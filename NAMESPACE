@@ -1,0 +1,12 @@
+useDynLib(punycoder, .registration = TRUE)
+importFrom(Rcpp, sourceCpp)
+
+# Export core functions
+export(puny_encode)
+export(puny_decode)
+export(url_encode)
+export(url_decode)
+export(parse_url)
+export(is_punycode)
+export(is_idn)
+export(validate_domain) 

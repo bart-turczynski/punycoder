@@ -1,0 +1,98 @@
+test_that("is_punycode correctly identifies punycode domains", {
+  # Should identify punycode domains
+  expect_true(is_punycode("xn--example"))
+  expect_true(is_punycode("xn--caf-dma.com"))
+  expect_true(is_punycode("subdomain.xn--example.com"))
+  
+  # Should not identify regular domains as punycode
+  expect_false(is_punycode("example.com"))
+  expect_false(is_punycode("test.org"))
+  expect_false(is_punycode("subdomain.example.net"))
+})
+
+test_that("is_punycode handles vectorized input", {
+  domains <- c("xn--example", "regular.com", "xn--test", "normal.org")
+  result <- is_punycode(domains)
+  
+  expect_length(result, 4)
+  expect_equal(result, c(TRUE, FALSE, TRUE, FALSE))
+})
+
+test_that("is_punycode validates input", {
+  expect_error(is_punycode(123), "character vector")
+  expect_error(is_punycode(TRUE), "character vector")
+})
+
+test_that("is_idn correctly identifies internationalized domains", {
+  # ASCII domains should not be considered IDN
+  expect_false(is_idn("example.com"))
+  expect_false(is_idn("test.org"))
+  expect_false(is_idn("subdomain.example.net"))
+  
+  # For now, we'll test the function exists and handles ASCII
+  # When Unicode support is added, these tests should be expanded
+  expect_type(is_idn("example.com"), "logical")
+})
+
+test_that("is_idn handles vectorized input", {
+  domains <- c("example.com", "test.org", "another.net")
+  result <- is_idn(domains)
+  
+  expect_length(result, 3)
+  expect_type(result, "logical")
+})
+
+test_that("is_idn validates input", {
+  expect_error(is_idn(123), "character vector")
+  expect_error(is_idn(TRUE), "character vector")
+})
+
+test_that("validate_domain returns proper structure", {
+  result <- validate_domain("example.com")
+  
+  expect_type(result, "list")
+  expect_s3_class(result, "punycoder_validation")
+  expect_named(result, c("domains", "valid", "errors"))
+})
+
+test_that("validate_domain handles valid domains", {
+  valid_domains <- c("example.com", "test.org", "subdomain.example.net")
+  result <- validate_domain(valid_domains)
+  
+  expect_length(result$domains, 3)
+  expect_length(result$valid, 3)
+  expect_length(result$errors, 3)
+  
+  # All should be valid for basic ASCII domains
+  expect_true(all(result$valid))
+})
+
+test_that("validate_domain handles invalid domains", {
+  result <- validate_domain(NA_character_)
+  
+  expect_false(result$valid[1])
+  expect_length(result$errors[[1]], 1)
+  expect_equal(result$errors[[1]][1], "Domain is NA")
+})
+
+test_that("validate_domain strict parameter works", {
+  expect_no_error(validate_domain("example.com", strict = TRUE))
+  expect_no_error(validate_domain("example.com", strict = FALSE))
+})
+
+test_that("validate_domain validates input", {
+  expect_error(validate_domain(123), "character vector")
+  expect_error(validate_domain(TRUE), "character vector")
+})
+
+test_that("print method for validation results works", {
+  result <- validate_domain(c("example.com", NA_character_))
+  
+  # Should not error when printing
+  expect_no_error(print(result))
+  
+  # Capture output to verify it contains expected elements
+  output <- capture.output(print(result))
+  expect_true(any(grepl("Punycoder Domain Validation Results", output)))
+  expect_true(any(grepl("example.com", output)))
+}) 

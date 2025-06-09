@@ -1,0 +1,25 @@
+Package: punycoder
+Type: Package
+Title: Unicode and Punycode Domain Name Processing
+Version: 1.0.0
+Author: Developer Name <developer@example.com>
+Maintainer: Developer Name <developer@example.com>
+Authors@R: person("Developer", "Name", email = "developer@example.com", 
+                  role = c("aut", "cre"))
+Description: High-performance Unicode and Punycode encoding/decoding for 
+    internationalized domain names. Provides RFC 3492 compliant conversion
+    functions with a focus on URL processing and data analysis workflows.
+    Addresses limitations in existing R packages for handling international
+    domain names in web scraping and URL parsing applications.
+Depends: R (>= 3.5.0)
+Imports: Rcpp (>= 1.0.0)
+LinkingTo: Rcpp
+License: GPL-3
+URL: https://github.com/yourusername/punycoder
+BugReports: https://github.com/yourusername/punycoder/issues
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.3.2
+Suggests: testthat (>= 3.0.0), knitr, rmarkdown
+VignetteBuilder: knitr
+SystemRequirements: C++11

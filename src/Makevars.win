@@ -1,0 +1,12 @@
+PKG_CPPFLAGS = -I../inst/include
+PKG_CXXFLAGS = -std=c++11
+
+# Windows-specific configurations
+PKG_CPPFLAGS += -DWIN32 -D_WIN32
+
+# For Windows, we'll likely need to vendor libidn2 or use a different approach
+# This is a placeholder for future Windows support
+# PKG_LIBS = -lidn2
+
+# Rcpp flags for Windows
+CXX_STD = CXX11 
