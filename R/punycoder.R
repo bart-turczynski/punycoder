@@ -9,11 +9,10 @@
 #' handling international domain names. It provides reliable, fast
 #' conversion between Unicode and ASCII representations of domain names.
 #'
-#' @docType package
 #' @name punycoder-package
 #' @useDynLib punycoder, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
-NULL
+"_PACKAGE"
 
 #' Encode Unicode domains to ASCII punycode
 #'
