@@ -71,6 +71,24 @@ test_that("strict parameter works", {
   expect_true(is.na(puny_encode("invalid..domain", strict = FALSE)))
 })
 
+test_that("puny domain helpers reject full URLs in strict mode", {
+  unicode_url <- "https://παράδειγμα.ελ"
+  ascii_url <- "https://xn--hxajbheg2az3al.xn--qxam"
+
+  expect_error(
+    puny_encode(unicode_url, strict = TRUE),
+    "letters, numbers and hyphens"
+  )
+  expect_error(
+    puny_decode(unicode_url, strict = TRUE),
+    "letters, numbers and hyphens"
+  )
+  expect_error(
+    puny_decode(ascii_url, strict = TRUE),
+    "letters, numbers and hyphens"
+  )
+})
+
 test_that("vectorized operations work", {
   domains <- c("example.com", "café.com", "москва.рф")
 

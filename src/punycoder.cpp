@@ -449,36 +449,37 @@ void validate_domain_name(const std::string& domain, bool strict) {
             throw std::invalid_argument("Domain label too long (max 63 characters)");
         }
 
-        if (!has_non_ascii(label)) {
-            if (strict) {
-                if (label.front() == '-' || label.back() == '-') {
-                    throw std::invalid_argument("Domain label cannot start or end with hyphen");
-                }
-                for (unsigned char c : label) {
-                    if (!std::isalnum(c) && c != '-') {
-                        throw std::invalid_argument("ASCII domain labels may contain only letters, numbers and hyphens");
-                    }
-                }
+        if (strict) {
+            if (label.front() == '-' || label.back() == '-') {
+                throw std::invalid_argument("Domain label cannot start or end with hyphen");
             }
 
-                if (starts_with_xn_prefix(label)) {
-                    std::string decoded = punycode_decode_label(label);
-                    // nocov start
-                    if (strict && decoded.empty()) {
-                        throw std::invalid_argument("Invalid punycode label");
-                    }
-                    // nocov end
+            for (unsigned char c : label) {
+                if (c < 0x80 && !std::isalnum(c) && c != '-') {
+                    throw std::invalid_argument("ASCII domain labels may contain only letters, numbers and hyphens");
                 }
-            } else if (strict) {
-                std::string encoded = punycode_encode_label(label);
-                std::string payload = encoded.substr(4);
+            }
+        }
+
+        if (!has_non_ascii(label)) {
+            if (starts_with_xn_prefix(label)) {
+                std::string decoded = punycode_decode_label(label);
                 // nocov start
-                if (payload.size() > 63) {
-                    throw std::invalid_argument("Encoded punycode label exceeds 63 characters");
+                if (strict && decoded.empty()) {
+                    throw std::invalid_argument("Invalid punycode label");
                 }
                 // nocov end
             }
+        } else if (strict) {
+            std::string encoded = punycode_encode_label(label);
+            std::string payload = encoded.substr(4);
+            // nocov start
+            if (payload.size() > 63) {
+                throw std::invalid_argument("Encoded punycode label exceeds 63 characters");
+            }
+            // nocov end
         }
+    }
 }
 
 bool parse_authority(const std::string& authority, ParsedURL* parsed) {

@@ -11,6 +11,10 @@ test_that("url_encode encodes Unicode host names", {
     url_encode("https://café.example.com/path?query=value"),
     "https://xn--caf-dma.example.com/path?query=value"
   )
+  expect_equal(
+    url_encode("https://παράδειγμα.ελ"),
+    "https://xn--hxajbheg2az3al.xn--qxam"
+  )
 })
 
 test_that("url_encode validates input", {
@@ -39,6 +43,10 @@ test_that("url_decode decodes punycode host names", {
   expect_equal(
     url_decode("https://xn--caf-dma.example.com/path"),
     "https://café.example.com/path"
+  )
+  expect_equal(
+    url_decode("https://xn--hxajbheg2az3al.xn--qxam"),
+    "https://παράδειγμα.ελ"
   )
 })
 
