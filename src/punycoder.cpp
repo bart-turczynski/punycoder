@@ -31,6 +31,7 @@ struct ParsedURL {
     bool has_authority = false;
     bool has_query = false;
     bool has_fragment = false;
+    bool host_was_bracketed = false;
     bool valid = false;
     std::string error_message;
 };
@@ -502,6 +503,7 @@ bool parse_authority(const std::string& authority, ParsedURL* parsed) {
             return false;
         }
 
+        parsed->host_was_bracketed = true;
         parsed->host = host_port.substr(1, close - 1);
         if (close + 1 < host_port.size()) {
             if (host_port[close + 1] != ':') {
@@ -594,10 +596,7 @@ std::string rebuild_url_with_host(const ParsedURL& parsed, const std::string& ho
             result.push_back('@');
         }
 
-        bool needs_brackets =
-            host.find(':') != std::string::npos &&
-            host.find('[') == std::string::npos &&
-            host.find(']') == std::string::npos;
+        bool needs_brackets = parsed.host_was_bracketed;
 
         if (needs_brackets) {
             result.push_back('[');

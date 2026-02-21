@@ -4,12 +4,13 @@
 \alias{url_decode}
 \title{Decode URLs with ASCII punycode domains to Unicode}
 \usage{
-url_decode(url, strict = TRUE)
+url_decode(url, strict = getOption("punycoder.strict", TRUE))
 }
 \arguments{
 \item{url}{Character vector of URLs with ASCII punycode domains}
 
-\item{strict}{Logical; whether to apply strict validation (default: TRUE)}
+\item{strict}{Logical; whether to apply strict validation. Defaults to
+`getOption("punycoder.strict", TRUE)`.}
 }
 \value{
 Character vector of URLs with Unicode-decoded domains

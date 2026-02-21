@@ -4,12 +4,13 @@
 \alias{validate_domain}
 \title{Comprehensive domain name validation}
 \usage{
-validate_domain(x, strict = TRUE)
+validate_domain(x, strict = getOption("punycoder.strict", TRUE))
 }
 \arguments{
 \item{x}{Character vector of domain names to validate}
 
-\item{strict}{Logical; whether to apply strict validation (default: TRUE)}
+\item{strict}{Logical; whether to apply strict validation. Defaults to
+`getOption("punycoder.strict", TRUE)`.}
 }
 \value{
 List containing validation results and error messages

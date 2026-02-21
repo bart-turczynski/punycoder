@@ -4,12 +4,13 @@
 \alias{puny_decode}
 \title{Decode ASCII punycode to Unicode domains}
 \usage{
-puny_decode(x, strict = TRUE)
+puny_decode(x, strict = getOption("punycoder.strict", TRUE))
 }
 \arguments{
 \item{x}{Character vector of ASCII punycode domains to decode}
 
-\item{strict}{Logical; whether to apply strict validation (default: TRUE)}
+\item{strict}{Logical; whether to apply strict validation. Defaults to
+`getOption("punycoder.strict", TRUE)`.}
 }
 \value{
 Character vector of Unicode-decoded domains

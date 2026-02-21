@@ -5,7 +5,8 @@
 #' for preparing URLs for systems that require ASCII-only domain names.
 #'
 #' @param url Character vector of URLs with potential Unicode domains
-#' @param strict Logical; whether to apply strict validation (default: TRUE)
+#' @param strict Logical; whether to apply strict validation. Defaults to
+#'   `getOption("punycoder.strict", TRUE)`.
 #' @return Character vector of URLs with ASCII-encoded domains
 #' @examples
 #' \dontrun{
@@ -23,7 +24,7 @@
 #' url_encode(urls)
 #' }
 #' @export
-url_encode <- function(url, strict = TRUE) {
+url_encode <- function(url, strict = getOption("punycoder.strict", TRUE)) {
   .assert_character(url)
   .assert_flag(strict, "strict")
   .warn_if_na(url)
@@ -38,7 +39,8 @@ url_encode <- function(url, strict = TRUE) {
 #' URLs human-readable.
 #'
 #' @param url Character vector of URLs with ASCII punycode domains
-#' @param strict Logical; whether to apply strict validation (default: TRUE)
+#' @param strict Logical; whether to apply strict validation. Defaults to
+#'   `getOption("punycoder.strict", TRUE)`.
 #' @return Character vector of URLs with Unicode-decoded domains
 #' @examples
 #' \dontrun{
@@ -54,7 +56,7 @@ url_encode <- function(url, strict = TRUE) {
 #' url_decode(ascii_urls)
 #' }
 #' @export
-url_decode <- function(url, strict = TRUE) {
+url_decode <- function(url, strict = getOption("punycoder.strict", TRUE)) {
   .assert_character(url)
   .assert_flag(strict, "strict")
   .warn_if_na(url)

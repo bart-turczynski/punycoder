@@ -21,7 +21,8 @@
 #' internationalized domain names (IDNs) in web scraping and URL analysis.
 #'
 #' @param x Character vector of Unicode domain names to encode
-#' @param strict Logical; whether to apply strict validation (default: TRUE)
+#' @param strict Logical; whether to apply strict validation. Defaults to
+#'   `getOption("punycoder.strict", TRUE)`.
 #' @return Character vector of ASCII-encoded domains
 #' @examples
 #' \dontrun{
@@ -38,7 +39,7 @@
 #' puny_encode(domains)
 #' }
 #' @export
-puny_encode <- function(x, strict = TRUE) {
+puny_encode <- function(x, strict = getOption("punycoder.strict", TRUE)) {
   .assert_character(x)
   .assert_flag(strict, "strict")
   .warn_if_na(x)
@@ -53,7 +54,8 @@ puny_encode <- function(x, strict = TRUE) {
 #' human-readable domain names.
 #'
 #' @param x Character vector of ASCII punycode domains to decode
-#' @param strict Logical; whether to apply strict validation (default: TRUE)
+#' @param strict Logical; whether to apply strict validation. Defaults to
+#'   `getOption("punycoder.strict", TRUE)`.
 #' @return Character vector of Unicode-decoded domains
 #' @examples
 #' \dontrun{
@@ -66,7 +68,7 @@ puny_encode <- function(x, strict = TRUE) {
 #' puny_decode(ascii_domains)
 #' }
 #' @export
-puny_decode <- function(x, strict = TRUE) {
+puny_decode <- function(x, strict = getOption("punycoder.strict", TRUE)) {
   .assert_character(x)
   .assert_flag(strict, "strict")
   .warn_if_na(x)

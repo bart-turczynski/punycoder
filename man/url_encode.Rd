@@ -4,12 +4,13 @@
 \alias{url_encode}
 \title{Encode URLs with Unicode domains to ASCII}
 \usage{
-url_encode(url, strict = TRUE)
+url_encode(url, strict = getOption("punycoder.strict", TRUE))
 }
 \arguments{
 \item{url}{Character vector of URLs with potential Unicode domains}
 
-\item{strict}{Logical; whether to apply strict validation (default: TRUE)}
+\item{strict}{Logical; whether to apply strict validation. Defaults to
+`getOption("punycoder.strict", TRUE)`.}
 }
 \value{
 Character vector of URLs with ASCII-encoded domains

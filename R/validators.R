@@ -52,7 +52,8 @@ is_idn <- function(x) {
 #' Supports both Unicode and ASCII domain names.
 #'
 #' @param x Character vector of domain names to validate
-#' @param strict Logical; whether to apply strict validation (default: TRUE)
+#' @param strict Logical; whether to apply strict validation. Defaults to
+#'   `getOption("punycoder.strict", TRUE)`.
 #' @return List containing validation results and error messages
 #' @examples
 #' \dontrun{
@@ -62,7 +63,7 @@ is_idn <- function(x) {
 #' validate_domain(c("valid.com", "invalid..com", long_label))
 #' }
 #' @export
-validate_domain <- function(x, strict = TRUE) {
+validate_domain <- function(x, strict = getOption("punycoder.strict", TRUE)) {
   .assert_character(x)
   .assert_flag(strict, "strict")
 

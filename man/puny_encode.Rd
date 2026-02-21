@@ -4,12 +4,13 @@
 \alias{puny_encode}
 \title{Encode Unicode domains to ASCII punycode}
 \usage{
-puny_encode(x, strict = TRUE)
+puny_encode(x, strict = getOption("punycoder.strict", TRUE))
 }
 \arguments{
 \item{x}{Character vector of Unicode domain names to encode}
 
-\item{strict}{Logical; whether to apply strict validation (default: TRUE)}
+\item{strict}{Logical; whether to apply strict validation. Defaults to
+`getOption("punycoder.strict", TRUE)`.}
 }
 \value{
 Character vector of ASCII-encoded domains

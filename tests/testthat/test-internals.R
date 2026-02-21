@@ -67,6 +67,18 @@ test_that("strict and non-strict paths handle malformed punycode differently", {
   expect_true(is.na(puny_encode("", strict = FALSE)))
 })
 
+test_that("strict defaults follow global punycoder.strict option", {
+  old <- options(punycoder.strict = FALSE)
+  on.exit(options(old), add = TRUE)
+
+  expect_true(is.na(puny_encode("invalid..domain")))
+  expect_true(is.na(url_decode("https://xn--.example.com")))
+
+  options(punycoder.strict = TRUE)
+  expect_error(puny_encode("invalid..domain"), "Error encoding domain")
+  expect_error(url_decode("https://xn--.example.com"), "Error decoding URL")
+})
+
 test_that(
   "url encode/decode handle userinfo, ports, and malformed authorities",
   {
@@ -168,7 +180,7 @@ test_that("url helpers cover authority edge cases", {
 
   expect_equal(
     url_encode("http://example.com:abc/path", strict = FALSE),
-    "http://[example.com:abc]/path"
+    "http://example.com:abc/path"
   )
   expect_error(
     url_encode("http://[::1]x/path", strict = TRUE),
