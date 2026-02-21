@@ -14,7 +14,7 @@
 #' url_encode(
 #'   "https://\\u043C\\u043E\\u0441\\u043A\\u0432\\u0430.\\u0440\\u0444/page"
 #' )
-#' 
+#'
 #' # Vectorized URL encoding
 #' urls <- c(
 #'   "https://caf\\u00E9.com/menu",
@@ -45,7 +45,7 @@ url_encode <- function(url, strict = TRUE) {
 #' # Basic URL decoding
 #' url_decode("https://xn--caf-dma.example.com/path")
 #' url_decode("https://xn--80adxhks.xn--p1ai/page")
-#' 
+#'
 #' # Vectorized URL decoding
 #' ascii_urls <- c(
 #'   "https://xn--caf-dma.com/menu",
@@ -77,7 +77,7 @@ url_decode <- function(url, strict = TRUE) {
 #' parse_url(
 #'   "https://caf\\u00E9.example.com:8080/path?query=value#fragment"
 #' )
-#' 
+#'
 #' # Parse multiple URLs
 #' urls <- c(
 #'   "https://caf\\u00E9.com/menu",
@@ -96,4 +96,4 @@ parse_url <- function(url, encode_domains = FALSE) {
   structure(result,
             class = c("punycoder_parsed_url", "list"),
             encode_domains = encode_domains)
-} 
+}

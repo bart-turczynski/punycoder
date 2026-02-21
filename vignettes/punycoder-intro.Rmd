@@ -50,7 +50,7 @@ library(punycoder)
 puny_encode("café.com")
 # Returns: "xn--caf-dma.com"
 
-puny_encode("москва.рф") 
+puny_encode("москва.рф")
 # Returns: "xn--80adxhks.xn--p1ai"
 
 # Decode ASCII domains back to Unicode
@@ -68,11 +68,9 @@ print(encoded)
 ```{r url-processing, eval=FALSE}
 # Encode URLs with Unicode domains
 url_encode("https://café.example.com/menu")
-# Returns: "https://xn--caf-dma.example.com/menu"
 
 # Decode URLs back to Unicode
 url_decode("https://xn--caf-dma.example.com/menu")
-# Returns: "https://café.example.com/menu"
 
 # Parse URLs with IDN handling
 url_parts <- parse_url("https://café.example.com:8080/path?q=test#section")
@@ -103,7 +101,7 @@ print(result)
 # Example: Processing international URLs for web scraping
 international_urls <- c(
   "https://café.paris.fr/menu",
-  "https://москва.рф/news", 
+  "https://москва.рф/news",
   "https://北京.中国/info"
 )
 
@@ -112,9 +110,6 @@ ascii_urls <- url_encode(international_urls)
 print(ascii_urls)
 
 # Process the data...
-# results <- lapply(ascii_urls, function(url) { 
-#   # Your web scraping code here
-# })
 
 # Convert back to Unicode for display
 display_urls <- url_decode(ascii_urls)
@@ -128,7 +123,7 @@ print(display_urls)
 set.seed(123)
 sample_domains <- c(
   rep("example.com", 1000),
-  rep("café.com", 1000), 
+  rep("café.com", 1000),
   rep("test.org", 1000)
 )
 
@@ -153,7 +148,7 @@ try({
 
 # Non-strict mode returns NA for invalid input
 result <- puny_encode(c("valid.com", ""), strict = FALSE)
-print(result)  # c("valid.com", NA)
+print(result)
 
 # Validation provides detailed error information
 validation <- validate_domain(c("valid.com", "invalid..domain", ""))
@@ -210,7 +205,7 @@ dt <- data.table(
 library(dplyr)
 urls_df <- data.frame(
   unicode_url = c("https://café.com", "https://москва.рф")
-) %>%
+) |>
   mutate(
     ascii_url = url_encode(unicode_url),
     is_international = is_idn(unicode_url)
@@ -225,4 +220,4 @@ urls_df <- data.frame(
 
 ## Technical Details
 
-The package uses a C++ backend with Rcpp for performance, and follows RFC 3492 standards for punycode implementation. Future versions will integrate with GNU libidn2 for complete IDNA2008 compliance. 
+The package uses a C++ backend with Rcpp for performance, and follows RFC 3492 standards for punycode implementation. Future versions will integrate with GNU libidn2 for complete IDNA2008 compliance.

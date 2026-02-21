@@ -52,6 +52,8 @@ src-x64/
 # Source package bundles
 *.tar.gz
 README.html
+coverage.html
+lib/
 
 # Documentation
 man/
@@ -64,3 +66,5 @@ tests/testthat/_snaps/
 # Local development
 .env
 *.log
+.gz
+.Rcheck

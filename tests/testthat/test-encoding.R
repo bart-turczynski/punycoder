@@ -41,7 +41,7 @@ test_that("puny_decode validates input types", {
 
 test_that("encoding and decoding are symmetric for ASCII", {
   ascii_domains <- c("example.com", "test.org", "subdomain.example.net")
-  
+
   for (domain in ascii_domains) {
     encoded <- puny_encode(domain)
     decoded <- puny_decode(encoded)
@@ -73,14 +73,14 @@ test_that("strict parameter works", {
 
 test_that("vectorized operations work", {
   domains <- c("example.com", "café.com", "москва.рф")
-  
+
   encoded <- puny_encode(domains)
   expect_length(encoded, 3)
   expect_type(encoded, "character")
   expect_equal(encoded[2], "xn--caf-dma.com")
-  
+
   decoded <- puny_decode(encoded)
   expect_length(decoded, 3)
   expect_type(decoded, "character")
   expect_equal(decoded, domains)
-}) 
+})

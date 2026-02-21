@@ -16,20 +16,20 @@ test_that("internal helper assertions behave as expected", {
 test_that(
   "startup hooks preserve explicit options and initialize missing ones",
   {
-  old <- options(
-    punycoder.strict = FALSE,
-    punycoder.encoding = "latin1"
-  )
-  on.exit(options(old), add = TRUE)
+    old <- options(
+      punycoder.strict = FALSE,
+      punycoder.encoding = "latin1"
+    )
+    on.exit(options(old), add = TRUE)
 
-  punycoder:::.onLoad("", "punycoder")
-  expect_false(getOption("punycoder.strict"))
-  expect_equal(getOption("punycoder.encoding"), "latin1")
+    punycoder:::.onLoad("", "punycoder")
+    expect_false(getOption("punycoder.strict"))
+    expect_equal(getOption("punycoder.encoding"), "latin1")
 
-  options(punycoder.strict = NULL, punycoder.encoding = NULL)
-  punycoder:::.onLoad("", "punycoder")
-  expect_true(getOption("punycoder.strict"))
-  expect_equal(getOption("punycoder.encoding"), "UTF-8")
+    options(punycoder.strict = NULL, punycoder.encoding = NULL)
+    punycoder:::.onLoad("", "punycoder")
+    expect_true(getOption("punycoder.strict"))
+    expect_equal(getOption("punycoder.encoding"), "UTF-8")
   }
 )
 
@@ -70,23 +70,23 @@ test_that("strict and non-strict paths handle malformed punycode differently", {
 test_that(
   "url encode/decode handle userinfo, ports, and malformed authorities",
   {
-  encoded <- url_encode(
-    "https://user:pass@caf\u00E9.example.com:8443/path?q=1#frag"
-  )
-  expect_equal(
-    encoded,
-    "https://user:pass@xn--caf-dma.example.com:8443/path?q=1#frag"
-  )
-  expect_equal(
-    url_decode(encoded),
-    "https://user:pass@caf\u00E9.example.com:8443/path?q=1#frag"
-  )
+    encoded <- url_encode(
+      "https://user:pass@caf\u00E9.example.com:8443/path?q=1#frag"
+    )
+    expect_equal(
+      encoded,
+      "https://user:pass@xn--caf-dma.example.com:8443/path?q=1#frag"
+    )
+    expect_equal(
+      url_decode(encoded),
+      "https://user:pass@caf\u00E9.example.com:8443/path?q=1#frag"
+    )
 
-  expect_error(
-    url_decode("https://xn--.example.com", strict = TRUE),
-    "Error decoding URL"
-  )
-  expect_true(is.na(url_decode("https://xn--.example.com", strict = FALSE)))
+    expect_error(
+      url_decode("https://xn--.example.com", strict = TRUE),
+      "Error decoding URL"
+    )
+    expect_true(is.na(url_decode("https://xn--.example.com", strict = FALSE)))
   }
 )
 
@@ -205,8 +205,14 @@ test_that("invalid UTF-8 byte sequences return NA in non-strict mode", {
     paste0(x, ".com")
   }
 
-  expect_true(is.na(puny_encode(bad_seq(c(0xF8, 0x80, 0x80, 0x80, 0x80)),
-    strict = FALSE)))
+  expect_true(
+    is.na(
+      puny_encode(
+        bad_seq(c(0xF8, 0x80, 0x80, 0x80, 0x80)),
+        strict = FALSE
+      )
+    )
+  )
   expect_true(is.na(puny_encode(bad_seq(c(0xE2)), strict = FALSE)))
   expect_true(is.na(puny_encode(bad_seq(c(0xC2, 0x20)), strict = FALSE)))
   expect_true(is.na(puny_encode(bad_seq(c(0xC0, 0x80)), strict = FALSE)))

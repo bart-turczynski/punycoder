@@ -84,7 +84,7 @@ get_validation_summary <- function(validation_result) {
   if (!inherits(validation_result, "punycoder_validation")) {
     stop("Input must be a punycoder_validation object", call. = FALSE)
   }
-  
+
   vapply(
     validation_result$errors,
     FUN.VALUE = character(1),
@@ -106,11 +106,11 @@ get_validation_summary <- function(validation_result) {
 print.punycoder_validation <- function(x, ...) {
   cat("Punycoder Domain Validation Results\n")
   cat("==================================\n\n")
-  
+
   for (i in seq_along(x$domains)) {
     cat("Domain:", x$domains[i], "\n")
     cat("Valid: ", x$valid[i], "\n")
-    
+
     if (!x$valid[i] && length(x$errors[[i]]) > 0) {
       cat("Errors:\n")
       for (error in x$errors[[i]]) {
@@ -119,6 +119,6 @@ print.punycoder_validation <- function(x, ...) {
     }
     cat("\n")
   }
-  
+
   invisible(x)
-} 
+}

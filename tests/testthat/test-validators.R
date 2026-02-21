@@ -3,7 +3,7 @@ test_that("is_punycode correctly identifies punycode domains", {
   expect_true(is_punycode("xn--example"))
   expect_true(is_punycode("xn--caf-dma.com"))
   expect_true(is_punycode("subdomain.xn--example.com"))
-  
+
   # Should not identify regular domains as punycode
   expect_false(is_punycode("example.com"))
   expect_false(is_punycode("test.org"))
@@ -13,7 +13,7 @@ test_that("is_punycode correctly identifies punycode domains", {
 test_that("is_punycode handles vectorized input", {
   domains <- c("xn--example", "regular.com", "xn--test", "normal.org")
   result <- is_punycode(domains)
-  
+
   expect_length(result, 4)
   expect_equal(result, c(TRUE, FALSE, TRUE, FALSE))
 })
@@ -36,7 +36,7 @@ test_that("is_idn correctly identifies internationalized domains", {
 test_that("is_idn handles vectorized input", {
   domains <- c("example.com", "test.org", "another.net")
   result <- is_idn(domains)
-  
+
   expect_length(result, 3)
   expect_type(result, "logical")
 })
@@ -48,7 +48,7 @@ test_that("is_idn validates input", {
 
 test_that("validate_domain returns proper structure", {
   result <- validate_domain("example.com")
-  
+
   expect_type(result, "list")
   expect_s3_class(result, "punycoder_validation")
   expect_named(result, c("domains", "valid", "errors"))
@@ -57,18 +57,18 @@ test_that("validate_domain returns proper structure", {
 test_that("validate_domain handles valid domains", {
   valid_domains <- c("example.com", "test.org", "subdomain.example.net")
   result <- validate_domain(valid_domains)
-  
+
   expect_length(result$domains, 3)
   expect_length(result$valid, 3)
   expect_length(result$errors, 3)
-  
+
   # All should be valid for basic ASCII domains
   expect_true(all(result$valid))
 })
 
 test_that("validate_domain handles invalid domains", {
   result <- validate_domain(NA_character_)
-  
+
   expect_false(result$valid[1])
   expect_length(result$errors[[1]], 1)
   expect_equal(result$errors[[1]][1], "Domain is NA")
@@ -92,12 +92,12 @@ test_that("validate_domain validates input", {
 
 test_that("print method for validation results works", {
   result <- validate_domain(c("example.com", NA_character_))
-  
+
   # Should not error when printing
   expect_no_error(print(result))
-  
+
   # Capture output to verify it contains expected elements
   output <- capture.output(print(result))
   expect_true(any(grepl("Punycoder Domain Validation Results", output)))
   expect_true(any(grepl("example.com", output)))
-}) 
+})

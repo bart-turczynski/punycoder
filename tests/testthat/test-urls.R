@@ -58,7 +58,7 @@ test_that("url_decode handles NA values", {
 
 test_that("parse_url returns proper structure", {
   result <- parse_url("https://example.com/path?query=value#fragment")
-  
+
   expect_type(result, "list")
   expect_s3_class(result, "punycoder_parsed_url")
   expect_named(
@@ -75,7 +75,7 @@ test_that("parse_url returns proper structure", {
 test_that("parse_url handles vectorized input", {
   urls <- c("https://example.com", "http://test.org:8080")
   result <- parse_url(urls)
-  
+
   expect_type(result, "list")
   expect_s3_class(result, "punycoder_parsed_url")
   expect_equal(result$domain[[2]], "test.org")
@@ -108,4 +108,4 @@ test_that("strict parameter works for URL functions", {
 
   expect_error(url_encode("https://[::1/path", strict = TRUE))
   expect_true(is.na(url_encode("https://[::1/path", strict = FALSE)))
-}) 
+})

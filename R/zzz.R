@@ -22,4 +22,4 @@
 .onUnload <- function(libpath) {
   # Clean up any resources when package is unloaded
   library.dynam.unload("punycoder", libpath)
-} 
+}

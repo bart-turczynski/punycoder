@@ -16,3 +16,8 @@ README\.html$
 ^LICENSE$
 ^src/.*\.(o|so|dll)$
 ^src/symbols\.rds$
+^coverage\.html$
+^lib$
+^lib/.*
+^\.github$
+^\.github/.*
