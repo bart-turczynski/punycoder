@@ -55,8 +55,7 @@ README.html
 coverage.html
 lib/
 
-# Documentation
-man/
+# Installed package artifacts
 doc/
 Meta/
 
