@@ -285,7 +285,7 @@ Description: High-performance Unicode and Punycode encoding/decoding for
 Depends: R (>= 3.5.0)
 Imports: Rcpp (>= 1.0.0)
 LinkingTo: Rcpp
-License: MIT + file LICENSE
+License: MIT
 URL: https://github.com/yourusername/punycoder
 BugReports: https://github.com/yourusername/punycoder/issues
 Encoding: UTF-8
