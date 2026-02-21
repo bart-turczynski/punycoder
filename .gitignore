@@ -65,5 +65,4 @@ tests/testthat/_snaps/
 # Local development
 .env
 *.log
-.gz
-.Rcheck
+*.gz
