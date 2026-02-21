@@ -557,6 +557,42 @@ std::string punycode_decode_label(const std::string& label) {
 #endif
 }
 
+bool looks_like_url_input(const std::string& input) {
+    if (input.find("://") != std::string::npos) {
+        return true;
+    }
+
+    if (input.rfind("//", 0) == 0) {
+        return true;
+    }
+
+    if (input.find('/') != std::string::npos ||
+        input.find('?') != std::string::npos ||
+        input.find('#') != std::string::npos ||
+        input.find('@') != std::string::npos) {
+        return true;
+    }
+
+    size_t colon_pos = input.find(':');
+    if (colon_pos != std::string::npos && colon_pos > 0 &&
+        std::isalpha(static_cast<unsigned char>(input[0])) != 0) {
+        bool scheme_like = std::all_of(
+            input.begin() + 1,
+            input.begin() + colon_pos,
+            [](char c) {
+                unsigned char uc = static_cast<unsigned char>(c);
+                return std::isalnum(uc) != 0 || c == '+' || c == '-' || c == '.';
+            }
+        );
+
+        if (scheme_like) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void validate_domain_name(const std::string& domain, bool strict) {
     if (domain.empty()) {
         throw std::invalid_argument("Domain name cannot be empty");
@@ -836,6 +872,11 @@ Rcpp::CharacterVector puny_encode_cpp(Rcpp::CharacterVector domains, bool strict
                 results[i] = NA_STRING;
             } else {
                 std::string domain = Rcpp::as<std::string>(domains[i]);
+                if (looks_like_url_input(domain)) {
+                    throw std::invalid_argument(
+                        "ASCII domain labels may contain only letters, numbers and hyphens"
+                    );
+                }
                 results[i] = processor.encode_domain(domain);
             }
         } catch (const std::exception& e) {
@@ -860,6 +901,11 @@ Rcpp::CharacterVector puny_decode_cpp(Rcpp::CharacterVector domains, bool strict
                 results[i] = NA_STRING;
             } else {
                 std::string domain = Rcpp::as<std::string>(domains[i]);
+                if (looks_like_url_input(domain)) {
+                    throw std::invalid_argument(
+                        "ASCII domain labels may contain only letters, numbers and hyphens"
+                    );
+                }
                 results[i] = processor.decode_domain(domain);
             }
         } catch (const std::exception& e) {
