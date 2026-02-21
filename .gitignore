@@ -45,8 +45,13 @@ vignettes/*.pdf
 src/*.o
 src/*.so
 src/*.dll
+src/symbols.rds
 src-i386/
 src-x64/
+
+# Source package bundles
+*.tar.gz
+README.html
 
 # Documentation
 man/

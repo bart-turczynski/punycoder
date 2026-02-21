@@ -221,7 +221,7 @@ urls_df <- data.frame(
 
 - Explore the function documentation: `help(package = "punycoder")`
 - Check out the test suite for more examples
-- Report issues at: https://github.com/yourusername/punycoder/issues
+- Report issues at: https://github.com/bart-turczynski/punycoder/issues
 
 ## Technical Details
 

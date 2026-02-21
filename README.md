@@ -6,7 +6,7 @@
 <!-- badges: start -->
 
 [![R build
-status](https://github.com/yourusername/punycoder/workflows/R-CMD-check/badge.svg)](https://github.com/yourusername/punycoder/actions)
+status](https://github.com/bart-turczynski/punycoder/workflows/R-CMD-check/badge.svg)](https://github.com/bart-turczynski/punycoder/actions)
 [![CRAN
 status](https://www.r-pkg.org/badges/version/punycoder)](https://CRAN.R-project.org/package=punycoder)
 <!-- badges: end -->
@@ -25,30 +25,21 @@ scraping, data analysis, and URL processing workflows.
 ## Installation
 
 You can install the development version of punycoder from
-[GitHub](https://github.com/) with:
+[GitHub](https://github.com/bart-turczynski/punycoder) with:
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("yourusername/punycoder")
+remotes::install_github("bart-turczynski/punycoder")
 ```
 
 ## Example
 
 ``` r
 library(punycoder)
-#> punycoder: Unicode and Punycode Domain Name Processing
-#> Type ?punycoder for help or see vignette('punycoder-intro')
-#> Report issues at: https://github.com/yourusername/punycoder/issues
 
-# Basic encoding (placeholder implementation)
-puny_encode("example.com")
-#> [1] "example.com"
-#> attr(,"class")
-#> [1] "punycoder_result" "character"       
-#> attr(,"strict")
-#> [1] TRUE
-#> attr(,"input_encoding")
-#> [1] "UTF-8"
+# Basic encoding
+puny_encode("café.com")
+#> [1] "xn--caf-dma.com"
 
 # Check if domain is punycode
 is_punycode("xn--example")
@@ -105,12 +96,10 @@ validate_domain(c("valid.com", "invalid..domain"))
 
 ## Development Status
 
-**Status**: This package is currently in development. The boilerplate
-structure is complete and ready for implementation of the libidn2
-backend.
+**Status**: Core punycode/IDN functionality is implemented and tested.
 
-The package now compiles cleanly and all R package infrastructure is
-working correctly. Ready for implementing real punycode functionality!
+The package provides RFC 3492 encoding/decoding, URL host processing,
+and domain validation utilities.
 
 ## Contributing
 

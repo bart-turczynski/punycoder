@@ -28,10 +28,9 @@ test_that("is_idn correctly identifies internationalized domains", {
   expect_false(is_idn("example.com"))
   expect_false(is_idn("test.org"))
   expect_false(is_idn("subdomain.example.net"))
-  
-  # For now, we'll test the function exists and handles ASCII
-  # When Unicode support is added, these tests should be expanded
-  expect_type(is_idn("example.com"), "logical")
+
+  expect_true(is_idn("café.com"))
+  expect_true(is_idn("москва.рф"))
 })
 
 test_that("is_idn handles vectorized input", {
@@ -73,6 +72,12 @@ test_that("validate_domain handles invalid domains", {
   expect_false(result$valid[1])
   expect_length(result$errors[[1]], 1)
   expect_equal(result$errors[[1]][1], "Domain is NA")
+
+  invalid <- validate_domain("invalid..domain")
+  expect_false(invalid$valid[1])
+  expect_true(any(
+    grepl("empty label", invalid$errors[[1]], ignore.case = TRUE)
+  ))
 })
 
 test_that("validate_domain strict parameter works", {

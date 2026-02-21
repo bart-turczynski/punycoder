@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 # punycoder
 
 <!-- badges: start -->
-[![R build status](https://github.com/yourusername/punycoder/workflows/R-CMD-check/badge.svg)](https://github.com/yourusername/punycoder/actions)
+[![R build status](https://github.com/bart-turczynski/punycoder/workflows/R-CMD-check/badge.svg)](https://github.com/bart-turczynski/punycoder/actions)
 [![CRAN status](https://www.r-pkg.org/badges/version/punycoder)](https://CRAN.R-project.org/package=punycoder)
 <!-- badges: end -->
 
@@ -28,11 +28,12 @@ The `punycoder` package addresses critical gaps in R's URL processing capabiliti
 
 ## Installation
 
-You can install the development version of punycoder from [GitHub](https://github.com/) with:
+You can install the development version of punycoder from
+[GitHub](https://github.com/bart-turczynski/punycoder) with:
 
 ```{r eval=FALSE}
 # install.packages("remotes")
-remotes::install_github("yourusername/punycoder")
+remotes::install_github("bart-turczynski/punycoder")
 ```
 
 ## Example
@@ -40,8 +41,8 @@ remotes::install_github("yourusername/punycoder")
 ```{r example}
 library(punycoder)
 
-# Basic encoding (placeholder implementation)
-puny_encode("example.com")
+# Basic encoding
+puny_encode("café.com")
 
 # Check if domain is punycode
 is_punycode("xn--example")
@@ -87,9 +88,9 @@ validate_domain(c("valid.com", "invalid..domain"))
 
 ## Development Status
 
-**Status**: This package is currently in development. The boilerplate structure is complete and ready for implementation of the libidn2 backend.
+**Status**: Core punycode/IDN functionality is implemented and tested.
 
-The package now compiles cleanly and all R package infrastructure is working correctly. Ready for implementing real punycode functionality!
+The package provides RFC 3492 encoding/decoding, URL host processing, and domain validation utilities.
 
 ## Contributing
 

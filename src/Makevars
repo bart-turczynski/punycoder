@@ -1,17 +1,1 @@
 PKG_CPPFLAGS = -I../inst/include
-PKG_CXXFLAGS = -std=c++11
-
-# For systems with libidn2 installed
-PKG_LIBS = $(shell pkg-config --libs libidn2 2>/dev/null)
-
-# Fallback if pkg-config fails
-ifeq ($(PKG_LIBS),)
-    PKG_LIBS = -lidn2
-endif
-
-# Additional flags for better compatibility
-PKG_CPPFLAGS += -DHAVE_LIBIDN2
-
-# Enable all warnings and treat them as errors in development
-# Remove for production release
-# PKG_CXXFLAGS += -Wall -Wextra -pedantic 

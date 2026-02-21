@@ -26,30 +26,24 @@
 #' @examples
 #' \dontrun{
 #' # Basic encoding
-#' puny_encode("café.com")
-#' puny_encode("москва.рф")
+#' puny_encode("caf\\u00E9.com")
+#' puny_encode("\\u043C\\u043E\\u0441\\u043A\\u0432\\u0430.\\u0440\\u0444")
 #' 
 #' # Vectorized encoding
-#' domains <- c("café.com", "москва.рф", "北京.中国")
+#' domains <- c(
+#'   "caf\\u00E9.com",
+#'   "\\u043C\\u043E\\u0441\\u043A\\u0432\\u0430.\\u0440\\u0444",
+#'   "\\u5317\\u4EAC.\\u4E2D\\u56FD"
+#' )
 #' puny_encode(domains)
 #' }
 #' @export
 puny_encode <- function(x, strict = TRUE) {
-  if (!is.character(x)) {
-    stop("Input must be a character vector", call. = FALSE)
-  }
-  
-  if (any(is.na(x))) {
-    warning("NA values detected in input", call. = FALSE)
-  }
-  
-  result <- puny_encode_cpp(x, strict)
-  
-  # Add proper class and attributes
-  structure(result, 
-            class = c("punycoder_result", "character"),
-            strict = strict,
-            input_encoding = "UTF-8")
+  .assert_character(x)
+  .assert_flag(strict, "strict")
+  .warn_if_na(x)
+
+  puny_encode_cpp(x, strict)
 }
 
 #' Decode ASCII punycode to Unicode domains
@@ -73,19 +67,9 @@ puny_encode <- function(x, strict = TRUE) {
 #' }
 #' @export
 puny_decode <- function(x, strict = TRUE) {
-  if (!is.character(x)) {
-    stop("Input must be a character vector", call. = FALSE)
-  }
-  
-  if (any(is.na(x))) {
-    warning("NA values detected in input", call. = FALSE)
-  }
-  
-  result <- puny_decode_cpp(x, strict)
-  
-  # Add proper class and attributes
-  structure(result, 
-            class = c("punycoder_result", "character"),
-            strict = strict,
-            output_encoding = "UTF-8")
+  .assert_character(x)
+  .assert_flag(strict, "strict")
+  .warn_if_na(x)
+
+  puny_decode_cpp(x, strict)
 } 

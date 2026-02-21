@@ -7,18 +7,16 @@
 #' @return Logical vector indicating which elements are punycode
 #' @examples
 #' \dontrun{
-#' is_punycode("xn--example")          # TRUE
-#' is_punycode("example.com")          # FALSE
+#' is_punycode("xn--example") # TRUE
+#' is_punycode("example.com") # FALSE
 #' is_punycode(c("xn--caf-dma.com", "regular.com"))  # c(TRUE, FALSE)
 #' }
 #' @export
 is_punycode <- function(x) {
-  if (!is.character(x)) {
-    stop("Input must be a character vector", call. = FALSE)
-  }
-  
+  .assert_character(x)
+
   # Check for xn-- prefix (case insensitive)
-  grepl("^xn--", x, ignore.case = TRUE) | 
+  grepl("^xn--", x, ignore.case = TRUE) |
     grepl("\\.xn--", x, ignore.case = TRUE)
 }
 
@@ -31,18 +29,20 @@ is_punycode <- function(x) {
 #' @return Logical vector indicating which domains contain Unicode characters
 #' @examples
 #' \dontrun{
-#' is_idn("café.com")              # TRUE
-#' is_idn("example.com")           # FALSE
-#' is_idn(c("café.com", "москва.рф", "test.com"))  # c(TRUE, TRUE, FALSE)
+#' is_idn("caf\\u00E9.com") # TRUE
+#' is_idn("example.com")    # FALSE
+#' is_idn(c(
+#'   "caf\\u00E9.com",
+#'   "\\u043C\\u043E\\u0441\\u043A\\u0432\\u0430.\\u0440\\u0444",
+#'   "test.com"
+#' ))  # c(TRUE, TRUE, FALSE)
 #' }
 #' @export
 is_idn <- function(x) {
-  if (!is.character(x)) {
-    stop("Input must be a character vector", call. = FALSE)
-  }
-  
-  # Check for non-ASCII characters
-  !grepl("^[[:ascii:]]*$", x)
+  .assert_character(x)
+
+  # Portable non-ASCII check across regex engines.
+  grepl("[^\\x00-\\x7F]", x, perl = TRUE)
 }
 
 #' Comprehensive domain name validation
@@ -57,17 +57,17 @@ is_idn <- function(x) {
 #' @examples
 #' \dontrun{
 #' validate_domain("example.com")
-#' validate_domain("café.example.com")
-#' validate_domain(c("valid.com", "invalid..com", "toolong" + paste(rep("x", 250), collapse = "")))
+#' validate_domain("caf\\u00E9.example.com")
+#' long_label <- paste(rep("x", 250), collapse = "")
+#' validate_domain(c("valid.com", "invalid..com", long_label))
 #' }
 #' @export
 validate_domain <- function(x, strict = TRUE) {
-  if (!is.character(x)) {
-    stop("Input must be a character vector", call. = FALSE)
-  }
-  
+  .assert_character(x)
+  .assert_flag(strict, "strict")
+
   result <- validate_domain_cpp(x, strict)
-  
+
   structure(result,
             class = c("punycoder_validation", "list"),
             strict = strict)
@@ -85,13 +85,17 @@ get_validation_summary <- function(validation_result) {
     stop("Input must be a punycoder_validation object", call. = FALSE)
   }
   
-  sapply(validation_result$errors, function(err) {
-    if (length(err) == 0) {
-      "Valid"
-    } else {
-      paste(err, collapse = "; ")
+  vapply(
+    validation_result$errors,
+    FUN.VALUE = character(1),
+    function(err) {
+      if (length(err) == 0) {
+        "Valid"
+      } else {
+        paste(err, collapse = "; ")
+      }
     }
-  })
+  )
 }
 
 #' Print method for punycoder validation results
