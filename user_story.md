@@ -7,7 +7,7 @@ Development of `punycoder` - a high-performance R package for Unicode/Punycode e
 ## Problem Statement
 
 ### Current Pain Points
-- **Broken Existing Tools**: `urltools::puny_encode()` and `urltools::puny_decode()` return incorrect results
+- **Broken Existing Tools**: Legacy punycode helpers return incorrect results
 - **URL Parsing Failures**: International domain names cause parsing errors in R URL processing
 - **Data Quality Issues**: Inconsistent handling of IDNs in web scraping and data analysis
 - **Performance Limitations**: No efficient bulk processing of internationalized URLs
@@ -15,8 +15,8 @@ Development of `punycoder` - a high-performance R package for Unicode/Punycode e
 
 ### Real-World Impact
 ```r
-# Current broken behavior in urltools
-urltools::puny_encode("münchen.de")  # Returns wrong encoding or fails
+# Current broken behavior in legacy tooling
+legacy_puny_encode("münchen.de")  # Returns wrong encoding or fails
 
 # What we need
 punycoder::puny_encode("münchen.de")  # Should return: "xn--mnchen-3ya.de"
@@ -108,7 +108,7 @@ punycoder::validate_domain("test.com")    # Comprehensive validation
 punycoder/
 ├── DESCRIPTION          # Package metadata (Title, Author, Dependencies)
 ├── NAMESPACE           # Exported functions and imports
-├── LICENSE             # GPL-3 license file
+├── LICENSE             # MIT license metadata file
 ├── R/                  # R interface functions
 │   ├── punycoder.R     # Main encoding/decoding functions
 │   ├── url-utils.R    # URL-specific utilities
@@ -285,7 +285,7 @@ Description: High-performance Unicode and Punycode encoding/decoding for
 Depends: R (>= 3.5.0)
 Imports: Rcpp (>= 1.0.0)
 LinkingTo: Rcpp
-License: GPL-3
+License: MIT + file LICENSE
 URL: https://github.com/yourusername/punycoder
 BugReports: https://github.com/yourusername/punycoder/issues
 Encoding: UTF-8
@@ -368,7 +368,7 @@ R-hub progress update (February 21, 2026):
 - [x] Clean R CMD check on all platforms
 
 ### Ecosystem Impact
-- [ ] Fills gap left by broken urltools functions
+- [ ] Fills gap left by broken legacy punycode helpers
 - [ ] Enables reliable international URL processing in R
 - [ ] Provides foundation for other packages needing IDN support
 - [ ] Establishes best practices for Unicode handling in R
@@ -408,7 +408,7 @@ endif
 
 ### Backward Compatibility
 
-#### 1. Migration Path from urltools
+#### 1. Migration Path from legacy helpers
 ```r
 # Drop-in replacement functions
 puny_encode_legacy <- function(...) {
@@ -424,9 +424,9 @@ puny_decode_legacy <- function(...) {
 
 #### 2. Compatibility Testing
 ```r
-# Test against urltools behavior (where it works)
+# Test against legacy behavior (where it works)
 test_compatibility <- function() {
-  # For domains that urltools handles correctly,
+  # For domains that legacy helpers handle correctly,
   # ensure punycoder produces same results
 }
 ```
@@ -447,7 +447,7 @@ test_compatibility <- function() {
 1. **CRAN Rejection**
    - *Mitigation*: Follow all CRAN policies, engage with reviewers early
    
-2. **Competition from urltools Fix**
+2. **Competition from fixes in other tooling**
    - *Mitigation*: Superior performance and reliability, better API design
    
 3. **Maintenance Burden**

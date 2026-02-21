@@ -26,7 +26,7 @@ The `punycoder` package provides high-performance Unicode and Punycode encoding/
 
 International domain names containing Unicode characters (like café.com or москва.рф) need to be converted to ASCII format for use in many network protocols and systems. Existing R packages have limitations:
 
-- **urltools**: Contains bugs in punycode implementation
+- **Inconsistent legacy helpers**: Existing workflows may produce incorrect punycode output
 - **Limited functionality**: No comprehensive IDN handling
 - **Performance**: No efficient bulk processing
 

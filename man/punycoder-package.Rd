@@ -24,6 +24,6 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Bart Turczynski \email{bartek@turczynski.pl}
+\strong{Maintainer}: Bart Turczynski \email{bartek+punycoder@turczynski.pl}
 
 }

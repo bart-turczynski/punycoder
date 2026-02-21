@@ -1,0 +1,21 @@
+# Third-Party Notices and Acknowledgments
+
+Project: punycoder  
+Copyright (c) 2026 Bart Turczynski  
+Contact: bartek+punycoder@turczynski.pl
+
+## Third-party libraries
+
+- Rcpp (`Imports`, `LinkingTo`): used for the R/C++ interface layer.
+  - Homepage: https://cran.r-project.org/package=Rcpp
+  - License: GPL (>= 2)
+- GNU libidn2 (optional system dependency): used as an optional native
+  punycode backend when available at build time.
+  - Homepage: https://www.gnu.org/software/libidn/#libidn2
+  - License: dual-licensed under LGPLv3+ or GPLv2+
+
+## Inspiration and compatibility notes
+
+- This package is inspired by `urltools`.
+- `punycoder` aims to provide a robust fix for punycode encode/decode issues
+  that may arise in `urltools` workflows.

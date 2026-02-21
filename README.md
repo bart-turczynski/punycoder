@@ -22,6 +22,16 @@ ASCII representations of domain names. It follows RFC 3492 standards and
 is designed for robust handling of internationalized domain names in web
 scraping, data analysis, and URL processing workflows.
 
+## Dependencies
+
+`punycoder` has a small dependency footprint:
+
+- Runtime dependencies: `R (>= 3.5.0)`, `Rcpp`
+- Optional system dependency: `libidn2` (detected at compile time)
+- Optional build helper: `pkg-config` (used by `configure` to detect
+  `libidn2`)
+- Development dependencies: `testthat`, `knitr`, `rmarkdown`
+
 ## Installation
 
 You can install the development version of punycoder from
@@ -92,7 +102,8 @@ validate_domain("test.com")
   datasets
 - **Comprehensive Validation**: Robust error handling with informative
   messages
-- **CRAN Compliant**: Follows all CRAN policies and best practices
+- **Flexible Backend**: Automatically uses `libidn2` when available,
+  with a built-in fallback backend
 
 ## Use Cases
 
@@ -123,12 +134,27 @@ is_idn(c("café.com", "example.com", "москва.рф"))
 validate_domain(c("valid.com", "invalid..domain"))
 ```
 
-## Development Status
+## Current State
 
-**Status**: Core punycode/IDN functionality is implemented and tested.
+`punycoder` currently provides:
 
-The package provides RFC 3492 encoding/decoding, URL host processing,
-and domain validation utilities.
+- Domain encoding/decoding: `puny_encode()`, `puny_decode()`
+- URL host processing: `url_encode()`, `url_decode()`, `parse_url()`
+- Domain validation utilities: `is_punycode()`, `is_idn()`,
+  `validate_domain()`
+- Vectorized operations and strict/non-strict handling for malformed
+  input
+- Build-time backend selection (`libidn2` when present, built-in
+  fallback otherwise)
+
+## Acknowledgments
+
+- Core C++/R integration is powered by `Rcpp`.
+- Optional native punycode backend support is provided through
+  `libidn2`.
+- `punycoder` is inspired by `urltools` and is designed to provide a
+  robust fix for punycode encode/decode issues that may arise in
+  `urltools` workflows.
 
 ## Contributing
 
@@ -137,4 +163,4 @@ Guide](CONTRIBUTING.md) for details.
 
 ## License
 
-GPL-3
+MIT
