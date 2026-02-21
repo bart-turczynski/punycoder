@@ -32,6 +32,35 @@ You can install the development version of punycoder from
 remotes::install_github("bart-turczynski/punycoder")
 ```
 
+### Optional native backend (`libidn2`)
+
+`punycoder` works without extra system libraries. If `libidn2` is
+available at build time, the package enables a native backend
+automatically; otherwise it uses the built-in C++ fallback backend.
+
+To install the recommended optional dependency:
+
+- macOS (Homebrew):
+  - `brew install libidn2 pkg-config`
+- Debian/Ubuntu:
+  - `sudo apt-get install libidn2-0-dev pkg-config`
+- Fedora/RHEL/CentOS:
+  - `sudo dnf install libidn2-devel pkgconf-pkg-config`
+- Arch Linux:
+  - `sudo pacman -S libidn2 pkgconf`
+
+Verify the library is visible before installing `punycoder` from source:
+
+``` r
+system("pkg-config --modversion libidn2")
+```
+
+Then install/reinstall `punycoder`:
+
+``` r
+remotes::install_github("bart-turczynski/punycoder")
+```
+
 ## Example
 
 ``` r

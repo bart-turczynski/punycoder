@@ -9,6 +9,10 @@
 #include <string>
 #include <vector>
 
+#ifdef PUNYCODER_USE_LIBIDN2
+#include <idn2.h>
+#endif
+
 namespace {
 
 constexpr uint32_t kBase = 36;
@@ -212,7 +216,17 @@ std::string join_with_dot(const std::vector<std::string>& labels) {
     return out;
 }
 
-std::string punycode_encode_label(const std::string& label) {
+#ifdef PUNYCODER_USE_LIBIDN2
+std::string libidn2_error_message(int rc) {
+    const char* error = idn2_strerror(rc);
+    if (error == nullptr) {
+        return "libidn2 returned unknown error";
+    }
+    return std::string(error);
+}
+#endif
+
+std::string punycode_encode_label_fallback(const std::string& label) {
     if (label.empty()) {
         // nocov start
         throw std::invalid_argument("Domain label cannot be empty");
@@ -319,7 +333,7 @@ std::string punycode_encode_label(const std::string& label) {
     return "xn--" + output;
 }
 
-std::string punycode_decode_label(const std::string& label) {
+std::string punycode_decode_label_fallback(const std::string& label) {
     if (!starts_with_xn_prefix(label)) {
         return label;
     }
@@ -418,6 +432,129 @@ std::string punycode_decode_label(const std::string& label) {
     }
 
     return codepoints_to_utf8(output);
+}
+
+#ifdef PUNYCODER_USE_LIBIDN2
+std::string punycode_encode_label_libidn2(const std::string& label) {
+    if (label.empty()) {
+        // nocov start
+        throw std::invalid_argument("Domain label cannot be empty");
+        // nocov end
+    }
+
+    std::vector<uint32_t> input = utf8_to_codepoints(label);
+    bool needs_encoding = false;
+    for (uint32_t cp : input) {
+        if (cp >= 0x80) {
+            needs_encoding = true;
+            break;
+        }
+    }
+
+    if (!needs_encoding) {
+        return label;
+    }
+
+    size_t buffer_size = std::max<size_t>(32, (input.size() * 5) + 16);
+    for (;;) {
+        std::vector<char> output(buffer_size);
+        size_t output_length = buffer_size;
+        int rc = idn2_punycode_encode(
+            input.data(),
+            input.size(),
+            output.data(),
+            &output_length
+        );
+
+        if (rc == IDN2_OK) {
+            return "xn--" + std::string(output.data(), output_length);
+        }
+
+        if (rc == IDN2_PUNYCODE_BIG_OUTPUT) {
+            size_t next_size = std::max(buffer_size * 2, output_length + 1);
+            // nocov start
+            if (next_size <= buffer_size) {
+                throw std::overflow_error("Punycode overflow");
+            }
+            // nocov end
+            buffer_size = next_size;
+            continue;
+        }
+
+        throw std::invalid_argument(libidn2_error_message(rc));
+    }
+}
+
+std::string punycode_decode_label_libidn2(const std::string& label) {
+    if (!starts_with_xn_prefix(label)) {
+        return label;
+    }
+
+    std::string input = label.substr(4);
+    if (input.empty()) {
+        throw std::invalid_argument("Invalid punycode label");
+    }
+
+    size_t buffer_size = std::max<size_t>(32, input.size() + 16);
+    for (;;) {
+        std::vector<uint32_t> output(buffer_size);
+        size_t output_length = buffer_size;
+        int rc = idn2_punycode_decode(
+            input.c_str(),
+            input.size(),
+            output.data(),
+            &output_length
+        );
+
+        if (rc == IDN2_OK) {
+            output.resize(output_length);
+            return codepoints_to_utf8(output);
+        }
+
+        if (rc == IDN2_PUNYCODE_BIG_OUTPUT) {
+            size_t next_size = std::max(buffer_size * 2, output_length + 1);
+            // nocov start
+            if (next_size <= buffer_size) {
+                throw std::overflow_error("Punycode overflow");
+            }
+            // nocov end
+            buffer_size = next_size;
+            continue;
+        }
+
+        throw std::invalid_argument(libidn2_error_message(rc));
+    }
+}
+#endif
+
+std::string punycode_encode_label(const std::string& label) {
+#ifdef PUNYCODER_USE_LIBIDN2
+    try {
+        return punycode_encode_label_libidn2(label);
+    } catch (const std::exception&) {
+        return punycode_encode_label_fallback(label);
+    }
+#else
+    return punycode_encode_label_fallback(label);
+#endif
+}
+
+std::string punycode_decode_label(const std::string& label) {
+#ifdef PUNYCODER_USE_LIBIDN2
+    // Preserve RFC 3492 case behavior for labels with uppercase payload.
+    std::string payload = starts_with_xn_prefix(label) ? label.substr(4) : std::string();
+    bool has_uppercase_payload =
+        std::any_of(payload.begin(), payload.end(), [](unsigned char c) {
+            return std::isupper(c) != 0;
+        });
+    if (has_uppercase_payload) {
+        return punycode_decode_label_fallback(label);
+    }
+
+    return punycode_decode_label_libidn2(label);
+#else
+    return punycode_decode_label_fallback(label);
+#endif
 }
 
 void validate_domain_name(const std::string& domain, bool strict) {

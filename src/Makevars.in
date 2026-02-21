@@ -1,0 +1,2 @@
+PKG_CPPFLAGS = -I../inst/include @LIBIDN2_CFLAGS@
+PKG_LIBS = @LIBIDN2_LIBS@

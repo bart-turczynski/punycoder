@@ -15,6 +15,7 @@ README\.Rmd$
 README\.html$
 ^LICENSE$
 ^src/.*\.(o|so|dll)$
+^src/Makevars$
 ^src/symbols\.rds$
 ^coverage\.html$
 ^lib$

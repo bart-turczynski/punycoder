@@ -14,6 +14,7 @@ Description: High-performance Unicode and Punycode encoding/decoding for
 Depends: R (>= 3.5.0)
 Imports: Rcpp (>= 1.0.0)
 LinkingTo: Rcpp
+SystemRequirements: Optional: libidn2 for native punycode backend
 License: GPL-3
 URL: https://github.com/bart-turczynski/punycoder
 BugReports: https://github.com/bart-turczynski/punycoder/issues
