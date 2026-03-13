@@ -25,11 +25,7 @@
 #' }
 #' @export
 url_encode <- function(url, strict = getOption("punycoder.strict", TRUE)) {
-  .assert_character(url)
-  .assert_flag(strict, "strict")
-  .warn_if_na(url)
-
-  url_encode_cpp(url, strict)
+  .call_with_validation(url, strict, url_encode_cpp, "url")
 }
 
 #' Decode URLs with ASCII punycode domains to Unicode
@@ -57,11 +53,7 @@ url_encode <- function(url, strict = getOption("punycoder.strict", TRUE)) {
 #' }
 #' @export
 url_decode <- function(url, strict = getOption("punycoder.strict", TRUE)) {
-  .assert_character(url)
-  .assert_flag(strict, "strict")
-  .warn_if_na(url)
-
-  url_decode_cpp(url, strict)
+  .call_with_validation(url, strict, url_decode_cpp, "url")
 }
 
 #' Parse URLs with internationalized domain name handling
@@ -98,4 +90,28 @@ parse_url <- function(url, encode_domains = FALSE) {
   structure(result,
             class = c("punycoder_parsed_url", "list"),
             encode_domains = encode_domains)
+}
+
+#' Print method for punycoder parsed URL results
+#'
+#' @param x A punycoder_parsed_url object
+#' @param ... Additional arguments (ignored)
+#' @export
+print.punycoder_parsed_url <- function(x, ...) {
+  cat("Punycoder Parsed URL Results\n")
+  cat("============================\n\n")
+
+  n <- length(x$scheme)
+  for (i in seq_len(n)) {
+    cat("URL", i, ":\n")
+    cat("  Scheme:  ", if (is.na(x$scheme[i])) "<NA>" else x$scheme[i], "\n")
+    cat("  Domain:  ", if (is.na(x$domain[i])) "<NA>" else x$domain[i], "\n")
+    if (!is.na(x$port[i])) cat("  Port:    ", x$port[i], "\n")
+    cat("  Path:    ", if (is.na(x$path[i])) "<NA>" else x$path[i], "\n")
+    if (!is.na(x$query[i])) cat("  Query:   ", x$query[i], "\n")
+    if (!is.na(x$fragment[i])) cat("  Fragment:", x$fragment[i], "\n")
+    cat("\n")
+  }
+
+  invisible(x)
 }

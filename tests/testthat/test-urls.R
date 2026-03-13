@@ -117,3 +117,92 @@ test_that("strict parameter works for URL functions", {
   expect_error(url_encode("https://[::1/path", strict = TRUE))
   expect_true(is.na(url_encode("https://[::1/path", strict = FALSE)))
 })
+
+test_that(
+  "url encode/decode handle userinfo, ports, and malformed authorities",
+  {
+    encoded <- url_encode(
+      "https://user:pass@caf\u00E9.example.com:8443/path?q=1#frag"
+    )
+    expect_equal(
+      encoded,
+      "https://user:pass@xn--caf-dma.example.com:8443/path?q=1#frag"
+    )
+    expect_equal(
+      url_decode(encoded),
+      "https://user:pass@caf\u00E9.example.com:8443/path?q=1#frag"
+    )
+
+    expect_error(
+      url_decode("https://xn--.example.com", strict = TRUE),
+      "Error decoding URL"
+    )
+    expect_true(is.na(url_decode("https://xn--.example.com", strict = FALSE)))
+  }
+)
+
+test_that("parse_url supports domain encoding and invalid inputs", {
+  parsed <- parse_url(
+    "https://caf\u00E9.example.com:8080/path",
+    encode_domains = TRUE
+  )
+  expect_equal(parsed$domain[[1]], "xn--caf-dma.example.com")
+  expect_equal(parsed$port[[1]], 8080L)
+
+  invalid <- parse_url("https://[::1/path")
+  expect_true(is.na(invalid$domain[[1]]))
+  expect_true(is.na(invalid$scheme[[1]]))
+})
+
+test_that("url helpers cover authority edge cases", {
+  expect_equal(url_encode("mailto:user@example.com"), "mailto:user@example.com")
+  expect_equal(url_decode("mailto:user@example.com"), "mailto:user@example.com")
+  expect_equal(url_encode("http://@/path"), "http://@/path")
+  expect_equal(
+    url_encode("http://[::1]:8080/path", strict = FALSE),
+    "http://[::1]:8080/path"
+  )
+  expect_error(url_encode("http://[::1]/path"), "Error encoding URL")
+  expect_equal(
+    url_encode("http://[::1]/path", strict = FALSE),
+    "http://[::1]/path"
+  )
+  expect_error(url_decode("http://[::1]/path"), "Error decoding URL")
+  expect_equal(
+    url_decode("http://[::1]/path", strict = FALSE),
+    "http://[::1]/path"
+  )
+  expect_error(url_decode("", strict = TRUE), "Error decoding URL")
+  expect_true(is.na(url_decode("", strict = FALSE)))
+
+  expect_equal(
+    url_encode("http://example.com:abc/path", strict = FALSE),
+    "http://example.com:abc/path"
+  )
+  expect_error(
+    url_encode("http://[::1]x/path", strict = TRUE),
+    "Invalid authority"
+  )
+  expect_true(is.na(url_encode("http://[::1]x/path", strict = FALSE)))
+  expect_true(is.na(url_encode("", strict = FALSE)))
+  expect_error(url_encode("", strict = TRUE), "Empty URL")
+})
+
+test_that("parse_url covers invalid inputs and encoding fallbacks", {
+  expect_true(is.na(parse_url("")$scheme[[1]]))
+
+  bad_host <- rawToChar(as.raw(c(0xC2, 0x20)))
+  Encoding(bad_host) <- "bytes"
+  bad_url <- paste0("http://", bad_host, ".com/path")
+  parsed <- parse_url(bad_url, encode_domains = TRUE)
+  expect_true(is.na(parsed$domain[[1]]))
+})
+
+test_that("url_encode non-strict catches malformed byte domains", {
+  bad_host <- rawToChar(as.raw(c(0xC2, 0x20)))
+  Encoding(bad_host) <- "bytes"
+  bad_url <- paste0("http://", bad_host, ".com/path")
+
+  expect_error(url_encode(bad_url, strict = TRUE), "Error encoding URL")
+  expect_true(is.na(url_encode(bad_url, strict = FALSE)))
+})

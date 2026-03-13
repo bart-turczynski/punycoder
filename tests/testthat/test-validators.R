@@ -101,3 +101,30 @@ test_that("print method for validation results works", {
   expect_true(any(grepl("Punycoder Domain Validation Results", output)))
   expect_true(any(grepl("example.com", output)))
 })
+
+test_that("validation summaries include valid and invalid messages", {
+  result <- validate_domain(c("example.com", "invalid..domain"))
+  summary <- punycoder:::get_validation_summary(result)
+
+  expect_equal(summary[[1]], "Valid")
+  expect_true(grepl("empty label", summary[[2]], ignore.case = TRUE))
+  expect_error(
+    punycoder:::get_validation_summary(list(errors = list(character()))),
+    "punycoder_validation"
+  )
+})
+
+test_that("strict domain validation catches length and character constraints", {
+  long_label <- paste(rep("a", 64), collapse = "")
+  overlong_domain <- paste0(long_label, ".com")
+  expect_error(puny_encode(overlong_domain, strict = TRUE), "label too long")
+  expect_false(is.na(puny_encode(overlong_domain, strict = FALSE)))
+
+  huge_domain <- paste0(paste(rep("a", 254), collapse = ""), ".com")
+  expect_error(puny_encode(huge_domain, strict = TRUE), "too long")
+  expect_false(is.na(puny_encode(huge_domain, strict = FALSE)))
+
+  expect_error(puny_encode("bad_label.com", strict = TRUE), "hyphens")
+  expect_false(is.na(puny_encode("bad_label.com", strict = FALSE)))
+  expect_error(puny_encode(".", strict = TRUE), "cannot be empty")
+})

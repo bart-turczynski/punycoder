@@ -40,11 +40,7 @@
 #' }
 #' @export
 puny_encode <- function(x, strict = getOption("punycoder.strict", TRUE)) {
-  .assert_character(x)
-  .assert_flag(strict, "strict")
-  .warn_if_na(x)
-
-  puny_encode_cpp(x, strict)
+  .call_with_validation(x, strict, puny_encode_cpp)
 }
 
 #' Decode ASCII punycode to Unicode domains
@@ -69,9 +65,5 @@ puny_encode <- function(x, strict = getOption("punycoder.strict", TRUE)) {
 #' }
 #' @export
 puny_decode <- function(x, strict = getOption("punycoder.strict", TRUE)) {
-  .assert_character(x)
-  .assert_flag(strict, "strict")
-  .warn_if_na(x)
-
-  puny_decode_cpp(x, strict)
+  .call_with_validation(x, strict, puny_decode_cpp)
 }
