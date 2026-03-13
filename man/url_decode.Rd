@@ -13,7 +13,11 @@ url_decode(url, strict = getOption("punycoder.strict", TRUE))
 `getOption("punycoder.strict", TRUE)`.}
 }
 \value{
-Character vector of URLs with Unicode-decoded domains
+A character vector the same length as \code{url}, with each element
+  containing the URL with its host portion decoded to Unicode. Only the
+  domain component is transformed; scheme, path, query, and fragment are
+  preserved. Elements corresponding to \code{NA} inputs are
+  \code{NA_character_}.
 }
 \description{
 Converts URLs containing ASCII punycode domain names back to their Unicode
@@ -21,7 +25,7 @@ representation for display purposes. This function makes internationalized
 URLs human-readable.
 }
 \examples{
-\dontrun{
+\donttest{
 # Basic URL decoding
 url_decode("https://xn--caf-dma.example.com/path")
 url_decode("https://xn--80adxhks.xn--p1ai/page")
@@ -33,4 +37,9 @@ ascii_urls <- c(
 )
 url_decode(ascii_urls)
 }
+}
+\seealso{
+\code{\link{url_encode}} for the reverse operation,
+  \code{\link{puny_decode}} for domain-only decoding,
+  \code{\link{parse_url}} for URL component extraction.
 }

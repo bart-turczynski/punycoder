@@ -10,20 +10,25 @@ is_idn(x)
 \item{x}{Character vector of domain names to test}
 }
 \value{
-Logical vector indicating which domains contain Unicode characters
+A logical vector the same length as \code{x}, where \code{TRUE}
+  indicates the element contains non-ASCII Unicode characters.
 }
 \description{
 Determines whether a domain name contains Unicode characters that
 would require punycode encoding for ASCII compatibility.
 }
 \examples{
-\dontrun{
-is_idn("caf\\\\u00E9.com") # TRUE
+\donttest{
+is_idn("caf\u00E9.com") # TRUE
 is_idn("example.com")    # FALSE
 is_idn(c(
-  "caf\\\\u00E9.com",
-  "\\\\u043C\\\\u043E\\\\u0441\\\\u043A\\\\u0432\\\\u0430.\\\\u0440\\\\u0444",
+  "caf\u00E9.com",
+  "\u043C\u043E\u0441\u043A\u0432\u0430.\u0440\u0444",
   "test.com"
 ))  # c(TRUE, TRUE, FALSE)
 }
+}
+\seealso{
+\code{\link{is_punycode}} for detecting punycode domains,
+  \code{\link{puny_encode}} for encoding Unicode domains.
 }

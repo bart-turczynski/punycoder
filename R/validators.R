@@ -4,9 +4,12 @@
 #' in punycode format (starts with xn-- prefix).
 #'
 #' @param x Character vector to test
-#' @return Logical vector indicating which elements are punycode
+#' @return A logical vector the same length as \code{x}, where \code{TRUE}
+#'   indicates the element contains a punycode-encoded label (xn-- prefix).
+#' @seealso \code{\link{is_idn}} for detecting Unicode domains,
+#'   \code{\link{puny_decode}} for decoding punycode domains.
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' is_punycode("xn--example") # TRUE
 #' is_punycode("example.com") # FALSE
 #' is_punycode(c("xn--caf-dma.com", "regular.com"))  # c(TRUE, FALSE)
@@ -26,14 +29,17 @@ is_punycode <- function(x) {
 #' would require punycode encoding for ASCII compatibility.
 #'
 #' @param x Character vector of domain names to test
-#' @return Logical vector indicating which domains contain Unicode characters
+#' @return A logical vector the same length as \code{x}, where \code{TRUE}
+#'   indicates the element contains non-ASCII Unicode characters.
+#' @seealso \code{\link{is_punycode}} for detecting punycode domains,
+#'   \code{\link{puny_encode}} for encoding Unicode domains.
 #' @examples
-#' \dontrun{
-#' is_idn("caf\\u00E9.com") # TRUE
+#' \donttest{
+#' is_idn("caf\u00E9.com") # TRUE
 #' is_idn("example.com")    # FALSE
 #' is_idn(c(
-#'   "caf\\u00E9.com",
-#'   "\\u043C\\u043E\\u0441\\u043A\\u0432\\u0430.\\u0440\\u0444",
+#'   "caf\u00E9.com",
+#'   "\u043C\u043E\u0441\u043A\u0432\u0430.\u0440\u0444",
 #'   "test.com"
 #' ))  # c(TRUE, TRUE, FALSE)
 #' }
@@ -54,11 +60,20 @@ is_idn <- function(x) {
 #' @param x Character vector of domain names to validate
 #' @param strict Logical; whether to apply strict validation. Defaults to
 #'   `getOption("punycoder.strict", TRUE)`.
-#' @return List containing validation results and error messages
+#' @return An object of class \code{"punycoder_validation"} (a named list)
+#'   with components:
+#'   \describe{
+#'     \item{domains}{Character vector of the input domain names.}
+#'     \item{valid}{Logical vector indicating whether each domain is valid.}
+#'     \item{errors}{List of character vectors, each containing error messages
+#'       for the corresponding domain (empty for valid domains).}
+#'   }
+#' @seealso \code{\link{get_validation_summary}} for a human-readable summary,
+#'   \code{\link{puny_encode}} for encoding validated domains.
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' validate_domain("example.com")
-#' validate_domain("caf\\u00E9.example.com")
+#' validate_domain("caf\u00E9.example.com")
 #' long_label <- paste(rep("x", 250), collapse = "")
 #' validate_domain(c("valid.com", "invalid..com", long_label))
 #' }
@@ -79,7 +94,8 @@ validate_domain <- function(x, strict = getOption("punycoder.strict", TRUE)) {
 #' Internal helper function to provide human-readable validation summaries.
 #'
 #' @param validation_result Result from validate_domain function
-#' @return Character vector with validation summary
+#' @return Character vector with one summary string per domain: \code{"Valid"}
+#'   for valid domains, or semicolon-separated error messages for invalid ones.
 #' @keywords internal
 get_validation_summary <- function(validation_result) {
   if (!inherits(validation_result, "punycoder_validation")) {

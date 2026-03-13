@@ -7,19 +7,25 @@
 #' @param url Character vector of URLs with potential Unicode domains
 #' @param strict Logical; whether to apply strict validation. Defaults to
 #'   `getOption("punycoder.strict", TRUE)`.
-#' @return Character vector of URLs with ASCII-encoded domains
+#' @return A character vector the same length as \code{url}, with each element
+#'   containing the URL with its host portion ASCII-encoded. Only the domain
+#'   component is transformed; scheme, path, query, and fragment are preserved.
+#'   Elements corresponding to \code{NA} inputs are \code{NA_character_}.
+#' @seealso \code{\link{url_decode}} for the reverse operation,
+#'   \code{\link{puny_encode}} for domain-only encoding,
+#'   \code{\link{parse_url}} for URL component extraction.
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # Basic URL encoding
-#' url_encode("https://caf\\u00E9.example.com/path?query=value")
+#' url_encode("https://caf\u00E9.example.com/path?query=value")
 #' url_encode(
-#'   "https://\\u043C\\u043E\\u0441\\u043A\\u0432\\u0430.\\u0440\\u0444/page"
+#'   "https://\u043C\u043E\u0441\u043A\u0432\u0430.\u0440\u0444/page"
 #' )
 #'
 #' # Vectorized URL encoding
 #' urls <- c(
-#'   "https://caf\\u00E9.com/menu",
-#'   "https://\\u5317\\u4EAC.\\u4E2D\\u56FD/info"
+#'   "https://caf\u00E9.com/menu",
+#'   "https://\u5317\u4EAC.\u4E2D\u56FD/info"
 #' )
 #' url_encode(urls)
 #' }
@@ -37,9 +43,16 @@ url_encode <- function(url, strict = getOption("punycoder.strict", TRUE)) {
 #' @param url Character vector of URLs with ASCII punycode domains
 #' @param strict Logical; whether to apply strict validation. Defaults to
 #'   `getOption("punycoder.strict", TRUE)`.
-#' @return Character vector of URLs with Unicode-decoded domains
+#' @return A character vector the same length as \code{url}, with each element
+#'   containing the URL with its host portion decoded to Unicode. Only the
+#'   domain component is transformed; scheme, path, query, and fragment are
+#'   preserved. Elements corresponding to \code{NA} inputs are
+#'   \code{NA_character_}.
+#' @seealso \code{\link{url_encode}} for the reverse operation,
+#'   \code{\link{puny_decode}} for domain-only decoding,
+#'   \code{\link{parse_url}} for URL component extraction.
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # Basic URL decoding
 #' url_decode("https://xn--caf-dma.example.com/path")
 #' url_decode("https://xn--80adxhks.xn--p1ai/page")
@@ -64,18 +77,31 @@ url_decode <- function(url, strict = getOption("punycoder.strict", TRUE)) {
 #'
 #' @param url Character vector of URLs to parse
 #' @param encode_domains Logical flag; encode Unicode domains to ASCII.
-#' @return List containing URL components with IDN handling
+#' @return An object of class \code{"punycoder_parsed_url"} (a named list)
+#'   with components:
+#'   \describe{
+#'     \item{scheme}{Character vector of URL schemes (e.g., \code{"https"}).}
+#'     \item{domain}{Character vector of domain names.}
+#'     \item{port}{Integer vector of port numbers.}
+#'     \item{path}{Character vector of URL paths.}
+#'     \item{query}{Character vector of query strings.}
+#'     \item{fragment}{Character vector of fragment identifiers.}
+#'   }
+#'   Each component has one element per input URL. Missing components are
+#'   \code{NA}.
+#' @seealso \code{\link{url_encode}}, \code{\link{url_decode}} for URL
+#'   transformation with IDN handling.
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # Parse URL with Unicode domain
 #' parse_url(
-#'   "https://caf\\u00E9.example.com:8080/path?query=value#fragment"
+#'   "https://caf\u00E9.example.com:8080/path?query=value#fragment"
 #' )
 #'
 #' # Parse multiple URLs
 #' urls <- c(
-#'   "https://caf\\u00E9.com/menu",
-#'   "https://\\u043C\\u043E\\u0441\\u043A\\u0432\\u0430.\\u0440\\u0444/info"
+#'   "https://caf\u00E9.com/menu",
+#'   "https://\u043C\u043E\u0441\u043A\u0432\u0430.\u0440\u0444/info"
 #' )
 #' parse_url(urls)
 #' }

@@ -10,7 +10,8 @@ get_validation_summary(validation_result)
 \item{validation_result}{Result from validate_domain function}
 }
 \value{
-Character vector with validation summary
+Character vector with one summary string per domain: \code{"Valid"}
+  for valid domains, or semicolon-separated error messages for invalid ones.
 }
 \description{
 Internal helper function to provide human-readable validation summaries.
