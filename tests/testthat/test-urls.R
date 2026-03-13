@@ -18,8 +18,7 @@ test_that("url_encode encodes Unicode host names", {
 })
 
 test_that("url_encode validates input", {
-  expect_error(url_encode(123), "character vector")
-  expect_error(url_encode(TRUE), "character vector")
+  expect_rejects_non_character(url_encode)
 })
 
 test_that("url_encode handles NA values", {
@@ -51,8 +50,7 @@ test_that("url_decode decodes punycode host names", {
 })
 
 test_that("url_decode validates input", {
-  expect_error(url_decode(123), "character vector")
-  expect_error(url_decode(TRUE), "character vector")
+  expect_rejects_non_character(url_decode)
 })
 
 test_that("url_decode handles NA values", {
@@ -91,8 +89,7 @@ test_that("parse_url handles vectorized input", {
 })
 
 test_that("parse_url validates input", {
-  expect_error(parse_url(123), "character vector")
-  expect_error(parse_url(TRUE), "character vector")
+  expect_rejects_non_character(parse_url)
 })
 
 test_that("parse_url handles NA values", {
@@ -205,4 +202,30 @@ test_that("url_encode non-strict catches malformed byte domains", {
 
   expect_error(url_encode(bad_url, strict = TRUE), "Error encoding URL")
   expect_true(is.na(url_encode(bad_url, strict = FALSE)))
+})
+
+test_that("parse_url handles port boundary values", {
+  p0 <- parse_url("http://example.com:0/path")
+  expect_equal(p0$port[[1]], 0L)
+
+  p65535 <- parse_url("http://example.com:65535/path")
+  expect_equal(p65535$port[[1]], 65535L)
+
+  pmax <- parse_url("http://example.com:99999/path")
+  expect_equal(pmax$port[[1]], 99999L)
+})
+
+test_that("IPv6 URLs pass through in non-strict mode", {
+  expect_equal(
+    url_encode("http://[::1]:8080/path", strict = FALSE),
+    "http://[::1]:8080/path"
+  )
+  expect_equal(
+    url_decode("http://[::1]:8080/path", strict = FALSE),
+    "http://[::1]:8080/path"
+  )
+  expect_equal(
+    url_encode("http://[2001:db8::1]/path", strict = FALSE),
+    "http://[2001:db8::1]/path"
+  )
 })

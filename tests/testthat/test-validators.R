@@ -19,8 +19,7 @@ test_that("is_punycode handles vectorized input", {
 })
 
 test_that("is_punycode validates input", {
-  expect_error(is_punycode(123), "character vector")
-  expect_error(is_punycode(TRUE), "character vector")
+  expect_rejects_non_character(is_punycode)
 })
 
 test_that("is_idn correctly identifies internationalized domains", {
@@ -42,8 +41,7 @@ test_that("is_idn handles vectorized input", {
 })
 
 test_that("is_idn validates input", {
-  expect_error(is_idn(123), "character vector")
-  expect_error(is_idn(TRUE), "character vector")
+  expect_rejects_non_character(is_idn)
 })
 
 test_that("validate_domain returns proper structure", {
@@ -86,8 +84,7 @@ test_that("validate_domain strict parameter works", {
 })
 
 test_that("validate_domain validates input", {
-  expect_error(validate_domain(123), "character vector")
-  expect_error(validate_domain(TRUE), "character vector")
+  expect_rejects_non_character(validate_domain)
 })
 
 test_that("print method for validation results works", {
@@ -127,4 +124,25 @@ test_that("strict domain validation catches length and character constraints", {
   expect_error(puny_encode("bad_label.com", strict = TRUE), "hyphens")
   expect_false(is.na(puny_encode("bad_label.com", strict = FALSE)))
   expect_error(puny_encode(".", strict = TRUE), "cannot be empty")
+})
+
+test_that("domain at 253-char boundary", {
+  # 63 + 1 + 63 + 1 + 63 + 1 + 59 = 251; add 2 more to hit 253
+  domain_253 <- paste0(
+    paste(rep("a", 63), collapse = ""), ".",
+    paste(rep("b", 63), collapse = ""), ".",
+    paste(rep("c", 63), collapse = ""), ".",
+    paste(rep("d", 61), collapse = "")
+  )
+  stopifnot(nchar(domain_253) == 253)
+  expect_no_error(puny_encode(domain_253, strict = TRUE))
+
+  domain_254 <- paste0(
+    paste(rep("a", 63), collapse = ""), ".",
+    paste(rep("b", 63), collapse = ""), ".",
+    paste(rep("c", 63), collapse = ""), ".",
+    paste(rep("d", 62), collapse = "")
+  )
+  stopifnot(nchar(domain_254) == 254)
+  expect_error(puny_encode(domain_254, strict = TRUE), "too long")
 })

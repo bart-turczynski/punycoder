@@ -113,6 +113,9 @@ std::vector<uint32_t> utf8_to_codepoints(const std::string& input) {
 
     size_t i = 0;
     while (i < input.size()) {
+        // Cast to unsigned char for portability: plain char may be signed on
+        // some platforms, which would sign-extend high bytes (>= 0x80) to
+        // negative values and break the bit-mask comparisons below.
         unsigned char c = static_cast<unsigned char>(input[i]);
 
         if (c < 0x80) {
@@ -558,7 +561,10 @@ std::string punycode_encode_label(const std::string& label) {
 
 std::string punycode_decode_label(const std::string& label) {
 #ifdef PUNYCODER_USE_LIBIDN2
-    // Preserve RFC 3492 case behavior for labels with uppercase payload.
+    // Bypass libidn2 when the payload (after "xn--") contains uppercase
+    // characters.  RFC 3492 uses mixed case as a case annotation hint;
+    // libidn2 normalises everything to lowercase, destroying that signal.
+    // The pure-C++ fallback preserves case faithfully.
     std::string payload = starts_with_xn_prefix(label) ? label.substr(4) : std::string();
     bool has_uppercase_payload =
         std::any_of(payload.begin(), payload.end(), [](unsigned char c) {

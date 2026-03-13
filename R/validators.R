@@ -18,9 +18,7 @@
 is_punycode <- function(x) {
   .assert_character(x)
 
-  # Check for xn-- prefix (case insensitive)
-  grepl("^xn--", x, ignore.case = TRUE) |
-    grepl("\\.xn--", x, ignore.case = TRUE)
+  grepl("(^|\\.)(xn--)", x, ignore.case = TRUE)
 }
 
 #' Test if domain contains internationalized characters
@@ -102,16 +100,10 @@ get_validation_summary <- function(validation_result) {
     stop("Input must be a punycoder_validation object", call. = FALSE)
   }
 
-  vapply(
-    validation_result$errors,
-    FUN.VALUE = character(1),
-    function(err) {
-      if (length(err) == 0) {
-        "Valid"
-      } else {
-        paste(err, collapse = "; ")
-      }
-    }
+  ifelse(
+    lengths(validation_result$errors) == 0L,
+    "Valid",
+    vapply(validation_result$errors, paste, character(1), collapse = "; ")
   )
 }
 
