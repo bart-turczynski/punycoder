@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <cstdlib>
 #include <limits>
-#include <regex>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -229,7 +228,12 @@ std::string join_with_dot(const std::vector<std::string>& labels) {
         // nocov end
     }
 
-    std::string out = labels[0];
+    size_t total = labels.size() - 1;  // dots
+    for (const auto& l : labels) total += l.size();
+
+    std::string out;
+    out.reserve(total);
+    out = labels[0];
     for (size_t i = 1; i < labels.size(); ++i) {
         out.push_back('.');
         out += labels[i];
@@ -369,6 +373,9 @@ std::string punycode_decode_label_fallback(const std::string& label) {
     }
 
     std::vector<uint32_t> output;
+    // Pre-allocate for expected output size. The O(n^2) insert pattern
+    // below is bounded by DNS label limits (max 63 chars per label).
+    output.reserve(input.size());
     size_t pos = input.find_last_of(kDelimiter);
     size_t index = 0;
 
@@ -607,13 +614,22 @@ bool looks_like_url_input(const std::string& input) {
     return false;
 }
 
-void validate_domain_name(const std::string& domain, bool strict) {
+struct ValidatedDomain {
+    std::vector<std::string> labels;
+    std::vector<std::vector<uint32_t>> label_codepoints;
+    bool has_trailing_dot;
+};
+
+ValidatedDomain validate_and_parse_domain(const std::string& domain, bool strict) {
     if (domain.empty()) {
         throw std::invalid_argument("Domain name cannot be empty");
     }
 
+    ValidatedDomain result;
+    result.has_trailing_dot = !domain.empty() && domain.back() == '.';
+
     std::string core = domain;
-    if (!core.empty() && core.back() == '.') {
+    if (result.has_trailing_dot) {
         core.pop_back();
     }
 
@@ -625,13 +641,16 @@ void validate_domain_name(const std::string& domain, bool strict) {
         throw std::invalid_argument("Domain name too long (max 253 characters)");
     }
 
-    std::vector<std::string> labels = split_on_dot(core);
-    for (const std::string& label : labels) {
+    result.labels = split_on_dot(core);
+    result.label_codepoints.reserve(result.labels.size());
+
+    for (const std::string& label : result.labels) {
         if (label.empty()) {
             throw std::invalid_argument("Domain contains empty label");
         }
 
-        utf8_to_codepoints(label);
+        // Parse UTF-8 once and cache the codepoints
+        result.label_codepoints.push_back(utf8_to_codepoints(label));
 
         if (strict && label.size() > 63) {
             throw std::invalid_argument("Domain label too long (max 63 characters)");
@@ -668,6 +687,12 @@ void validate_domain_name(const std::string& domain, bool strict) {
             // nocov end
         }
     }
+
+    return result;
+}
+
+void validate_domain_name(const std::string& domain, bool strict) {
+    validate_and_parse_domain(domain, strict);
 }
 
 // ============================================================
@@ -731,41 +756,49 @@ ParsedURL parse_url_string(const std::string& url) {
         return parsed;
     }
 
-    static const std::regex kUrlPattern(
-        R"(^(?:([^:/?#]+):)?(?://([^/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?)"
-    );
+    // Hand-coded RFC 3986 URI decomposition (replaces std::regex for speed).
+    // Grammar: ^(?:([^:/?#]+):)?(?://([^/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?
+    size_t pos = 0;
 
-    std::smatch matches;
-    // nocov start
-    if (!std::regex_match(url, matches, kUrlPattern)) {
-        parsed.error_message = "Invalid URL format";
-        return parsed;
-    }
-    // nocov end
-
-    if (matches[1].matched) {
-        parsed.scheme = matches[1].str();
+    // 1. Scheme: everything before ':' that doesn't contain '/', '?', or '#'
+    size_t scheme_end = url.find_first_of(":/?#");
+    if (scheme_end != std::string::npos && url[scheme_end] == ':') {
+        parsed.scheme = url.substr(0, scheme_end);
+        pos = scheme_end + 1;
     }
 
-    if (matches[2].matched) {
+    // 2. Authority: if next chars are "//"
+    if (pos + 1 < url.size() && url[pos] == '/' && url[pos + 1] == '/') {
         parsed.has_authority = true;
-        if (!parse_authority(matches[2].str(), &parsed)) {
+        pos += 2;
+        size_t auth_end = url.find_first_of("/?#", pos);
+        if (auth_end == std::string::npos) auth_end = url.size();
+        if (!parse_authority(url.substr(pos, auth_end - pos), &parsed)) {
             return parsed;
         }
+        pos = auth_end;
     }
 
-    if (matches[3].matched) {
-        parsed.path = matches[3].str();
-    }
+    // 3. Path: up to '?' or '#'
+    size_t path_end = url.find_first_of("?#", pos);
+    if (path_end == std::string::npos) path_end = url.size();
+    parsed.path = url.substr(pos, path_end - pos);
+    pos = path_end;
 
-    if (matches[4].matched) {
+    // 4. Query: after '?' up to '#'
+    if (pos < url.size() && url[pos] == '?') {
         parsed.has_query = true;
-        parsed.query = matches[4].str();
+        ++pos;
+        size_t query_end = url.find('#', pos);
+        if (query_end == std::string::npos) query_end = url.size();
+        parsed.query = url.substr(pos, query_end - pos);
+        pos = query_end;
     }
 
-    if (matches[5].matched) {
+    // 5. Fragment: after '#' to end
+    if (pos < url.size() && url[pos] == '#') {
         parsed.has_fragment = true;
-        parsed.fragment = matches[5].str();
+        parsed.fragment = url.substr(pos + 1);
     }
 
     parsed.valid = true;
