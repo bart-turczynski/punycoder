@@ -13,7 +13,14 @@ validate_domain(x, strict = getOption("punycoder.strict", TRUE))
 `getOption("punycoder.strict", TRUE)`.}
 }
 \value{
-List containing validation results and error messages
+An object of class \code{"punycoder_validation"} (a named list)
+  with components:
+  \describe{
+    \item{domains}{Character vector of the input domain names.}
+    \item{valid}{Logical vector indicating whether each domain is valid.}
+    \item{errors}{List of character vectors, each containing error messages
+      for the corresponding domain (empty for valid domains).}
+  }
 }
 \description{
 Validates domain names according to RFC standards, checking for
@@ -21,10 +28,14 @@ proper format, length restrictions, and character requirements.
 Supports both Unicode and ASCII domain names.
 }
 \examples{
-\dontrun{
+\donttest{
 validate_domain("example.com")
-validate_domain("caf\\\\u00E9.example.com")
+validate_domain("caf\u00E9.example.com")
 long_label <- paste(rep("x", 250), collapse = "")
 validate_domain(c("valid.com", "invalid..com", long_label))
 }
+}
+\seealso{
+\code{\link{get_validation_summary}} for a human-readable summary,
+  \code{\link{puny_encode}} for encoding validated domains.
 }

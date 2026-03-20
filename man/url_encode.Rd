@@ -13,7 +13,10 @@ url_encode(url, strict = getOption("punycoder.strict", TRUE))
 `getOption("punycoder.strict", TRUE)`.}
 }
 \value{
-Character vector of URLs with ASCII-encoded domains
+A character vector the same length as \code{url}, with each element
+  containing the URL with its host portion ASCII-encoded. Only the domain
+  component is transformed; scheme, path, query, and fragment are preserved.
+  Elements corresponding to \code{NA} inputs are \code{NA_character_}.
 }
 \description{
 Converts URLs containing Unicode domain names to their ASCII representation
@@ -21,18 +24,23 @@ while preserving the rest of the URL structure. This function is essential
 for preparing URLs for systems that require ASCII-only domain names.
 }
 \examples{
-\dontrun{
+\donttest{
 # Basic URL encoding
-url_encode("https://caf\\\\u00E9.example.com/path?query=value")
+url_encode("https://caf\u00E9.example.com/path?query=value")
 url_encode(
-  "https://\\\\u043C\\\\u043E\\\\u0441\\\\u043A\\\\u0432\\\\u0430.\\\\u0440\\\\u0444/page"
+  "https://\u043C\u043E\u0441\u043A\u0432\u0430.\u0440\u0444/page"
 )
 
 # Vectorized URL encoding
 urls <- c(
-  "https://caf\\\\u00E9.com/menu",
-  "https://\\\\u5317\\\\u4EAC.\\\\u4E2D\\\\u56FD/info"
+  "https://caf\u00E9.com/menu",
+  "https://\u5317\u4EAC.\u4E2D\u56FD/info"
 )
 url_encode(urls)
 }
+}
+\seealso{
+\code{\link{url_decode}} for the reverse operation,
+  \code{\link{puny_encode}} for domain-only encoding,
+  \code{\link{parse_url}} for URL component extraction.
 }

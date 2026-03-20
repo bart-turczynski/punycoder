@@ -18,9 +18,7 @@ test_that("puny_encode handles NA values", {
 })
 
 test_that("puny_encode validates input types", {
-  expect_error(puny_encode(123), "character vector")
-  expect_error(puny_encode(TRUE), "character vector")
-  expect_error(puny_encode(list("test.com")), "character vector")
+  expect_rejects_non_character(puny_encode)
 })
 
 test_that("puny_decode handles ASCII domains", {
@@ -35,8 +33,7 @@ test_that("puny_decode handles punycode domains", {
 })
 
 test_that("puny_decode validates input types", {
-  expect_error(puny_decode(123), "character vector")
-  expect_error(puny_decode(TRUE), "character vector")
+  expect_rejects_non_character(puny_decode)
 })
 
 test_that("encoding and decoding are symmetric for ASCII", {
@@ -105,4 +102,61 @@ test_that("vectorized operations work", {
   expect_length(decoded, 3)
   expect_type(decoded, "character")
   expect_equal(decoded, domains)
+})
+
+test_that("strict and non-strict paths handle malformed punycode differently", {
+  expect_error(puny_decode("xn--", strict = TRUE), "Error decoding domain")
+  expect_true(is.na(puny_decode("xn--", strict = FALSE)))
+  expect_error(puny_decode("xn--z", strict = TRUE), "Error decoding domain")
+  expect_true(is.na(puny_decode("xn--z", strict = FALSE)))
+
+  expect_error(puny_encode("", strict = TRUE), "Error encoding domain")
+  expect_true(is.na(puny_encode("", strict = FALSE)))
+})
+
+test_that("strict defaults follow global punycoder.strict option", {
+  old <- options(punycoder.strict = FALSE)
+  on.exit(options(old), add = TRUE)
+
+  expect_true(is.na(puny_encode("invalid..domain")))
+  expect_true(is.na(url_decode("https://xn--.example.com")))
+
+  options(punycoder.strict = TRUE)
+  expect_error(puny_encode("invalid..domain"), "Error encoding domain")
+  expect_error(url_decode("https://xn--.example.com"), "Error decoding URL")
+})
+
+test_that("punycode handles uppercase and trailing dots", {
+  expect_equal(puny_decode("XN--CAF-DMA.COM"), "CAFé.COM")
+  expect_equal(puny_encode("caf\u00E9.com."), "xn--caf-dma.com.")
+  expect_equal(puny_decode("xn--caf-dma.com."), "caf\u00E9.com.")
+
+  expect_warning(decoded <- puny_decode(c("xn--caf-dma.com", NA_character_)))
+  expect_equal(decoded[[1]], "café.com")
+  expect_true(is.na(decoded[[2]]))
+})
+
+test_that("punycode decode reports invalid payload characters", {
+  expect_error(puny_decode("xn--ab*", strict = TRUE), "hyphens")
+  expect_true(is.na(puny_decode("xn--ab*", strict = FALSE)))
+})
+
+test_that("empty string edge cases", {
+  expect_error(puny_encode("", strict = TRUE), "Error encoding domain")
+  expect_true(is.na(puny_encode("", strict = FALSE)))
+  expect_error(puny_decode("", strict = TRUE), "Error decoding domain")
+  expect_true(is.na(puny_decode("", strict = FALSE)))
+})
+
+test_that("mixed valid/invalid/NA in same vector", {
+  expect_warning(
+    result <- puny_encode(
+      c("example.com", "invalid..com", NA, "caf\u00E9.com"),
+      strict = FALSE
+    )
+  )
+  expect_equal(result[1], "example.com")
+  expect_true(is.na(result[2]))
+  expect_true(is.na(result[3]))
+  expect_equal(result[4], "xn--caf-dma.com")
 })

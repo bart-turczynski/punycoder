@@ -13,7 +13,10 @@ puny_encode(x, strict = getOption("punycoder.strict", TRUE))
 `getOption("punycoder.strict", TRUE)`.}
 }
 \value{
-Character vector of ASCII-encoded domains
+A character vector the same length as \code{x}, with each element
+  containing the ASCII punycode-encoded domain name. Elements corresponding
+  to \code{NA} inputs are \code{NA_character_}. In non-strict mode, domains
+  that fail encoding are also returned as \code{NA_character_}.
 }
 \description{
 Converts Unicode domain names to their ASCII punycode representation
@@ -21,17 +24,21 @@ following RFC 3492 standards. This function is essential for processing
 internationalized domain names (IDNs) in web scraping and URL analysis.
 }
 \examples{
-\dontrun{
+\donttest{
 # Basic encoding
-puny_encode("caf\\\\u00E9.com")
-puny_encode("\\\\u043C\\\\u043E\\\\u0441\\\\u043A\\\\u0432\\\\u0430.\\\\u0440\\\\u0444")
+puny_encode("caf\u00E9.com")
+puny_encode("\u043C\u043E\u0441\u043A\u0432\u0430.\u0440\u0444")
 
 # Vectorized encoding
 domains <- c(
-  "caf\\\\u00E9.com",
-  "\\\\u043C\\\\u043E\\\\u0441\\\\u043A\\\\u0432\\\\u0430.\\\\u0440\\\\u0444",
-  "\\\\u5317\\\\u4EAC.\\\\u4E2D\\\\u56FD"
+  "caf\u00E9.com",
+  "\u043C\u043E\u0441\u043A\u0432\u0430.\u0440\u0444",
+  "\u5317\u4EAC.\u4E2D\u56FD"
 )
 puny_encode(domains)
 }
+}
+\seealso{
+\code{\link{puny_decode}} for the reverse operation,
+  \code{\link{url_encode}} for full URL encoding.
 }

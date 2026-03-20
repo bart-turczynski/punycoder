@@ -12,7 +12,18 @@ parse_url(url, encode_domains = FALSE)
 \item{encode_domains}{Logical flag; encode Unicode domains to ASCII.}
 }
 \value{
-List containing URL components with IDN handling
+An object of class \code{"punycoder_parsed_url"} (a named list)
+  with components:
+  \describe{
+    \item{scheme}{Character vector of URL schemes (e.g., \code{"https"}).}
+    \item{domain}{Character vector of domain names.}
+    \item{port}{Integer vector of port numbers.}
+    \item{path}{Character vector of URL paths.}
+    \item{query}{Character vector of query strings.}
+    \item{fragment}{Character vector of fragment identifiers.}
+  }
+  Each component has one element per input URL. Missing components are
+  \code{NA}.
 }
 \description{
 Parses URLs and returns a structured list with proper handling of
@@ -20,17 +31,21 @@ internationalized domain names. This function provides both Unicode
 and ASCII representations of domain components.
 }
 \examples{
-\dontrun{
+\donttest{
 # Parse URL with Unicode domain
 parse_url(
-  "https://caf\\\\u00E9.example.com:8080/path?query=value#fragment"
+  "https://caf\u00E9.example.com:8080/path?query=value#fragment"
 )
 
 # Parse multiple URLs
 urls <- c(
-  "https://caf\\\\u00E9.com/menu",
-  "https://\\\\u043C\\\\u043E\\\\u0441\\\\u043A\\\\u0432\\\\u0430.\\\\u0440\\\\u0444/info"
+  "https://caf\u00E9.com/menu",
+  "https://\u043C\u043E\u0441\u043A\u0432\u0430.\u0440\u0444/info"
 )
 parse_url(urls)
 }
+}
+\seealso{
+\code{\link{url_encode}}, \code{\link{url_decode}} for URL
+  transformation with IDN handling.
 }

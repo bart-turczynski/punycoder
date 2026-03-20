@@ -13,7 +13,10 @@ puny_decode(x, strict = getOption("punycoder.strict", TRUE))
 `getOption("punycoder.strict", TRUE)`.}
 }
 \value{
-Character vector of Unicode-decoded domains
+A character vector the same length as \code{x}, with each element
+  containing the Unicode-decoded domain name. Elements corresponding to
+  \code{NA} inputs are \code{NA_character_}. In non-strict mode, domains
+  that fail decoding are also returned as \code{NA_character_}.
 }
 \description{
 Converts ASCII punycode domain names back to their Unicode representation.
@@ -21,7 +24,7 @@ This is the reverse operation of puny_encode and is useful for displaying
 human-readable domain names.
 }
 \examples{
-\dontrun{
+\donttest{
 # Basic decoding
 puny_decode("xn--caf-dma.com")
 puny_decode("xn--80adxhks.xn--p1ai")
@@ -30,4 +33,8 @@ puny_decode("xn--80adxhks.xn--p1ai")
 ascii_domains <- c("xn--caf-dma.com", "xn--80adxhks.xn--p1ai")
 puny_decode(ascii_domains)
 }
+}
+\seealso{
+\code{\link{puny_encode}} for the reverse operation,
+  \code{\link{url_decode}} for full URL decoding.
 }

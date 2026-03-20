@@ -2,8 +2,6 @@ Package: punycoder
 Type: Package
 Title: Unicode and Punycode Domain Name Processing
 Version: 1.0.0
-Author: Bart Turczynski [aut, cre]
-Maintainer: Bart Turczynski <bartek+punycoder@turczynski.pl>
 Authors@R: person("Bart", "Turczynski", email = "bartek+punycoder@turczynski.pl",
                   role = c("aut", "cre"))
 Description: High-performance Unicode and Punycode encoding/decoding for 
@@ -14,7 +12,7 @@ Description: High-performance Unicode and Punycode encoding/decoding for
 Depends: R (>= 3.5.0)
 Imports: Rcpp (>= 1.0.0)
 LinkingTo: Rcpp
-SystemRequirements: Optional: libidn2 for native punycode backend
+SystemRequirements: GNU libidn2 (optional, for native punycode backend)
 License: MIT
 URL: https://github.com/bart-turczynski/punycoder
 BugReports: https://github.com/bart-turczynski/punycoder/issues

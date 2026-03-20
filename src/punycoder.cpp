@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <cstdlib>
 #include <limits>
-#include <regex>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -14,6 +13,10 @@
 #endif
 
 namespace {
+
+// ============================================================
+// Constants & Types
+// ============================================================
 
 constexpr uint32_t kBase = 36;
 constexpr uint32_t kTmin = 1;
@@ -39,6 +42,16 @@ struct ParsedURL {
     bool valid = false;
     std::string error_message;
 };
+
+// ============================================================
+// Shared Helpers
+// ============================================================
+
+inline uint32_t compute_threshold(uint32_t k, uint32_t bias) {
+    if (k <= bias) return kTmin;
+    if (k >= bias + kTmax) return kTmax;
+    return k - bias;
+}
 
 bool starts_with_xn_prefix(const std::string& label) {
     if (label.size() < 4) {
@@ -90,12 +103,19 @@ uint32_t adapt(uint64_t delta, uint64_t numpoints, bool first_time) {
     );
 }
 
+// ============================================================
+// UTF-8 Subsystem
+// ============================================================
+
 std::vector<uint32_t> utf8_to_codepoints(const std::string& input) {
     std::vector<uint32_t> codepoints;
     codepoints.reserve(input.size());
 
     size_t i = 0;
     while (i < input.size()) {
+        // Cast to unsigned char for portability: plain char may be signed on
+        // some platforms, which would sign-extend high bytes (>= 0x80) to
+        // negative values and break the bit-mask comparisons below.
         unsigned char c = static_cast<unsigned char>(input[i]);
 
         if (c < 0x80) {
@@ -186,6 +206,10 @@ bool has_non_ascii(const std::string& s) {
     return false;
 }
 
+// ============================================================
+// String & Domain Utilities
+// ============================================================
+
 std::vector<std::string> split_on_dot(const std::string& domain) {
     std::vector<std::string> parts;
     size_t start = 0;
@@ -207,13 +231,40 @@ std::string join_with_dot(const std::vector<std::string>& labels) {
         // nocov end
     }
 
-    std::string out = labels[0];
+    size_t total = labels.size() - 1;  // dots
+    for (const auto& l : labels) total += l.size();
+
+    std::string out;
+    out.reserve(total);
+    out = labels[0];
     for (size_t i = 1; i < labels.size(); ++i) {
         out.push_back('.');
         out += labels[i];
     }
 
     return out;
+}
+
+// ============================================================
+// RFC 3492 Punycode Core
+// ============================================================
+
+struct EncodingInput {
+    std::vector<uint32_t> codepoints;
+    bool needs_encoding;
+};
+
+EncodingInput prepare_encode_input(const std::string& label) {
+    if (label.empty()) {
+        // nocov start
+        throw std::invalid_argument("Domain label cannot be empty");
+        // nocov end
+    }
+
+    std::vector<uint32_t> cps = utf8_to_codepoints(label);
+    bool needs = std::any_of(cps.begin(), cps.end(),
+                             [](uint32_t cp) { return cp >= 0x80; });
+    return {std::move(cps), needs};
 }
 
 #ifdef PUNYCODER_USE_LIBIDN2
@@ -227,25 +278,13 @@ std::string libidn2_error_message(int rc) {
 #endif
 
 std::string punycode_encode_label_fallback(const std::string& label) {
-    if (label.empty()) {
-        // nocov start
-        throw std::invalid_argument("Domain label cannot be empty");
-        // nocov end
-    }
+    EncodingInput ei = prepare_encode_input(label);
 
-    std::vector<uint32_t> input = utf8_to_codepoints(label);
-    bool needs_encoding = false;
-    for (uint32_t cp : input) {
-        if (cp >= 0x80) {
-            needs_encoding = true;
-            break;
-        }
-    }
-
-    if (!needs_encoding) {
+    if (!ei.needs_encoding) {
         return label;
     }
 
+    const std::vector<uint32_t>& input = ei.codepoints;
     std::string output;
     size_t basic_count = 0;
     size_t handled = 0;
@@ -300,14 +339,7 @@ std::string punycode_encode_label_fallback(const std::string& label) {
             if (cp == n) {
                 uint64_t q = delta;
                 for (uint32_t k = kBase;; k += kBase) {
-                    uint32_t t = 0;
-                    if (k <= bias) {
-                        t = kTmin;
-                    } else if (k >= bias + kTmax) {
-                        t = kTmax;
-                    } else {
-                        t = k - bias;
-                    }
+                    uint32_t t = compute_threshold(k, bias);
 
                     if (q < t) {
                         break;
@@ -344,6 +376,9 @@ std::string punycode_decode_label_fallback(const std::string& label) {
     }
 
     std::vector<uint32_t> output;
+    // Pre-allocate for expected output size. The O(n^2) insert pattern
+    // below is bounded by DNS label limits (max 63 chars per label).
+    output.reserve(input.size());
     size_t pos = input.find_last_of(kDelimiter);
     size_t index = 0;
 
@@ -387,14 +422,7 @@ std::string punycode_decode_label_fallback(const std::string& label) {
 
             i += static_cast<uint64_t>(digit) * w;
 
-            uint32_t t = 0;
-            if (k <= bias) {
-                t = kTmin;
-            } else if (k >= bias + kTmax) {
-                t = kTmax;
-            } else {
-                t = k - bias;
-            }
+            uint32_t t = compute_threshold(k, bias);
 
             if (static_cast<uint32_t>(digit) < t) {
                 break;
@@ -434,27 +462,19 @@ std::string punycode_decode_label_fallback(const std::string& label) {
     return codepoints_to_utf8(output);
 }
 
+// ============================================================
+// libidn2 Dual Backend
+// ============================================================
+
 #ifdef PUNYCODER_USE_LIBIDN2
 std::string punycode_encode_label_libidn2(const std::string& label) {
-    if (label.empty()) {
-        // nocov start
-        throw std::invalid_argument("Domain label cannot be empty");
-        // nocov end
-    }
+    EncodingInput ei = prepare_encode_input(label);
 
-    std::vector<uint32_t> input = utf8_to_codepoints(label);
-    bool needs_encoding = false;
-    for (uint32_t cp : input) {
-        if (cp >= 0x80) {
-            needs_encoding = true;
-            break;
-        }
-    }
-
-    if (!needs_encoding) {
+    if (!ei.needs_encoding) {
         return label;
     }
 
+    const std::vector<uint32_t>& input = ei.codepoints;
     size_t buffer_size = std::max<size_t>(32, (input.size() * 5) + 16);
     for (;;) {
         std::vector<char> output(buffer_size);
@@ -541,7 +561,10 @@ std::string punycode_encode_label(const std::string& label) {
 
 std::string punycode_decode_label(const std::string& label) {
 #ifdef PUNYCODER_USE_LIBIDN2
-    // Preserve RFC 3492 case behavior for labels with uppercase payload.
+    // Bypass libidn2 when the payload (after "xn--") contains uppercase
+    // characters.  RFC 3492 uses mixed case as a case annotation hint;
+    // libidn2 normalises everything to lowercase, destroying that signal.
+    // The pure-C++ fallback preserves case faithfully.
     std::string payload = starts_with_xn_prefix(label) ? label.substr(4) : std::string();
     bool has_uppercase_payload =
         std::any_of(payload.begin(), payload.end(), [](unsigned char c) {
@@ -556,6 +579,10 @@ std::string punycode_decode_label(const std::string& label) {
     return punycode_decode_label_fallback(label);
 #endif
 }
+
+// ============================================================
+// Domain Validation & URL Detection
+// ============================================================
 
 bool looks_like_url_input(const std::string& input) {
     if (input.find("://") != std::string::npos) {
@@ -593,13 +620,22 @@ bool looks_like_url_input(const std::string& input) {
     return false;
 }
 
-void validate_domain_name(const std::string& domain, bool strict) {
+struct ValidatedDomain {
+    std::vector<std::string> labels;
+    std::vector<std::vector<uint32_t>> label_codepoints;
+    bool has_trailing_dot;
+};
+
+ValidatedDomain validate_and_parse_domain(const std::string& domain, bool strict) {
     if (domain.empty()) {
         throw std::invalid_argument("Domain name cannot be empty");
     }
 
+    ValidatedDomain result;
+    result.has_trailing_dot = !domain.empty() && domain.back() == '.';
+
     std::string core = domain;
-    if (!core.empty() && core.back() == '.') {
+    if (result.has_trailing_dot) {
         core.pop_back();
     }
 
@@ -611,13 +647,16 @@ void validate_domain_name(const std::string& domain, bool strict) {
         throw std::invalid_argument("Domain name too long (max 253 characters)");
     }
 
-    std::vector<std::string> labels = split_on_dot(core);
-    for (const std::string& label : labels) {
+    result.labels = split_on_dot(core);
+    result.label_codepoints.reserve(result.labels.size());
+
+    for (const std::string& label : result.labels) {
         if (label.empty()) {
             throw std::invalid_argument("Domain contains empty label");
         }
 
-        utf8_to_codepoints(label);
+        // Parse UTF-8 once and cache the codepoints
+        result.label_codepoints.push_back(utf8_to_codepoints(label));
 
         if (strict && label.size() > 63) {
             throw std::invalid_argument("Domain label too long (max 63 characters)");
@@ -654,7 +693,17 @@ void validate_domain_name(const std::string& domain, bool strict) {
             // nocov end
         }
     }
+
+    return result;
 }
+
+void validate_domain_name(const std::string& domain, bool strict) {
+    validate_and_parse_domain(domain, strict);
+}
+
+// ============================================================
+// URL Parsing
+// ============================================================
 
 bool parse_authority(const std::string& authority, ParsedURL* parsed) {
     std::string host_port = authority;
@@ -713,41 +762,49 @@ ParsedURL parse_url_string(const std::string& url) {
         return parsed;
     }
 
-    static const std::regex kUrlPattern(
-        R"(^(?:([^:/?#]+):)?(?://([^/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?)"
-    );
+    // Hand-coded RFC 3986 URI decomposition (replaces std::regex for speed).
+    // Grammar: ^(?:([^:/?#]+):)?(?://([^/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?
+    size_t pos = 0;
 
-    std::smatch matches;
-    // nocov start
-    if (!std::regex_match(url, matches, kUrlPattern)) {
-        parsed.error_message = "Invalid URL format";
-        return parsed;
-    }
-    // nocov end
-
-    if (matches[1].matched) {
-        parsed.scheme = matches[1].str();
+    // 1. Scheme: everything before ':' that doesn't contain '/', '?', or '#'
+    size_t scheme_end = url.find_first_of(":/?#");
+    if (scheme_end != std::string::npos && url[scheme_end] == ':') {
+        parsed.scheme = url.substr(0, scheme_end);
+        pos = scheme_end + 1;
     }
 
-    if (matches[2].matched) {
+    // 2. Authority: if next chars are "//"
+    if (pos + 1 < url.size() && url[pos] == '/' && url[pos + 1] == '/') {
         parsed.has_authority = true;
-        if (!parse_authority(matches[2].str(), &parsed)) {
+        pos += 2;
+        size_t auth_end = url.find_first_of("/?#", pos);
+        if (auth_end == std::string::npos) auth_end = url.size();
+        if (!parse_authority(url.substr(pos, auth_end - pos), &parsed)) {
             return parsed;
         }
+        pos = auth_end;
     }
 
-    if (matches[3].matched) {
-        parsed.path = matches[3].str();
-    }
+    // 3. Path: up to '?' or '#'
+    size_t path_end = url.find_first_of("?#", pos);
+    if (path_end == std::string::npos) path_end = url.size();
+    parsed.path = url.substr(pos, path_end - pos);
+    pos = path_end;
 
-    if (matches[4].matched) {
+    // 4. Query: after '?' up to '#'
+    if (pos < url.size() && url[pos] == '?') {
         parsed.has_query = true;
-        parsed.query = matches[4].str();
+        ++pos;
+        size_t query_end = url.find('#', pos);
+        if (query_end == std::string::npos) query_end = url.size();
+        parsed.query = url.substr(pos, query_end - pos);
+        pos = query_end;
     }
 
-    if (matches[5].matched) {
+    // 5. Fragment: after '#' to end
+    if (pos < url.size() && url[pos] == '#') {
         parsed.has_fragment = true;
-        parsed.fragment = matches[5].str();
+        parsed.fragment = url.substr(pos + 1);
     }
 
     parsed.valid = true;
@@ -799,6 +856,10 @@ std::string rebuild_url_with_host(const ParsedURL& parsed, const std::string& ho
 
     return result;
 }
+
+// ============================================================
+// PunycodeProcessor Class
+// ============================================================
 
 class PunycodeProcessor {
 public:
@@ -860,6 +921,10 @@ private:
 };
 
 }  // namespace
+
+// ============================================================
+// Public R Interface
+// ============================================================
 
 // [[Rcpp::export]]
 Rcpp::CharacterVector puny_encode_cpp(Rcpp::CharacterVector domains, bool strict = true) {
