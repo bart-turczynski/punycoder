@@ -66,3 +66,6 @@ tests/testthat/_snaps/
 .env
 *.log
 *.gz
+
+# Claude Cowork
+.claude/
