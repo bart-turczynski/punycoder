@@ -146,6 +146,8 @@ validate_domain(c("valid.com", "invalid..domain"))
   input
 - Build-time backend selection (`libidn2` when present, built-in
   fallback otherwise)
+- Structured URL parsing where invalid inputs are returned as missing
+  components
 
 ## Acknowledgments
 
@@ -158,8 +160,8 @@ validate_domain(c("valid.com", "invalid..domain"))
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing
-Guide](CONTRIBUTING.md) for details.
+We welcome contributions. See [CONTRIBUTING.md](CONTRIBUTING.md) for the
+current development workflow.
 
 ## License
 

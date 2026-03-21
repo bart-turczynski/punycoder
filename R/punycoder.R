@@ -11,7 +11,7 @@
 #'
 #' @name punycoder-package
 #' @useDynLib punycoder, .registration = TRUE
-#' @importFrom Rcpp sourceCpp
+#' @importFrom Rcpp evalCpp
 "_PACKAGE"
 
 #' Encode Unicode domains to ASCII punycode

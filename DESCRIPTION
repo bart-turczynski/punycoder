@@ -4,6 +4,8 @@ Title: Unicode and Punycode Domain Name Processing
 Version: 1.0.0
 Authors@R: person("Bart", "Turczynski", email = "bartek+punycoder@turczynski.pl",
                   role = c("aut", "cre"))
+Author: Bart Turczynski [aut, cre]
+Maintainer: Bart Turczynski <bartek+punycoder@turczynski.pl>
 Description: High-performance Unicode and Punycode encoding/decoding for 
     internationalized domain names. Provides RFC 3492 compliant conversion
     functions with a focus on URL processing and data analysis workflows.
@@ -13,7 +15,7 @@ Depends: R (>= 3.5.0)
 Imports: Rcpp (>= 1.0.0)
 LinkingTo: Rcpp
 SystemRequirements: GNU libidn2 (optional, for native punycode backend)
-License: MIT
+License: MIT + file LICENSE
 URL: https://github.com/bart-turczynski/punycoder
 BugReports: https://github.com/bart-turczynski/punycoder/issues
 Encoding: UTF-8

@@ -1,0 +1,197 @@
+#include <Rcpp.h>
+
+#include <cstdlib>
+#include <limits>
+#include <string>
+
+#include "punycoder_core.h"
+
+namespace {
+
+template <typename Fn>
+Rcpp::CharacterVector transform_strings(
+    const Rcpp::CharacterVector& input,
+    bool strict,
+    const char* error_prefix,
+    Fn&& fn
+) {
+    Rcpp::CharacterVector output(input.size());
+
+    for (R_xlen_t i = 0; i < input.size(); ++i) {
+        try {
+            if (Rcpp::CharacterVector::is_na(input[i])) {
+                output[i] = NA_STRING;
+                continue;
+            }
+
+            output[i] = fn(Rcpp::as<std::string>(input[i]));
+        } catch (const std::exception& e) {
+            if (strict) {
+                Rcpp::stop("%s: %s", error_prefix, e.what());
+            }
+            output[i] = NA_STRING;
+        }
+    }
+
+    return output;
+}
+
+}  // namespace
+
+Rcpp::CharacterVector puny_encode_cpp(Rcpp::CharacterVector domains, bool strict) {
+    punycoder::PunycodeService service(strict);
+    return transform_strings(
+        domains,
+        strict,
+        "Error encoding domain",
+        [&](const std::string& domain) {
+            if (punycoder::looks_like_url_input(domain)) {
+                punycoder::throw_error(punycoder::ErrorCode::ascii_domain_characters);
+            }
+            return service.encode_domain(domain);
+        }
+    );
+}
+
+Rcpp::CharacterVector puny_decode_cpp(Rcpp::CharacterVector domains, bool strict) {
+    punycoder::PunycodeService service(strict);
+    return transform_strings(
+        domains,
+        strict,
+        "Error decoding domain",
+        [&](const std::string& domain) {
+            if (punycoder::looks_like_url_input(domain)) {
+                punycoder::throw_error(punycoder::ErrorCode::ascii_domain_characters);
+            }
+            return service.decode_domain(domain);
+        }
+    );
+}
+
+Rcpp::CharacterVector url_encode_cpp(Rcpp::CharacterVector urls, bool strict) {
+    punycoder::PunycodeService service(strict);
+    return transform_strings(
+        urls,
+        strict,
+        "Error encoding URL",
+        [&](const std::string& url) {
+            return service.encode_url(url);
+        }
+    );
+}
+
+Rcpp::CharacterVector url_decode_cpp(Rcpp::CharacterVector urls, bool strict) {
+    punycoder::PunycodeService service(strict);
+    return transform_strings(
+        urls,
+        strict,
+        "Error decoding URL",
+        [&](const std::string& url) {
+            return service.decode_url(url);
+        }
+    );
+}
+
+Rcpp::List parse_url_cpp(Rcpp::CharacterVector urls, bool encode_domains) {
+    R_xlen_t n = urls.size();
+    Rcpp::CharacterVector scheme(n, NA_STRING);
+    Rcpp::CharacterVector domain(n, NA_STRING);
+    Rcpp::IntegerVector port(n, NA_INTEGER);
+    Rcpp::CharacterVector path(n, NA_STRING);
+    Rcpp::CharacterVector query(n, NA_STRING);
+    Rcpp::CharacterVector fragment(n, NA_STRING);
+    punycoder::PunycodeService service(false);
+
+    for (R_xlen_t i = 0; i < n; ++i) {
+        if (Rcpp::CharacterVector::is_na(urls[i])) {
+            continue;
+        }
+
+        std::string url = Rcpp::as<std::string>(urls[i]);
+        punycoder::ParsedURL parsed = punycoder::parse_url_string(url);
+        if (!parsed.valid) {
+            continue;
+        }
+
+        if (!parsed.scheme.empty()) {
+            scheme[i] = parsed.scheme;
+        }
+
+        if (!parsed.path.empty()) {
+            path[i] = parsed.path;
+        } else {
+            path[i] = "";
+        }
+
+        if (parsed.has_query) {
+            query[i] = parsed.query;
+        }
+        if (parsed.has_fragment) {
+            fragment[i] = parsed.fragment;
+        }
+
+        if (!parsed.host.empty()) {
+            if (encode_domains) {
+                try {
+                    domain[i] = service.encode_domain(parsed.host);
+                } catch (const std::exception&) {
+                    domain[i] = NA_STRING;
+                }
+            } else {
+                domain[i] = parsed.host;
+            }
+        }
+
+        if (!parsed.port.empty()) {
+            char* end_ptr = nullptr;
+            long parsed_port = std::strtol(parsed.port.c_str(), &end_ptr, 10);
+            if (end_ptr != nullptr &&
+                *end_ptr == '\0' &&
+                parsed_port >= 0 &&
+                parsed_port <= std::numeric_limits<int>::max()) {
+                port[i] = static_cast<int>(parsed_port);
+            }
+        }
+    }
+
+    return Rcpp::List::create(
+        Rcpp::Named("scheme") = scheme,
+        Rcpp::Named("domain") = domain,
+        Rcpp::Named("port") = port,
+        Rcpp::Named("path") = path,
+        Rcpp::Named("query") = query,
+        Rcpp::Named("fragment") = fragment
+    );
+}
+
+Rcpp::List validate_domain_cpp(Rcpp::CharacterVector domains, bool strict) {
+    R_xlen_t n = domains.size();
+    Rcpp::LogicalVector valid(n);
+    Rcpp::List errors(n);
+    punycoder::LabelBackend backend = punycoder::select_label_backend();
+
+    for (R_xlen_t i = 0; i < n; ++i) {
+        if (Rcpp::CharacterVector::is_na(domains[i])) {
+            valid[i] = false;
+            errors[i] = Rcpp::CharacterVector::create("Domain is NA");
+            continue;
+        }
+
+        std::string domain = Rcpp::as<std::string>(domains[i]);
+
+        try {
+            punycoder::validate_and_parse_domain(domain, backend, strict);
+            valid[i] = true;
+            errors[i] = Rcpp::CharacterVector::create();
+        } catch (const std::exception& e) {
+            valid[i] = false;
+            errors[i] = Rcpp::CharacterVector::create(e.what());
+        }
+    }
+
+    return Rcpp::List::create(
+        Rcpp::Named("domains") = domains,
+        Rcpp::Named("valid") = valid,
+        Rcpp::Named("errors") = errors
+    );
+}

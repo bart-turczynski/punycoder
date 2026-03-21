@@ -6,6 +6,7 @@
 
   current_encoding <- getOption("punycoder.encoding")
   if (is.null(current_encoding)) {
+    # Preserved for compatibility while the package standardizes on UTF-8.
     options(punycoder.encoding = "UTF-8")
   }
 }

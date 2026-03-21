@@ -220,4 +220,4 @@ urls_df <- data.frame(
 
 ## Technical Details
 
-The package uses a C++ backend with Rcpp for performance, and follows RFC 3492 standards for punycode implementation. Future versions will integrate with GNU libidn2 for complete IDNA2008 compliance.
+The package uses a C++ backend with Rcpp for performance, and follows RFC 3492 standards for punycode implementation. When `libidn2` is available at build time, `punycoder` uses it behind the same R-level API and falls back to the built-in implementation otherwise.

@@ -9,7 +9,7 @@ parse_url(url, encode_domains = FALSE)
 \arguments{
 \item{url}{Character vector of URLs to parse}
 
-\item{encode_domains}{Logical flag; encode Unicode domains to ASCII.}
+\item{encode_domains}{Logical flag; encode parsed host names to ASCII.}
 }
 \value{
 An object of class \code{"punycoder_parsed_url"} (a named list)
@@ -22,8 +22,9 @@ An object of class \code{"punycoder_parsed_url"} (a named list)
     \item{query}{Character vector of query strings.}
     \item{fragment}{Character vector of fragment identifiers.}
   }
-  Each component has one element per input URL. Missing components are
-  \code{NA}.
+  Each component has one element per input URL. Invalid URLs yield
+  \code{NA} components. For valid URLs without an explicit path,
+  \code{path} is returned as \code{""}.
 }
 \description{
 Parses URLs and returns a structured list with proper handling of

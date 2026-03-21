@@ -76,7 +76,7 @@ url_decode <- function(url, strict = getOption("punycoder.strict", TRUE)) {
 #' and ASCII representations of domain components.
 #'
 #' @param url Character vector of URLs to parse
-#' @param encode_domains Logical flag; encode Unicode domains to ASCII.
+#' @param encode_domains Logical flag; encode parsed host names to ASCII.
 #' @return An object of class \code{"punycoder_parsed_url"} (a named list)
 #'   with components:
 #'   \describe{
@@ -87,8 +87,9 @@ url_decode <- function(url, strict = getOption("punycoder.strict", TRUE)) {
 #'     \item{query}{Character vector of query strings.}
 #'     \item{fragment}{Character vector of fragment identifiers.}
 #'   }
-#'   Each component has one element per input URL. Missing components are
-#'   \code{NA}.
+#'   Each component has one element per input URL. Invalid URLs yield
+#'   \code{NA} components. For valid URLs without an explicit path,
+#'   \code{path} is returned as \code{""}.
 #' @seealso \code{\link{url_encode}}, \code{\link{url_decode}} for URL
 #'   transformation with IDN handling.
 #' @examples
@@ -111,33 +112,5 @@ parse_url <- function(url, encode_domains = FALSE) {
   .assert_flag(encode_domains, "encode_domains")
   .warn_if_na(url)
 
-  result <- parse_url_cpp(url, encode_domains)
-
-  structure(result,
-            class = c("punycoder_parsed_url", "list"),
-            encode_domains = encode_domains)
-}
-
-#' Print method for punycoder parsed URL results
-#'
-#' @param x A punycoder_parsed_url object
-#' @param ... Additional arguments (ignored)
-#' @export
-print.punycoder_parsed_url <- function(x, ...) {
-  cat("Punycoder Parsed URL Results\n")
-  cat("============================\n\n")
-
-  n <- length(x$scheme)
-  for (i in seq_len(n)) {
-    cat("URL", i, ":\n")
-    cat("  Scheme:  ", if (is.na(x$scheme[i])) "<NA>" else x$scheme[i], "\n")
-    cat("  Domain:  ", if (is.na(x$domain[i])) "<NA>" else x$domain[i], "\n")
-    if (!is.na(x$port[i])) cat("  Port:    ", x$port[i], "\n")
-    cat("  Path:    ", if (is.na(x$path[i])) "<NA>" else x$path[i], "\n")
-    if (!is.na(x$query[i])) cat("  Query:   ", x$query[i], "\n")
-    if (!is.na(x$fragment[i])) cat("  Fragment:", x$fragment[i], "\n")
-    cat("\n")
-  }
-
-  invisible(x)
+  .new_parsed_url(parse_url_cpp(url, encode_domains), encode_domains)
 }

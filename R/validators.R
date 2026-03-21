@@ -66,8 +66,7 @@ is_idn <- function(x) {
 #'     \item{errors}{List of character vectors, each containing error messages
 #'       for the corresponding domain (empty for valid domains).}
 #'   }
-#' @seealso \code{\link{get_validation_summary}} for a human-readable summary,
-#'   \code{\link{puny_encode}} for encoding validated domains.
+#' @seealso \code{\link{puny_encode}} for encoding validated domains.
 #' @examples
 #' \donttest{
 #' validate_domain("example.com")
@@ -80,54 +79,5 @@ validate_domain <- function(x, strict = getOption("punycoder.strict", TRUE)) {
   .assert_character(x)
   .assert_flag(strict, "strict")
 
-  result <- validate_domain_cpp(x, strict)
-
-  structure(result,
-            class = c("punycoder_validation", "list"),
-            strict = strict)
-}
-
-#' Get domain validation summary
-#'
-#' Internal helper function to provide human-readable validation summaries.
-#'
-#' @param validation_result Result from validate_domain function
-#' @return Character vector with one summary string per domain: \code{"Valid"}
-#'   for valid domains, or semicolon-separated error messages for invalid ones.
-#' @keywords internal
-get_validation_summary <- function(validation_result) {
-  if (!inherits(validation_result, "punycoder_validation")) {
-    stop("Input must be a punycoder_validation object", call. = FALSE)
-  }
-
-  ifelse(
-    lengths(validation_result$errors) == 0L,
-    "Valid",
-    vapply(validation_result$errors, paste, character(1), collapse = "; ")
-  )
-}
-
-#' Print method for punycoder validation results
-#'
-#' @param x A punycoder_validation object
-#' @param ... Additional arguments (ignored)
-#' @export
-print.punycoder_validation <- function(x, ...) {
-  cat("Punycoder Domain Validation Results\n")
-  cat("==================================\n\n")
-
-  for (i in seq_along(x$domains)) {
-    cat("Domain:", x$domains[i], "\n")
-    cat("Valid: ", x$valid[i], "\n")
-
-    if (!x$valid[i] && length(x$errors[[i]]) > 0) {
-      cat("Errors:\n")
-      for (error in x$errors[[i]]) {
-        cat("  -", error, "\n")
-      }
-    }
-    cat("\n")
-  }
-
-  invisible(x)
+  .new_validation_result(validate_domain_cpp(x, strict), strict)
 }

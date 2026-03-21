@@ -36,6 +36,5 @@ validate_domain(c("valid.com", "invalid..com", long_label))
 }
 }
 \seealso{
-\code{\link{get_validation_summary}} for a human-readable summary,
-  \code{\link{puny_encode}} for encoding validated domains.
+\code{\link{puny_encode}} for encoding validated domains.
 }
