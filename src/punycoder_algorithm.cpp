@@ -18,6 +18,20 @@ constexpr uint32_t kInitialBias = 72;
 constexpr uint32_t kInitialN = 128;
 constexpr char kDelimiter = '-';
 
+inline uint64_t checked_add_u64(uint64_t a, uint64_t b) {
+    if (a > std::numeric_limits<uint64_t>::max() - b) {
+        throw_error(ErrorCode::punycode_overflow);
+    }
+    return a + b;
+}
+
+inline uint64_t checked_mul_u64(uint64_t a, uint64_t b) {
+    if (b != 0 && a > std::numeric_limits<uint64_t>::max() / b) {
+        throw_error(ErrorCode::punycode_overflow);
+    }
+    return a * b;
+}
+
 struct EncodingInput {
     std::vector<uint32_t> codepoints;
     bool needs_encoding;
@@ -137,19 +151,17 @@ std::string punycode_encode_label_fallback(const std::string& label) {
             throw_error(ErrorCode::punycode_overflow);
         }
 
-        uint64_t span = static_cast<uint64_t>(m - n) * (handled + 1);
-        if (span > std::numeric_limits<uint64_t>::max() - delta) {
-            throw_error(ErrorCode::punycode_overflow);
-        }
-        delta += span;
+        // RFC 3492 §6.3 "Encoding procedure" — delta accumulates the distance
+        // between successive insertion points, scaled by (handled + 1).
+        uint64_t span = checked_mul_u64(
+            static_cast<uint64_t>(m - n), static_cast<uint64_t>(handled) + 1
+        );
+        delta = checked_add_u64(delta, span);
         n = m;
 
         for (uint32_t cp : codepoints) {
             if (cp < n) {
-                if (delta == std::numeric_limits<uint64_t>::max()) {
-                    throw_error(ErrorCode::punycode_overflow);
-                }
-                ++delta;
+                delta = checked_add_u64(delta, 1);
             }
 
             if (cp == n) {
@@ -224,28 +236,22 @@ std::string punycode_decode_label_fallback(const std::string& label) {
                 throw_error(ErrorCode::invalid_punycode_digit);
             }
 
-            if (static_cast<uint64_t>(digit) >
-                (std::numeric_limits<uint64_t>::max() - i) / w) {
-                throw_error(ErrorCode::punycode_overflow);
-            }
-
-            i += static_cast<uint64_t>(digit) * w;
+            // RFC 3492 §6.2 "Decoding procedure" — i accumulates a generalized
+            // variable-length integer; w is its place value.
+            i = checked_add_u64(i, checked_mul_u64(static_cast<uint64_t>(digit), w));
             uint32_t t = compute_threshold(k, bias);
 
             if (static_cast<uint32_t>(digit) < t) {
                 break;
             }
 
-            uint64_t base_minus_t = kBase - t;
-            if (w > std::numeric_limits<uint64_t>::max() / base_minus_t) {
-                throw_error(ErrorCode::punycode_overflow);
-            }
-            w *= base_minus_t;
+            w = checked_mul_u64(w, static_cast<uint64_t>(kBase - t));
         }
 
         uint64_t out_len = output.size() + 1;
         bias = adapt(i - oldi, out_len, oldi == 0);
 
+        // n is uint32; check the destination range before narrowing.
         uint64_t increment = i / out_len;
         if (increment > std::numeric_limits<uint32_t>::max() - n) {
             throw_error(ErrorCode::punycode_overflow);
