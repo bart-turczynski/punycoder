@@ -1,8 +1,17 @@
 #include "punycoder_core.h"
 
+#include <stdexcept>
+
 namespace punycoder {
 
 namespace {
+
+[[noreturn]] void unreachable_error_code(ErrorCode code) {
+    throw std::logic_error(
+        "punycoder: unhandled ErrorCode value " +
+        std::to_string(static_cast<int>(code))
+    );
+}
 
 std::string format_error(ErrorCode code, const std::string& detail) {
     switch (code) {
@@ -59,7 +68,7 @@ std::string format_error(ErrorCode code, const std::string& detail) {
         return "Backend failure";
     }
 
-    return "Unknown punycoder error";
+    unreachable_error_code(code);
 }
 
 }  // namespace
