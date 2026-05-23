@@ -8,6 +8,23 @@ namespace punycoder {
 
 namespace {
 
+std::vector<std::string> split_on_dot(const std::string& domain) {
+    std::vector<std::string> parts;
+    parts.reserve(static_cast<size_t>(
+        std::count(domain.begin(), domain.end(), '.') + 1
+    ));
+    size_t start = 0;
+
+    for (size_t i = 0; i <= domain.size(); ++i) {
+        if (i == domain.size() || domain[i] == '.') {
+            parts.push_back(domain.substr(start, i - start));
+            start = i + 1;
+        }
+    }
+
+    return parts;
+}
+
 bool is_valid_ascii_domain_char(unsigned char c) {
     return std::isalnum(c) != 0 || c == '-';
 }

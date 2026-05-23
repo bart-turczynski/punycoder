@@ -1,8 +1,6 @@
 #include "punycoder_core.h"
 
-#include <algorithm>
 #include <cctype>
-#include <cstddef>
 #include <limits>
 
 namespace punycoder {

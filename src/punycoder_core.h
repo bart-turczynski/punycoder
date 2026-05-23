@@ -111,8 +111,6 @@ std::vector<uint32_t> utf8_to_codepoints(const std::string& input);
 std::string codepoints_to_utf8(const std::vector<uint32_t>& codepoints);
 bool has_non_ascii(const std::string& input);
 bool starts_with_xn_prefix(const std::string& label);
-std::vector<std::string> split_on_dot(const std::string& domain);
-std::string join_with_dot(const std::vector<std::string>& labels);
 
 std::string punycode_encode_label_fallback(const std::string& label);
 std::string punycode_decode_label_fallback(const std::string& label);

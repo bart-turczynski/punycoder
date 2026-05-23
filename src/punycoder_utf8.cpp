@@ -1,7 +1,5 @@
 #include "punycoder_core.h"
 
-#include <algorithm>
-
 namespace punycoder {
 
 std::vector<uint32_t> utf8_to_codepoints(const std::string& input) {
@@ -97,44 +95,6 @@ bool has_non_ascii(const std::string& input) {
         }
     }
     return false;
-}
-
-std::vector<std::string> split_on_dot(const std::string& domain) {
-    std::vector<std::string> parts;
-    parts.reserve(static_cast<size_t>(
-        std::count(domain.begin(), domain.end(), '.') + 1
-    ));
-    size_t start = 0;
-
-    for (size_t i = 0; i <= domain.size(); ++i) {
-        if (i == domain.size() || domain[i] == '.') {
-            parts.push_back(domain.substr(start, i - start));
-            start = i + 1;
-        }
-    }
-
-    return parts;
-}
-
-std::string join_with_dot(const std::vector<std::string>& labels) {
-    if (labels.empty()) {
-        return "";
-    }
-
-    size_t total = labels.size() - 1;
-    for (const auto& label : labels) {
-        total += label.size();
-    }
-
-    std::string output;
-    output.reserve(total);
-    output = labels[0];
-    for (size_t i = 1; i < labels.size(); ++i) {
-        output.push_back('.');
-        output += labels[i];
-    }
-
-    return output;
 }
 
 }  // namespace punycoder
