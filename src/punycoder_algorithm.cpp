@@ -253,7 +253,7 @@ std::string punycode_decode_label_fallback(const std::string& label) {
         n += static_cast<uint32_t>(increment);
         i %= out_len;
 
-        if (n > 0x10FFFF || (n >= 0xD800 && n <= 0xDFFF)) {
+        if (!is_valid_unicode_scalar(n)) {
             throw_error(ErrorCode::decoded_code_point_out_of_range);
         }
 

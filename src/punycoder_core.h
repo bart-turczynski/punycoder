@@ -103,6 +103,10 @@ struct LabelBackend {
     const char* name;
 };
 
+constexpr inline bool is_valid_unicode_scalar(uint32_t cp) noexcept {
+    return cp <= 0x10FFFF && (cp < 0xD800 || cp > 0xDFFF);
+}
+
 std::vector<uint32_t> utf8_to_codepoints(const std::string& input);
 std::string codepoints_to_utf8(const std::vector<uint32_t>& codepoints);
 bool has_non_ascii(const std::string& input);

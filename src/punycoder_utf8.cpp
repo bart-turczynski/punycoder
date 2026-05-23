@@ -52,7 +52,7 @@ std::vector<uint32_t> utf8_to_codepoints(const std::string& input) {
             throw_error(ErrorCode::overlong_utf8_sequence);
         }
 
-        if (cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF)) {
+        if (!is_valid_unicode_scalar(cp)) {
             throw_error(ErrorCode::invalid_utf8_code_point);
         }
 
