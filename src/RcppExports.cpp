@@ -82,3 +82,26 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// backend_info_cpp
+Rcpp::List backend_info_cpp();
+RcppExport SEXP _punycoder_backend_info_cpp() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(backend_info_cpp());
+    return rcpp_result_gen;
+END_RCPP
+}
+// compare_backends_cpp
+Rcpp::List compare_backends_cpp(Rcpp::CharacterVector input, std::string mode, bool strict);
+RcppExport SEXP _punycoder_compare_backends_cpp(SEXP inputSEXP, SEXP modeSEXP, SEXP strictSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type input(inputSEXP);
+    Rcpp::traits::input_parameter< std::string >::type mode(modeSEXP);
+    Rcpp::traits::input_parameter< bool >::type strict(strictSEXP);
+    rcpp_result_gen = Rcpp::wrap(compare_backends_cpp(input, mode, strict));
+    return rcpp_result_gen;
+END_RCPP
+}

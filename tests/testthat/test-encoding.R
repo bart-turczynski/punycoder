@@ -104,6 +104,19 @@ test_that("vectorized operations work", {
   expect_equal(decoded, domains)
 })
 
+test_that("mixed ASCII, Unicode, and xn labels preserve strict decode behavior", {
+  inputs <- c("example.com", "xn--caf-dma.com", "bücher.de")
+
+  expect_equal(
+    puny_decode(inputs, strict = TRUE),
+    c("example.com", "café.com", "bücher.de")
+  )
+  expect_equal(
+    puny_encode(inputs, strict = TRUE),
+    c("example.com", "xn--caf-dma.com", "xn--bcher-kva.de")
+  )
+})
+
 test_that("strict and non-strict paths handle malformed punycode differently", {
   expect_error(puny_decode("xn--", strict = TRUE), "Error decoding domain")
   expect_true(is.na(puny_decode("xn--", strict = FALSE)))

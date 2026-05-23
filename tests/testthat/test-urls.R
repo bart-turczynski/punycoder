@@ -110,6 +110,14 @@ test_that("strict parameter works for URL functions", {
   expect_no_error(url_encode("https://example.com", strict = FALSE))
   expect_no_error(url_decode("https://example.com", strict = TRUE))
   expect_no_error(url_decode("https://example.com", strict = FALSE))
+  expect_equal(
+    url_encode("http://127.0.0.1/path", strict = TRUE),
+    "http://127.0.0.1/path"
+  )
+  expect_equal(
+    url_decode("http://127.0.0.1/path", strict = TRUE),
+    "http://127.0.0.1/path"
+  )
 
   expect_error(url_encode("https://[::1/path", strict = TRUE))
   expect_true(is.na(url_encode("https://[::1/path", strict = FALSE)))
@@ -159,14 +167,20 @@ test_that("url helpers cover authority edge cases", {
     url_encode("http://[::1]:8080/path", strict = FALSE),
     "http://[::1]:8080/path"
   )
-  expect_error(url_encode("http://[::1]/path"), "Error encoding URL")
   expect_equal(
     url_encode("http://[::1]/path", strict = FALSE),
     "http://[::1]/path"
   )
-  expect_error(url_decode("http://[::1]/path"), "Error decoding URL")
+  expect_equal(
+    url_encode("http://[::1]/path", strict = TRUE),
+    "http://[::1]/path"
+  )
   expect_equal(
     url_decode("http://[::1]/path", strict = FALSE),
+    "http://[::1]/path"
+  )
+  expect_equal(
+    url_decode("http://[::1]/path", strict = TRUE),
     "http://[::1]/path"
   )
   expect_error(url_decode("", strict = TRUE), "Error decoding URL")
@@ -193,6 +207,16 @@ test_that("parse_url covers invalid inputs and encoding fallbacks", {
   bad_url <- paste0("http://", bad_host, ".com/path")
   parsed <- parse_url(bad_url, encode_domains = TRUE)
   expect_true(is.na(parsed$domain[[1]]))
+})
+
+test_that("parse_url leaves IP literals unchanged when encode_domains is enabled", {
+  ipv4 <- parse_url("http://127.0.0.1:8080/path", encode_domains = TRUE)
+  expect_equal(ipv4$domain[[1]], "127.0.0.1")
+  expect_equal(ipv4$port[[1]], 8080L)
+
+  ipv6 <- parse_url("http://[2001:db8::1]:8080/path", encode_domains = TRUE)
+  expect_equal(ipv6$domain[[1]], "2001:db8::1")
+  expect_equal(ipv6$port[[1]], 8080L)
 })
 
 test_that("url_encode non-strict catches malformed byte domains", {
@@ -226,6 +250,14 @@ test_that("IPv6 URLs pass through in non-strict mode", {
   )
   expect_equal(
     url_encode("http://[2001:db8::1]/path", strict = FALSE),
+    "http://[2001:db8::1]/path"
+  )
+  expect_equal(
+    url_encode("http://[2001:db8::1]/path", strict = TRUE),
+    "http://[2001:db8::1]/path"
+  )
+  expect_equal(
+    url_decode("http://[2001:db8::1]/path", strict = TRUE),
     "http://[2001:db8::1]/path"
   )
 })

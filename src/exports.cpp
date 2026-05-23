@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 #include <limits>
+#include <stdexcept>
 #include <string>
 
 #include "punycoder_core.h"
@@ -34,6 +35,39 @@ Rcpp::CharacterVector transform_strings(
     }
 
     return output;
+}
+
+std::string apply_backend_mode(
+    const punycoder::PunycodeService& service,
+    const std::string& mode,
+    const std::string& value
+) {
+    if (mode == "encode_domain") {
+        return service.encode_domain(value);
+    }
+    if (mode == "decode_domain") {
+        return service.decode_domain(value);
+    }
+    if (mode == "encode_url") {
+        return service.encode_url(value);
+    }
+    if (mode == "decode_url") {
+        return service.decode_url(value);
+    }
+
+    throw std::invalid_argument("Unknown backend comparison mode");
+}
+
+std::string safe_backend_mode(
+    const punycoder::PunycodeService& service,
+    const std::string& mode,
+    const std::string& value
+) {
+    try {
+        return apply_backend_mode(service, mode, value);
+    } catch (const std::exception& e) {
+        return std::string("__ERROR__: ") + e.what();
+    }
 }
 
 }  // namespace
@@ -131,7 +165,7 @@ Rcpp::List parse_url_cpp(Rcpp::CharacterVector urls, bool encode_domains) {
         }
 
         if (!parsed.host.empty()) {
-            if (encode_domains) {
+            if (encode_domains && parsed.host_kind == punycoder::HostKind::dns) {
                 try {
                     domain[i] = service.encode_domain(parsed.host);
                 } catch (const std::exception&) {
@@ -180,7 +214,12 @@ Rcpp::List validate_domain_cpp(Rcpp::CharacterVector domains, bool strict) {
         std::string domain = Rcpp::as<std::string>(domains[i]);
 
         try {
-            punycoder::validate_and_parse_domain(domain, backend, strict);
+            punycoder::validate_and_parse_domain(
+                domain,
+                backend,
+                strict,
+                punycoder::DomainTransform::none
+            );
             valid[i] = true;
             errors[i] = Rcpp::CharacterVector::create();
         } catch (const std::exception& e) {
@@ -193,5 +232,55 @@ Rcpp::List validate_domain_cpp(Rcpp::CharacterVector domains, bool strict) {
         Rcpp::Named("domains") = domains,
         Rcpp::Named("valid") = valid,
         Rcpp::Named("errors") = errors
+    );
+}
+
+Rcpp::List backend_info_cpp() {
+    punycoder::LabelBackend backend = punycoder::select_label_backend();
+
+    return Rcpp::List::create(
+        Rcpp::Named("automatic") = backend.name,
+        Rcpp::Named("has_libidn2") = punycoder::libidn2_backend_available()
+    );
+}
+
+Rcpp::List compare_backends_cpp(
+    Rcpp::CharacterVector input,
+    std::string mode,
+    bool strict
+) {
+    Rcpp::CharacterVector fallback(input.size());
+    Rcpp::CharacterVector libidn2(input.size());
+    bool has_libidn2 = punycoder::libidn2_backend_available();
+
+    punycoder::PunycodeService fallback_service(
+        strict,
+        punycoder::select_label_backend(punycoder::BackendPreference::fallback)
+    );
+    punycoder::PunycodeService libidn2_service(
+        strict,
+        punycoder::select_label_backend(punycoder::BackendPreference::libidn2)
+    );
+
+    for (R_xlen_t i = 0; i < input.size(); ++i) {
+        if (Rcpp::CharacterVector::is_na(input[i])) {
+            fallback[i] = NA_STRING;
+            libidn2[i] = NA_STRING;
+            continue;
+        }
+
+        std::string value = Rcpp::as<std::string>(input[i]);
+        fallback[i] = safe_backend_mode(fallback_service, mode, value);
+        if (has_libidn2) {
+            libidn2[i] = safe_backend_mode(libidn2_service, mode, value);
+        } else {
+            libidn2[i] = NA_STRING;
+        }
+    }
+
+    return Rcpp::List::create(
+        Rcpp::Named("available") = has_libidn2,
+        Rcpp::Named("fallback") = fallback,
+        Rcpp::Named("libidn2") = libidn2
     );
 }

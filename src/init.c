@@ -13,6 +13,8 @@ extern SEXP _punycoder_url_encode_cpp(SEXP, SEXP);
 extern SEXP _punycoder_url_decode_cpp(SEXP, SEXP);
 extern SEXP _punycoder_parse_url_cpp(SEXP, SEXP);
 extern SEXP _punycoder_validate_domain_cpp(SEXP, SEXP);
+extern SEXP _punycoder_backend_info_cpp();
+extern SEXP _punycoder_compare_backends_cpp(SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
     {"_punycoder_puny_encode_cpp", (DL_FUNC) &_punycoder_puny_encode_cpp, 2},
@@ -21,6 +23,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_punycoder_url_decode_cpp", (DL_FUNC) &_punycoder_url_decode_cpp, 2},
     {"_punycoder_parse_url_cpp", (DL_FUNC) &_punycoder_parse_url_cpp, 2},
     {"_punycoder_validate_domain_cpp", (DL_FUNC) &_punycoder_validate_domain_cpp, 2},
+    {"_punycoder_backend_info_cpp", (DL_FUNC) &_punycoder_backend_info_cpp, 0},
+    {"_punycoder_compare_backends_cpp", (DL_FUNC) &_punycoder_compare_backends_cpp, 3},
     {NULL, NULL, 0}
 };
 
@@ -29,4 +33,3 @@ void R_init_punycoder(DllInfo *dll)
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }
-

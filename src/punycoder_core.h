@@ -35,6 +35,25 @@ enum class ErrorCode {
     backend_failure
 };
 
+enum class DomainTransform {
+    none,
+    encode,
+    decode
+};
+
+enum class HostKind {
+    empty,
+    dns,
+    ipv4,
+    ipv6
+};
+
+enum class BackendPreference {
+    automatic,
+    libidn2,
+    fallback
+};
+
 class PunycoderError : public std::runtime_error {
 public:
     PunycoderError(ErrorCode code, const std::string& message);
@@ -46,6 +65,15 @@ private:
 
 [[noreturn]] void throw_error(ErrorCode code);
 [[noreturn]] void throw_error(ErrorCode code, const std::string& detail);
+
+struct LabelInfo {
+    std::string value;
+    std::string transformed;
+    bool is_ascii = true;
+    bool has_xn_prefix = false;
+    bool needs_encoding = false;
+    bool needs_decoding = false;
+};
 
 struct ParsedURL {
     std::string scheme;
@@ -59,12 +87,13 @@ struct ParsedURL {
     bool has_query = false;
     bool has_fragment = false;
     bool host_was_bracketed = false;
+    HostKind host_kind = HostKind::empty;
     bool valid = false;
     std::string error_message;
 };
 
 struct ParsedDomain {
-    std::vector<std::string> labels;
+    std::vector<LabelInfo> labels;
     bool has_trailing_dot = false;
 };
 
@@ -83,12 +112,16 @@ std::string join_with_dot(const std::vector<std::string>& labels);
 
 std::string punycode_encode_label_fallback(const std::string& label);
 std::string punycode_decode_label_fallback(const std::string& label);
-LabelBackend select_label_backend();
+bool libidn2_backend_available() noexcept;
+LabelBackend select_label_backend(
+    BackendPreference preference = BackendPreference::automatic
+);
 
 ParsedDomain validate_and_parse_domain(
     const std::string& domain,
     const LabelBackend& backend,
-    bool strict
+    bool strict,
+    DomainTransform transform = DomainTransform::none
 );
 bool looks_like_url_input(const std::string& input);
 
@@ -98,6 +131,7 @@ std::string rebuild_url_with_host(const ParsedURL& parsed, const std::string& ho
 class PunycodeService {
 public:
     explicit PunycodeService(bool strict);
+    PunycodeService(bool strict, const LabelBackend& backend);
 
     std::string encode_domain(const std::string& unicode_domain) const;
     std::string decode_domain(const std::string& punycode_domain) const;
@@ -106,7 +140,6 @@ public:
     bool is_valid_domain(const std::string& domain) const;
 
 private:
-    enum class DomainTransform { encode, decode };
     enum class UrlTransform { encode, decode };
 
     std::string transform_domain(

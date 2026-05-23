@@ -2,8 +2,99 @@
 
 #include <algorithm>
 #include <cctype>
+#include <utility>
 
 namespace punycoder {
+
+namespace {
+
+bool is_valid_ascii_domain_char(unsigned char c) {
+    return std::isalnum(c) != 0 || c == '-';
+}
+
+void validate_encoded_label_length(const std::string& encoded) {
+    size_t payload_size = encoded.size();
+    if (starts_with_xn_prefix(encoded)) {
+        payload_size -= 4;
+    }
+    if (payload_size > 63) {
+        throw_error(ErrorCode::encoded_label_too_long);
+    }
+}
+
+LabelInfo classify_label(const std::string& label, bool strict) {
+    if (label.empty()) {
+        throw_error(ErrorCode::domain_empty_label);
+    }
+
+    LabelInfo info;
+    info.value = label;
+    info.has_xn_prefix = starts_with_xn_prefix(label);
+
+    if (strict) {
+        if (label.size() > 63) {
+            throw_error(ErrorCode::domain_label_too_long);
+        }
+        if (label.front() == '-' || label.back() == '-') {
+            throw_error(ErrorCode::domain_label_hyphen);
+        }
+    }
+
+    for (unsigned char c : label) {
+        if (c >= 0x80) {
+            info.is_ascii = false;
+            continue;
+        }
+        if (strict && !is_valid_ascii_domain_char(c)) {
+            throw_error(ErrorCode::ascii_domain_characters);
+        }
+    }
+
+    info.needs_encoding = !info.is_ascii;
+    info.needs_decoding = info.is_ascii && info.has_xn_prefix;
+
+    if (info.needs_encoding) {
+        utf8_to_codepoints(label);
+    }
+
+    return info;
+}
+
+void plan_label_transform(
+    LabelInfo* label,
+    const LabelBackend& backend,
+    bool strict,
+    DomainTransform transform
+) {
+    if (label->needs_decoding) {
+        std::string decoded = backend.decode(label->value);
+        if (strict && decoded.empty()) {
+            throw_error(ErrorCode::invalid_punycode_label);
+        }
+        if (transform == DomainTransform::decode) {
+            label->transformed = std::move(decoded);
+        }
+        return;
+    }
+
+    if (!label->needs_encoding) {
+        return;
+    }
+
+    if (transform != DomainTransform::encode && !strict) {
+        return;
+    }
+
+    std::string encoded = backend.encode(label->value);
+    if (strict) {
+        validate_encoded_label_length(encoded);
+    }
+    if (transform == DomainTransform::encode) {
+        label->transformed = std::move(encoded);
+    }
+}
+
+}  // namespace
 
 bool looks_like_url_input(const std::string& input) {
     if (input.find("://") != std::string::npos) {
@@ -43,7 +134,8 @@ bool looks_like_url_input(const std::string& input) {
 ParsedDomain validate_and_parse_domain(
     const std::string& domain,
     const LabelBackend& backend,
-    bool strict
+    bool strict,
+    DomainTransform transform
 ) {
     if (domain.empty()) {
         throw_error(ErrorCode::domain_empty);
@@ -65,44 +157,12 @@ ParsedDomain validate_and_parse_domain(
         throw_error(ErrorCode::domain_too_long);
     }
 
-    result.labels = split_on_dot(core);
-    for (const std::string& label : result.labels) {
-        if (label.empty()) {
-            throw_error(ErrorCode::domain_empty_label);
-        }
-
-        utf8_to_codepoints(label);
-
-        if (strict && label.size() > 63) {
-            throw_error(ErrorCode::domain_label_too_long);
-        }
-
-        if (strict) {
-            if (label.front() == '-' || label.back() == '-') {
-                throw_error(ErrorCode::domain_label_hyphen);
-            }
-
-            for (unsigned char c : label) {
-                if (c < 0x80 && !std::isalnum(c) && c != '-') {
-                    throw_error(ErrorCode::ascii_domain_characters);
-                }
-            }
-        }
-
-        if (!has_non_ascii(label)) {
-            if (starts_with_xn_prefix(label)) {
-                std::string decoded = backend.decode(label);
-                if (strict && decoded.empty()) {
-                    throw_error(ErrorCode::invalid_punycode_label);
-                }
-            }
-        } else if (strict) {
-            std::string encoded = backend.encode(label);
-            std::string payload = encoded.substr(4);
-            if (payload.size() > 63) {
-                throw_error(ErrorCode::encoded_label_too_long);
-            }
-        }
+    std::vector<std::string> raw_labels = split_on_dot(core);
+    result.labels.reserve(raw_labels.size());
+    for (const std::string& raw_label : raw_labels) {
+        LabelInfo label = classify_label(raw_label, strict);
+        plan_label_transform(&label, backend, strict, transform);
+        result.labels.push_back(std::move(label));
     }
 
     return result;

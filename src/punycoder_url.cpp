@@ -7,6 +7,118 @@ namespace punycoder {
 
 namespace {
 
+bool is_hex_digit(char c) {
+    unsigned char uc = static_cast<unsigned char>(c);
+    return std::isxdigit(uc) != 0;
+}
+
+bool is_ipv4_address(const std::string& host) {
+    int octets = 0;
+    size_t start = 0;
+
+    for (size_t i = 0; i <= host.size(); ++i) {
+        if (i != host.size() && host[i] != '.') {
+            continue;
+        }
+
+        if (start == i) {
+            return false;
+        }
+
+        int value = 0;
+        for (size_t j = start; j < i; ++j) {
+            unsigned char c = static_cast<unsigned char>(host[j]);
+            if (std::isdigit(c) == 0) {
+                return false;
+            }
+            value = (value * 10) + (c - '0');
+            if (value > 255) {
+                return false;
+            }
+        }
+
+        ++octets;
+        start = i + 1;
+    }
+
+    return octets == 4;
+}
+
+bool parse_ipv6_sequence(
+    const std::string& input,
+    bool allow_ipv4_tail,
+    int* groups
+) {
+    *groups = 0;
+    if (input.empty()) {
+        return true;
+    }
+
+    size_t start = 0;
+    for (;;) {
+        size_t end = input.find(':', start);
+        std::string token = input.substr(
+            start,
+            end == std::string::npos ? std::string::npos : end - start
+        );
+        if (token.empty()) {
+            return false;
+        }
+
+        if (end == std::string::npos && allow_ipv4_tail &&
+            token.find('.') != std::string::npos) {
+            if (!is_ipv4_address(token)) {
+                return false;
+            }
+            *groups += 2;
+            return true;
+        }
+
+        if (token.size() > 4) {
+            return false;
+        }
+        for (char c : token) {
+            if (!is_hex_digit(c)) {
+                return false;
+            }
+        }
+        ++(*groups);
+
+        if (end == std::string::npos) {
+            return true;
+        }
+
+        start = end + 1;
+    }
+}
+
+bool is_ipv6_address(const std::string& host) {
+    if (host.empty()) {
+        return false;
+    }
+
+    size_t double_colon = host.find("::");
+    if (double_colon == std::string::npos) {
+        int groups = 0;
+        return parse_ipv6_sequence(host, true, &groups) && groups == 8;
+    }
+
+    if (host.find("::", double_colon + 2) != std::string::npos) {
+        return false;
+    }
+
+    int left_groups = 0;
+    int right_groups = 0;
+    if (!parse_ipv6_sequence(host.substr(0, double_colon), false, &left_groups)) {
+        return false;
+    }
+    if (!parse_ipv6_sequence(host.substr(double_colon + 2), true, &right_groups)) {
+        return false;
+    }
+
+    return left_groups + right_groups < 8;
+}
+
 bool parse_authority(const std::string& authority, ParsedURL* parsed) {
     std::string host_port = authority;
     size_t at_pos = host_port.find_last_of('@');
@@ -17,6 +129,7 @@ bool parse_authority(const std::string& authority, ParsedURL* parsed) {
 
     if (host_port.empty()) {
         parsed->host.clear();
+        parsed->host_kind = HostKind::empty;
         return true;
     }
 
@@ -29,6 +142,11 @@ bool parse_authority(const std::string& authority, ParsedURL* parsed) {
 
         parsed->host_was_bracketed = true;
         parsed->host = host_port.substr(1, close - 1);
+        if (!is_ipv6_address(parsed->host)) {
+            parsed->error_message = "Invalid IPv6 authority";
+            return false;
+        }
+        parsed->host_kind = HostKind::ipv6;
         if (close + 1 < host_port.size()) {
             if (host_port[close + 1] != ':') {
                 parsed->error_message = "Invalid authority";
@@ -52,6 +170,14 @@ bool parse_authority(const std::string& authority, ParsedURL* parsed) {
             }
         } else {
             parsed->host = host_port;
+        }
+
+        if (parsed->host.empty()) {
+            parsed->host_kind = HostKind::empty;
+        } else if (is_ipv4_address(parsed->host)) {
+            parsed->host_kind = HostKind::ipv4;
+        } else {
+            parsed->host_kind = HostKind::dns;
         }
     }
 
