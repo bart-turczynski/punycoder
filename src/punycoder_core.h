@@ -103,17 +103,23 @@ struct LabelBackend {
     const char* name;
 };
 
-constexpr inline bool is_valid_unicode_scalar(uint32_t cp) noexcept {
-    return cp <= 0x10FFFF && (cp < 0xD800 || cp > 0xDFFF);
-}
-
+// UTF-8 codec utilities. Used by every encode/decode path and by the
+// label/domain validators.
 std::vector<uint32_t> utf8_to_codepoints(const std::string& input);
 std::string codepoints_to_utf8(const std::vector<uint32_t>& codepoints);
 bool has_non_ascii(const std::string& input);
-bool starts_with_xn_prefix(const std::string& label);
 
+// Punycode internals. Not part of the public R surface; used only by
+// the backend, the fallback algorithm, and domain classification.
+constexpr inline bool is_valid_unicode_scalar(uint32_t cp) noexcept {
+    return cp <= 0x10FFFF && (cp < 0xD800 || cp > 0xDFFF);
+}
+bool starts_with_xn_prefix(const std::string& label);
 std::string punycode_encode_label_fallback(const std::string& label);
 std::string punycode_decode_label_fallback(const std::string& label);
+
+// Backend selection. The libidn2 path is compiled in only when
+// PUNYCODER_USE_LIBIDN2 is defined (see punycoder_backend.cpp).
 bool libidn2_backend_available() noexcept;
 LabelBackend select_label_backend(
     BackendPreference preference = BackendPreference::automatic
