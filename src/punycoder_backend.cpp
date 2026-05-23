@@ -102,7 +102,9 @@ bool has_uppercase_payload(const std::string& label) {
 std::string default_encode_label(const std::string& label) {
     try {
         return encode_label_libidn2(label);
-    } catch (const std::exception&) {
+    } catch (const PunycoderError&) {
+        // Only fall back on deterministic Punycode-level errors; let
+        // std::bad_alloc and other genuine failures propagate.
         return punycode_encode_label_fallback(label);
     }
 }
@@ -114,7 +116,7 @@ std::string default_decode_label(const std::string& label) {
 
     try {
         return decode_label_libidn2(label);
-    } catch (const std::exception&) {
+    } catch (const PunycoderError&) {
         return punycode_decode_label_fallback(label);
     }
 }
