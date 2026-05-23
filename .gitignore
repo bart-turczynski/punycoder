@@ -49,6 +49,9 @@ src/symbols.rds
 src-i386/
 src-x64/
 
+# configure-generated (templates: Makevars.in / Makevars.win)
+src/Makevars
+
 # Source package bundles
 *.tar.gz
 README.html
