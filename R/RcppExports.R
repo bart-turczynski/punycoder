@@ -32,3 +32,4 @@ backend_info_cpp <- function() {
 compare_backends_cpp <- function(input, mode, strict = TRUE) {
     .Call(`_punycoder_compare_backends_cpp`, input, mode, strict)
 }
+

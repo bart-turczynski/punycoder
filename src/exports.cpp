@@ -72,7 +72,8 @@ std::string safe_backend_mode(
 
 }  // namespace
 
-Rcpp::CharacterVector puny_encode_cpp(Rcpp::CharacterVector domains, bool strict) {
+// [[Rcpp::export]]
+Rcpp::CharacterVector puny_encode_cpp(Rcpp::CharacterVector domains, bool strict = true) {
     punycoder::PunycodeService service(strict);
     return transform_strings(
         domains,
@@ -87,7 +88,8 @@ Rcpp::CharacterVector puny_encode_cpp(Rcpp::CharacterVector domains, bool strict
     );
 }
 
-Rcpp::CharacterVector puny_decode_cpp(Rcpp::CharacterVector domains, bool strict) {
+// [[Rcpp::export]]
+Rcpp::CharacterVector puny_decode_cpp(Rcpp::CharacterVector domains, bool strict = true) {
     punycoder::PunycodeService service(strict);
     return transform_strings(
         domains,
@@ -102,7 +104,8 @@ Rcpp::CharacterVector puny_decode_cpp(Rcpp::CharacterVector domains, bool strict
     );
 }
 
-Rcpp::CharacterVector url_encode_cpp(Rcpp::CharacterVector urls, bool strict) {
+// [[Rcpp::export]]
+Rcpp::CharacterVector url_encode_cpp(Rcpp::CharacterVector urls, bool strict = true) {
     punycoder::PunycodeService service(strict);
     return transform_strings(
         urls,
@@ -114,7 +117,8 @@ Rcpp::CharacterVector url_encode_cpp(Rcpp::CharacterVector urls, bool strict) {
     );
 }
 
-Rcpp::CharacterVector url_decode_cpp(Rcpp::CharacterVector urls, bool strict) {
+// [[Rcpp::export]]
+Rcpp::CharacterVector url_decode_cpp(Rcpp::CharacterVector urls, bool strict = true) {
     punycoder::PunycodeService service(strict);
     return transform_strings(
         urls,
@@ -126,7 +130,8 @@ Rcpp::CharacterVector url_decode_cpp(Rcpp::CharacterVector urls, bool strict) {
     );
 }
 
-Rcpp::List parse_url_cpp(Rcpp::CharacterVector urls, bool encode_domains) {
+// [[Rcpp::export]]
+Rcpp::List parse_url_cpp(Rcpp::CharacterVector urls, bool encode_domains = false) {
     R_xlen_t n = urls.size();
     Rcpp::CharacterVector scheme(n, NA_STRING);
     Rcpp::CharacterVector domain(n, NA_STRING);
@@ -198,7 +203,8 @@ Rcpp::List parse_url_cpp(Rcpp::CharacterVector urls, bool encode_domains) {
     );
 }
 
-Rcpp::List validate_domain_cpp(Rcpp::CharacterVector domains, bool strict) {
+// [[Rcpp::export]]
+Rcpp::List validate_domain_cpp(Rcpp::CharacterVector domains, bool strict = true) {
     R_xlen_t n = domains.size();
     Rcpp::LogicalVector valid(n);
     Rcpp::List errors(n);
@@ -235,6 +241,7 @@ Rcpp::List validate_domain_cpp(Rcpp::CharacterVector domains, bool strict) {
     );
 }
 
+// [[Rcpp::export]]
 Rcpp::List backend_info_cpp() {
     punycoder::LabelBackend backend = punycoder::select_label_backend();
 
@@ -244,10 +251,11 @@ Rcpp::List backend_info_cpp() {
     );
 }
 
+// [[Rcpp::export]]
 Rcpp::List compare_backends_cpp(
     Rcpp::CharacterVector input,
     std::string mode,
-    bool strict
+    bool strict = true
 ) {
     Rcpp::CharacterVector fallback(input.size());
     Rcpp::CharacterVector libidn2(input.size());
