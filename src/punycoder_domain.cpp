@@ -53,10 +53,6 @@ LabelInfo classify_label(const std::string& label, bool strict) {
     info.needs_encoding = !info.is_ascii;
     info.needs_decoding = info.is_ascii && info.has_xn_prefix;
 
-    if (info.needs_encoding) {
-        utf8_to_codepoints(label);
-    }
-
     return info;
 }
 
@@ -82,6 +78,10 @@ void plan_label_transform(
     }
 
     if (transform != DomainTransform::encode && !strict) {
+        // The backend.encode call below would normally walk the UTF-8; on
+        // this branch it doesn't run, so validate directly to preserve the
+        // contract that any non-ASCII label is checked for well-formed UTF-8.
+        utf8_to_codepoints(label->value);
         return;
     }
 
