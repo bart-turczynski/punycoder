@@ -22,16 +22,11 @@ std::string libidn2_error_message(int rc) {
 }
 
 std::string encode_label_libidn2(const std::string& label) {
-    std::vector<uint32_t> input = utf8_to_codepoints(label);
-    bool needs_encoding = std::any_of(
-        input.begin(),
-        input.end(),
-        [](uint32_t cp) { return cp >= 0x80; }
-    );
-    if (!needs_encoding) {
+    if (!has_non_ascii(label)) {
         return label;
     }
 
+    std::vector<uint32_t> input = utf8_to_codepoints(label);
     size_t buffer_size = std::max<size_t>(32, (input.size() * 5) + 16);
     for (;;) {
         std::vector<char> output(buffer_size);
@@ -135,10 +130,26 @@ std::string fallback_decode_label(const std::string& label) {
 
 }  // namespace
 
-LabelBackend select_label_backend() {
+bool libidn2_backend_available() noexcept {
 #ifdef PUNYCODER_USE_LIBIDN2
+    return true;
+#else
+    return false;
+#endif
+}
+
+LabelBackend select_label_backend(BackendPreference preference) {
+    if (preference == BackendPreference::fallback) {
+        return {&fallback_encode_label, &fallback_decode_label, "fallback"};
+    }
+
+#ifdef PUNYCODER_USE_LIBIDN2
+    if (preference == BackendPreference::libidn2) {
+        return {&encode_label_libidn2, &decode_label_libidn2, "libidn2"};
+    }
     return {&default_encode_label, &default_decode_label, "libidn2+fallback"};
 #else
+    (void) preference;
     return {&fallback_encode_label, &fallback_decode_label, "fallback"};
 #endif
 }

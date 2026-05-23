@@ -65,3 +65,19 @@
     strict = strict
   )
 }
+
+# Internal backend metadata helper used by tests.
+# @keywords internal
+# @noRd
+.backend_info <- function() {
+  backend_info_cpp()
+}
+
+# Internal backend comparison helper used by tests.
+# @keywords internal
+# @noRd
+.compare_backends <- function(x, mode, strict = TRUE) {
+  .assert_character(x, "x")
+  .assert_flag(strict, "strict")
+  compare_backends_cpp(x, mode, strict)
+}

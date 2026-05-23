@@ -25,3 +25,11 @@ validate_domain_cpp <- function(domains, strict = TRUE) {
     .Call(`_punycoder_validate_domain_cpp`, domains, strict)
 }
 
+backend_info_cpp <- function() {
+    .Call(`_punycoder_backend_info_cpp`)
+}
+
+compare_backends_cpp <- function(input, mode, strict = TRUE) {
+    .Call(`_punycoder_compare_backends_cpp`, input, mode, strict)
+}
+

@@ -1,5 +1,7 @@
 #include "punycoder_core.h"
 
+#include <algorithm>
+
 namespace punycoder {
 
 std::vector<uint32_t> utf8_to_codepoints(const std::string& input) {
@@ -63,6 +65,7 @@ std::vector<uint32_t> utf8_to_codepoints(const std::string& input) {
 
 std::string codepoints_to_utf8(const std::vector<uint32_t>& codepoints) {
     std::string output;
+    output.reserve(codepoints.size() * 4);
 
     for (uint32_t cp : codepoints) {
         if (cp <= 0x7F) {
@@ -98,6 +101,9 @@ bool has_non_ascii(const std::string& input) {
 
 std::vector<std::string> split_on_dot(const std::string& domain) {
     std::vector<std::string> parts;
+    parts.reserve(static_cast<size_t>(
+        std::count(domain.begin(), domain.end(), '.') + 1
+    ));
     size_t start = 0;
 
     for (size_t i = 0; i <= domain.size(); ++i) {

@@ -2,8 +2,59 @@
 
 namespace punycoder {
 
+namespace {
+
+const std::string& resolved_label(
+    const LabelInfo& label,
+    DomainTransform transform
+) {
+    if (transform == DomainTransform::encode && label.needs_encoding &&
+        !label.transformed.empty()) {
+        return label.transformed;
+    }
+
+    if (transform == DomainTransform::decode && label.needs_decoding &&
+        !label.transformed.empty()) {
+        return label.transformed;
+    }
+
+    return label.value;
+}
+
+std::string materialize_domain(
+    const ParsedDomain& parsed,
+    DomainTransform transform
+) {
+    size_t total = parsed.has_trailing_dot ? 1 : 0;
+    if (!parsed.labels.empty()) {
+        total += parsed.labels.size() - 1;
+    }
+    for (const LabelInfo& label : parsed.labels) {
+        total += resolved_label(label, transform).size();
+    }
+
+    std::string output;
+    output.reserve(total);
+    for (size_t i = 0; i < parsed.labels.size(); ++i) {
+        if (i > 0) {
+            output.push_back('.');
+        }
+        output += resolved_label(parsed.labels[i], transform);
+    }
+    if (parsed.has_trailing_dot) {
+        output.push_back('.');
+    }
+
+    return output;
+}
+
+}  // namespace
+
 PunycodeService::PunycodeService(bool strict)
     : backend_(select_label_backend()), strict_(strict) {}
+
+PunycodeService::PunycodeService(bool strict, const LabelBackend& backend)
+    : backend_(backend), strict_(strict) {}
 
 std::string PunycodeService::encode_domain(const std::string& unicode_domain) const {
     return transform_domain(unicode_domain, DomainTransform::encode);
@@ -23,7 +74,7 @@ std::string PunycodeService::decode_url(const std::string& url) const {
 
 bool PunycodeService::is_valid_domain(const std::string& domain) const {
     try {
-        validate_and_parse_domain(domain, backend_, strict_);
+        validate_and_parse_domain(domain, backend_, strict_, DomainTransform::none);
         return true;
     } catch (const std::exception&) {
         return false;
@@ -34,20 +85,8 @@ std::string PunycodeService::transform_domain(
     const std::string& domain,
     DomainTransform transform
 ) const {
-    ParsedDomain parsed = validate_and_parse_domain(domain, backend_, strict_);
-    for (std::string& label : parsed.labels) {
-        if (transform == DomainTransform::encode) {
-            label = backend_.encode(label);
-        } else {
-            label = backend_.decode(label);
-        }
-    }
-
-    std::string output = join_with_dot(parsed.labels);
-    if (parsed.has_trailing_dot) {
-        output.push_back('.');
-    }
-    return output;
+    ParsedDomain parsed = validate_and_parse_domain(domain, backend_, strict_, transform);
+    return materialize_domain(parsed, transform);
 }
 
 std::string PunycodeService::transform_url(
@@ -60,6 +99,10 @@ std::string PunycodeService::transform_url(
     }
 
     if (!parsed.has_authority || parsed.host.empty()) {
+        return url;
+    }
+
+    if (parsed.host_kind == HostKind::ipv4 || parsed.host_kind == HostKind::ipv6) {
         return url;
     }
 

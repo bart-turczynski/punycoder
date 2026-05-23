@@ -1,2 +1,0 @@
-PKG_CPPFLAGS = -I../inst/include -I/opt/homebrew/Cellar/libidn2/2.3.7/include -DPUNYCODER_USE_LIBIDN2
-PKG_LIBS = -L/opt/homebrew/Cellar/libidn2/2.3.7/lib -lidn2

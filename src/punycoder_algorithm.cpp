@@ -76,14 +76,12 @@ EncodingInput prepare_encode_input(const std::string& label) {
         throw_error(ErrorCode::empty_domain_label);
     }
 
-    std::vector<uint32_t> codepoints = utf8_to_codepoints(label);
-    bool needs_encoding = std::any_of(
-        codepoints.begin(),
-        codepoints.end(),
-        [](uint32_t cp) { return cp >= 0x80; }
-    );
+    if (!has_non_ascii(label)) {
+        return {{}, false};
+    }
 
-    return {std::move(codepoints), needs_encoding};
+    std::vector<uint32_t> codepoints = utf8_to_codepoints(label);
+    return {std::move(codepoints), true};
 }
 
 }  // namespace
@@ -107,6 +105,7 @@ std::string punycode_encode_label_fallback(const std::string& label) {
 
     const std::vector<uint32_t>& codepoints = input.codepoints;
     std::string output;
+    output.reserve(codepoints.size() + 8);
     size_t basic_count = 0;
     size_t handled = 0;
 
