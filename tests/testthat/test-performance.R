@@ -10,7 +10,7 @@ benchmark_rate <- function(fn, input, iterations = 3L) {
 
 expect_rate_at_least <- function(fn, input, minimum_rate) {
   rate <- benchmark_rate(fn, input)
-  expect_gte(rate, minimum_rate)
+  testthat::expect_gte(rate, minimum_rate)
 }
 
 test_that("ASCII domain throughput stays high for encode and decode", {
