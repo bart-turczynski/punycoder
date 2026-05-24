@@ -26,4 +26,9 @@ Useful links:
 \author{
 \strong{Maintainer}: Bart Turczynski \email{bartek+punycoder@turczynski.pl}
 
+Authors:
+\itemize{
+  \item Bart Turczynski \email{bartek+punycoder@turczynski.pl}
+}
+
 }

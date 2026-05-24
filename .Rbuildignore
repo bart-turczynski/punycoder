@@ -17,6 +17,7 @@ README\.html$
 ^src/Makevars$
 ^src/symbols\.rds$
 ^coverage\.html$
+^test_coverage\.html$
 ^lib$
 ^lib/.*
 ^\.github$

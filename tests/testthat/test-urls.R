@@ -209,7 +209,7 @@ test_that("parse_url covers invalid inputs and encoding fallbacks", {
   expect_true(is.na(parsed$domain[[1]]))
 })
 
-test_that("parse_url leaves IP literals unchanged when encode_domains is enabled", {
+test_that("parse_url leaves IP literals unchanged with encode_domains", {
   ipv4 <- parse_url("http://127.0.0.1:8080/path", encode_domains = TRUE)
   expect_equal(ipv4$domain[[1]], "127.0.0.1")
   expect_equal(ipv4$port[[1]], 8080L)

@@ -104,7 +104,7 @@ test_that("vectorized operations work", {
   expect_equal(decoded, domains)
 })
 
-test_that("mixed ASCII, Unicode, and xn labels preserve strict decode behavior", {
+test_that("mixed ASCII, Unicode, xn labels keep strict decode behavior", {
   inputs <- c("example.com", "xn--caf-dma.com", "bücher.de")
 
   expect_equal(
