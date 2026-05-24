@@ -55,7 +55,7 @@ src/Makevars
 # Source package bundles
 *.tar.gz
 README.html
-coverage.html
+*coverage.html
 lib/
 
 # Installed package artifacts
