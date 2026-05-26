@@ -27,5 +27,6 @@ README\.html$
 ^\.claude$
 ^\.claude/.*
 ^CLAUDE\.md$
+^AGENTS\.md$
 ^CONTRIBUTING\.md$
 ^THIRD_PARTY_NOTICES\.md$
