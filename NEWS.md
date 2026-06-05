@@ -15,7 +15,7 @@
 ## Package Structure
 
 * CRAN-compliant package structure
-* GPL-3 license
+* MIT license
 * Comprehensive test coverage
 * Performance optimizations
 * Cross-platform compatibility (Windows, macOS, Linux)

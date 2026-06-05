@@ -72,3 +72,7 @@ tests/testthat/_snaps/
 
 # Claude Cowork
 .claude/
+
+# Fiberplane local issue tracking
+.fp/
+FP_CLAUDE.md
