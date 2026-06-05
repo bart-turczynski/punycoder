@@ -116,7 +116,7 @@ std::string punycode_encode_label_fallback(const std::string& label) {
     }
 
     const std::vector<uint32_t>& codepoints = input.codepoints;
-    std::string output;
+    std::string output = "xn--";
     output.reserve(codepoints.size() + 8);
     size_t basic_count = 0;
     size_t handled = 0;
@@ -187,7 +187,7 @@ std::string punycode_encode_label_fallback(const std::string& label) {
         ++n;
     }
 
-    return "xn--" + output;
+    return output;
 }
 
 std::string punycode_decode_label_fallback(const std::string& label) {
@@ -204,19 +204,19 @@ std::string punycode_decode_label_fallback(const std::string& label) {
         throw_error(ErrorCode::label_length_limit);
     }
 
-    std::string input = label.substr(4);
-    if (input.empty()) {
+    constexpr size_t payload_start = 4;
+    if (label.size() == payload_start) {
         throw_error(ErrorCode::invalid_punycode_label);
     }
 
     std::vector<uint32_t> output;
-    output.reserve(input.size());
-    size_t pos = input.find_last_of(kDelimiter);
-    size_t index = 0;
+    output.reserve(label.size() - payload_start);
+    size_t pos = label.find_last_of(kDelimiter);
+    size_t index = payload_start;
 
-    if (pos != std::string::npos) {
-        for (size_t j = 0; j < pos; ++j) {
-            unsigned char c = static_cast<unsigned char>(input[j]);
+    if (pos != std::string::npos && pos >= payload_start) {
+        for (size_t j = payload_start; j < pos; ++j) {
+            unsigned char c = static_cast<unsigned char>(label[j]);
             if (c >= 0x80) {
                 throw_error(ErrorCode::invalid_basic_code_point);
             }
@@ -229,16 +229,16 @@ std::string punycode_decode_label_fallback(const std::string& label) {
     uint64_t i = 0;
     uint32_t bias = kInitialBias;
 
-    while (index < input.size()) {
+    while (index < label.size()) {
         uint64_t oldi = i;
         uint64_t w = 1;
 
         for (uint32_t k = kBase;; k += kBase) {
-            if (index >= input.size()) {
+            if (index >= label.size()) {
                 throw_error(ErrorCode::truncated_punycode_input);
             }
 
-            int digit = decode_digit(input[index++]);
+            int digit = decode_digit(label[index++]);
             if (digit < 0) {
                 throw_error(ErrorCode::invalid_punycode_digit);
             }

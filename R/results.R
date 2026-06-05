@@ -23,6 +23,7 @@ get_validation_summary <- function(validation_result) {
 #'
 #' @param x A punycoder_parsed_url object
 #' @param ... Additional arguments (ignored)
+#' @return Invisibly returns \code{x}.
 #' @export
 print.punycoder_parsed_url <- function(x, ...) {
   cat("Punycoder Parsed URL Results\n")
@@ -47,6 +48,7 @@ print.punycoder_parsed_url <- function(x, ...) {
 #'
 #' @param x A punycoder_validation object
 #' @param ... Additional arguments (ignored)
+#' @return Invisibly returns \code{x}.
 #' @export
 print.punycoder_validation <- function(x, ...) {
   cat("Punycoder Domain Validation Results\n")

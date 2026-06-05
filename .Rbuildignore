@@ -27,6 +27,10 @@ README\.html$
 ^\.claude$
 ^\.claude/.*
 ^CLAUDE\.md$
+^FP_CLAUDE\.md$
+^\.fp$
+^\.fp/.*
 ^AGENTS\.md$
 ^CONTRIBUTING\.md$
 ^THIRD_PARTY_NOTICES\.md$
+^cran-comments\.md$

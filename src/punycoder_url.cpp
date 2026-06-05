@@ -242,6 +242,32 @@ ParsedURL parse_url_string(const std::string& url) {
 
 std::string rebuild_url_with_host(const ParsedURL& parsed, const std::string& host) {
     std::string result;
+    size_t capacity = parsed.scheme.size() + parsed.userinfo.size() + host.size() +
+        parsed.port.size() + parsed.path.size() + parsed.query.size() +
+        parsed.fragment.size();
+
+    if (!parsed.scheme.empty()) {
+        capacity += 1;
+    }
+    if (parsed.has_authority) {
+        capacity += 2;
+        if (!parsed.userinfo.empty()) {
+            capacity += 1;
+        }
+        if (parsed.host_was_bracketed) {
+            capacity += 2;
+        }
+        if (!parsed.port.empty()) {
+            capacity += 1;
+        }
+    }
+    if (parsed.has_query) {
+        capacity += 1;
+    }
+    if (parsed.has_fragment) {
+        capacity += 1;
+    }
+    result.reserve(capacity);
 
     if (!parsed.scheme.empty()) {
         result += parsed.scheme;

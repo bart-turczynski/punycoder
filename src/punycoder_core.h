@@ -123,7 +123,7 @@ constexpr inline bool is_valid_unicode_scalar(uint32_t cp) noexcept {
 // / unbounded-allocation territory on the non-strict path, where the precise
 // RFC limits are not applied. See punycoder_domain.cpp and
 // punycoder_algorithm.cpp.
-constexpr inline std::size_t kMaxLabelLength = 1024;
+constexpr std::size_t kMaxLabelLength = 1024;
 
 bool starts_with_xn_prefix(const std::string& label);
 std::string punycode_encode_label_fallback(const std::string& label);
