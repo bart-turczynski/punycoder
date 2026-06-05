@@ -145,7 +145,7 @@ validate_domain(c("valid.com", "invalid..domain"))
 
 ## Contributing
 
-We welcome contributions. See [CONTRIBUTING.md](CONTRIBUTING.md) for the
+We welcome contributions. See [CONTRIBUTING.md](https://github.com/bart-turczynski/punycoder/blob/main/CONTRIBUTING.md) for the
 current development workflow.
 
 ## License

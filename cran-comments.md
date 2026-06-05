@@ -1,6 +1,6 @@
 ## R CMD check results
 
-0 errors | 0 warnings | 2 notes
+0 errors | 0 warnings | 1 note
 
 * This is a new submission.
 
@@ -9,10 +9,6 @@
 **New submission**
 
 Standard note for first-time CRAN submissions; no action required.
-
-**HTML validation skipped**
-
-`tidy` (HTML Tidy) installed locally is older than the version `R CMD check` expects. The manual HTML is valid — this is a local tooling gap only and will not affect CRAN's infrastructure.
 
 ## Platform
 
