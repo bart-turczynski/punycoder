@@ -195,6 +195,15 @@ std::string punycode_decode_label_fallback(const std::string& label) {
         return label;
     }
 
+    // Self-protection for the O(n^2) insert loop below: refuse oversized input
+    // regardless of caller, so a crafted label can never drive quadratic time
+    // or unbounded allocation. The domain layer caps this earlier, but the
+    // reference decoder must not rely on that for callers that reach it
+    // directly (e.g. backend parity comparisons).
+    if (label.size() > kMaxLabelLength) {
+        throw_error(ErrorCode::label_length_limit);
+    }
+
     std::string input = label.substr(4);
     if (input.empty()) {
         throw_error(ErrorCode::invalid_punycode_label);

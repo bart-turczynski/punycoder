@@ -140,7 +140,18 @@ test_that("strict defaults follow global punycoder.strict option", {
 })
 
 test_that("punycode handles uppercase and trailing dots", {
-  expect_equal(puny_decode("XN--CAF-DMA.COM"), "CAFé.COM")
+  # The xn-- prefix is matched case-insensitively, so an uppercase prefix on
+  # an otherwise canonical A-label still decodes in strict mode.
+  expect_equal(puny_decode("XN--caf-dma.com", strict = TRUE), "café.com")
+
+  # An uppercase *payload* is a non-canonical A-label (RFC 5891 canonical
+  # form): strict decode rejects it because it does not round-trip, while
+  # non-strict decode stays lenient and best-effort.
+  expect_error(
+    puny_decode("XN--CAF-DMA.COM", strict = TRUE),
+    "Error decoding domain"
+  )
+  expect_equal(puny_decode("XN--CAF-DMA.COM", strict = FALSE), "CAFé.COM")
   expect_equal(puny_encode("caf\u00E9.com."), "xn--caf-dma.com.")
   expect_equal(puny_decode("xn--caf-dma.com."), "caf\u00E9.com.")
 
@@ -152,6 +163,22 @@ test_that("punycode handles uppercase and trailing dots", {
 test_that("punycode decode reports invalid payload characters", {
   expect_error(puny_decode("xn--ab*", strict = TRUE), "hyphens")
   expect_true(is.na(puny_decode("xn--ab*", strict = FALSE)))
+})
+
+test_that("strict decode enforces canonical A-label round-trip", {
+  # Canonical A-labels decode unchanged in strict mode.
+  expect_equal(puny_decode("xn--caf-dma.com", strict = TRUE), "café.com")
+  expect_equal(puny_decode("xn--80adxhks.xn--p1ai", strict = TRUE), "москва.рф")
+
+  # A non-canonical encoding (uppercase digit in the payload) decodes to the
+  # same Unicode but does not re-encode to itself, so strict mode rejects it.
+  expect_error(
+    puny_decode("xn--caf-dMA.com", strict = TRUE),
+    "Error decoding domain"
+  )
+
+  # Non-strict mode keeps the lenient best-effort decode unchanged.
+  expect_equal(puny_decode("xn--caf-dMA.com", strict = FALSE), "café.com")
 })
 
 test_that("empty string edge cases", {

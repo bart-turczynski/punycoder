@@ -1,6 +1,7 @@
 #ifndef PUNYCODER_CORE_H
 #define PUNYCODER_CORE_H
 
+#include <cstddef>
 #include <cstdint>
 #include <stdexcept>
 #include <string>
@@ -29,6 +30,7 @@ enum class ErrorCode {
     domain_label_hyphen,
     ascii_domain_characters,
     encoded_label_too_long,
+    label_length_limit,
     invalid_ipv6_authority,
     invalid_authority,
     empty_url,
@@ -114,6 +116,15 @@ bool has_non_ascii(const std::string& input);
 constexpr inline bool is_valid_unicode_scalar(uint32_t cp) noexcept {
     return cp <= 0x10FFFF && (cp < 0xD800 || cp > 0xDFFF);
 }
+// Hard upper bound on a single label's byte length, enforced regardless of
+// the strict flag. Legitimate DNS labels never exceed 63 octets (RFC 1035);
+// this deliberately generous cap exists only to stop adversarial oversized
+// input from driving the O(n^2) reference encoder/decoder into quadratic-time
+// / unbounded-allocation territory on the non-strict path, where the precise
+// RFC limits are not applied. See punycoder_domain.cpp and
+// punycoder_algorithm.cpp.
+constexpr inline std::size_t kMaxLabelLength = 1024;
+
 bool starts_with_xn_prefix(const std::string& label);
 std::string punycode_encode_label_fallback(const std::string& label);
 std::string punycode_decode_label_fallback(const std::string& label);

@@ -44,6 +44,14 @@ LabelInfo classify_label(const std::string& label, bool strict) {
         throw_error(ErrorCode::domain_empty_label);
     }
 
+    // Hard length cap applied in both strict and non-strict mode. Strict mode
+    // additionally enforces the precise 63-octet RFC limit below; this guard
+    // exists so the non-strict path still refuses pathologically long labels
+    // rather than handing them to the O(n^2) encoder/decoder unbounded.
+    if (label.size() > kMaxLabelLength) {
+        throw_error(ErrorCode::label_length_limit);
+    }
+
     LabelInfo info;
     info.value = label;
     info.has_xn_prefix = starts_with_xn_prefix(label);
@@ -81,8 +89,22 @@ void plan_label_transform(
 ) {
     if (label->needs_decoding) {
         std::string decoded = backend.decode(label->value);
-        if (strict && decoded.empty()) {
-            throw_error(ErrorCode::invalid_punycode_label);
+        if (strict) {
+            if (decoded.empty()) {
+                throw_error(ErrorCode::invalid_punycode_label);
+            }
+            // RFC 5891 §5.4 / UTS-46: a valid A-label is canonical, i.e. it
+            // must re-encode to exactly itself. The xn-- prefix is compared
+            // case-insensitively (already guaranteed by the prefix detector);
+            // the payload must match byte-for-byte, which rejects uppercase
+            // payloads and other non-canonical encodings. Non-strict callers
+            // keep the lenient best-effort decode.
+            std::string reencoded = backend.encode(decoded);
+            if (!starts_with_xn_prefix(reencoded) ||
+                reencoded.compare(4, std::string::npos,
+                                  label->value, 4, std::string::npos) != 0) {
+                throw_error(ErrorCode::invalid_punycode_label);
+            }
         }
         if (transform == DomainTransform::decode) {
             label->transformed = std::move(decoded);

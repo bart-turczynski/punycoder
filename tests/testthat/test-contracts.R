@@ -44,3 +44,25 @@ test_that("strict wrappers preserve user-facing error prefixes", {
     "^Error decoding URL:"
   )
 })
+
+test_that("oversized labels are bounded in both strict and non-strict mode", {
+  # A crafted xn-- label far beyond the 63-octet DNS limit must not drive the
+  # O(n^2) reference decoder into a quadratic-time / unbounded-allocation DoS.
+  # The length cap fires regardless of the strict flag.
+  oversized <- paste0("xn--", strrep("a", 5e5))
+
+  elapsed <- system.time(
+    result <- puny_decode(oversized, strict = FALSE)
+  )[["elapsed"]]
+  expect_true(is.na(result))
+  expect_lt(elapsed, 1)
+
+  expect_error(
+    puny_decode(oversized, strict = TRUE),
+    "^Error decoding domain:"
+  )
+
+  # The same bound applies to the encode path's oversized non-ASCII input.
+  oversized_unicode <- paste0(strrep("é", 5e5), ".com")
+  expect_true(is.na(puny_encode(oversized_unicode, strict = FALSE)))
+})

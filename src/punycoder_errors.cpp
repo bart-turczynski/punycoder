@@ -55,6 +55,8 @@ std::string format_error(ErrorCode code, const std::string& detail) {
         return "ASCII domain labels may contain only letters, numbers and hyphens";
     case ErrorCode::encoded_label_too_long:
         return "Encoded punycode label exceeds 63 characters";
+    case ErrorCode::label_length_limit:
+        return "Domain label exceeds maximum supported length";
     case ErrorCode::invalid_ipv6_authority:
         return "Invalid IPv6 authority";
     case ErrorCode::invalid_authority:

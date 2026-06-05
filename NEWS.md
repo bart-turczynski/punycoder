@@ -1,3 +1,18 @@
+# punycoder (development version)
+
+## Bug Fixes
+
+* `puny_decode()` (and the URL/domain decoders) now bound label length in both
+  strict and non-strict mode. A crafted oversized `xn--` label previously drove
+  the fallback decoder into quadratic time with unbounded allocation; oversized
+  labels are now rejected promptly (error in strict mode, `NA` in non-strict).
+
+## New Features
+
+* Strict decoding now enforces RFC 5891 canonical A-label form: a decoded
+  label must re-encode to itself. Non-canonical encodings (e.g. uppercase
+  payloads) are rejected in strict mode while non-strict decoding stays lenient.
+
 # punycoder 1.0.0
 
 ## New Features
