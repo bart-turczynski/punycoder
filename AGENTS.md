@@ -43,6 +43,8 @@ All declarations live in `src/punycoder_core.h`. Implementations are split by re
 
 `select_label_backend(BackendPreference)` returns a `LabelBackend` (a pair of encode/decode function pointers plus a name). `automatic` resolves to `"libidn2+fallback"` when libidn2 is compiled in (with libidn2 tried first, fallback on exception), `"libidn2"` to force native, `"fallback"` to force the in-tree algorithm. Tests in `tests/testthat/test-backends.R` use `punycoder:::.compare_backends()` (which calls `compare_backends_cpp`) to assert the two backends agree on RFC 3492 vectors (`inst/testdata/rfc3492_vectors.csv`) and on representative URLs; tests `skip_if` when libidn2 isn't available.
 
+Note the libidn2 path is Unix-only: `configure` defines `-DPUNYCODER_USE_LIBIDN2` only on Linux/macOS. `src/Makevars.win` never sets it, so **Windows builds always use the fallback backend** regardless of installed libraries.
+
 ### Strict vs non-strict
 
 Every public encode/decode function takes `strict = getOption("punycoder.strict", TRUE)`. The default is set in `R/zzz.R::.onLoad`. In strict mode the C++ layer throws and `exports.cpp` converts to `Rcpp::stop`; in non-strict mode failures become `NA_character_` per element. `puny_encode`/`puny_decode` additionally reject URL-shaped input via `looks_like_url_input()` so callers don't accidentally pass a full URL to a domain-only function.
