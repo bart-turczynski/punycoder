@@ -34,7 +34,14 @@ scraping, data analysis, and URL processing workflows.
 
 ## Installation
 
-You can install the development version of punycoder from
+Install the released version of punycoder from
+[CRAN](https://CRAN.R-project.org/package=punycoder) with:
+
+``` r
+install.packages("punycoder")
+```
+
+Or install the development version from
 [GitHub](https://github.com/bart-turczynski/punycoder) with:
 
 ``` r
@@ -160,8 +167,9 @@ validate_domain(c("valid.com", "invalid..domain"))
 
 ## Contributing
 
-We welcome contributions. See [CONTRIBUTING.md](https://github.com/bart-turczynski/punycoder/blob/main/CONTRIBUTING.md) for the
-current development workflow.
+We welcome contributions. See
+[CONTRIBUTING.md](https://github.com/bart-turczynski/punycoder/blob/main/CONTRIBUTING.md)
+for the current development workflow.
 
 ## License
 
