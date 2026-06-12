@@ -37,7 +37,14 @@ The `punycoder` package addresses critical gaps in R's URL processing capabiliti
 
 ## Installation
 
-You can install the development version of punycoder from
+Install the released version of punycoder from
+[CRAN](https://CRAN.R-project.org/package=punycoder) with:
+
+```{r eval=FALSE}
+install.packages("punycoder")
+```
+
+Or install the development version from
 [GitHub](https://github.com/bart-turczynski/punycoder) with:
 
 ```{r eval=FALSE}

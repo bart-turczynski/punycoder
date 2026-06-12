@@ -1,5 +1,9 @@
 # punycoder (development version)
 
+# punycoder 1.0.0
+
+First CRAN release.
+
 ## Bug Fixes
 
 * `puny_decode()` (and the URL/domain decoders) now bound label length in both
@@ -12,11 +16,6 @@
 * Strict decoding now enforces RFC 5891 canonical A-label form: a decoded
   label must re-encode to itself. Non-canonical encodings (e.g. uppercase
   payloads) are rejected in strict mode while non-strict decoding stays lenient.
-
-# punycoder 1.0.0
-
-## New Features
-
 * Initial release of punycoder package
 * Core punycode encoding and decoding functions (`puny_encode()`, `puny_decode()`)
 * URL-aware processing functions (`url_encode()`, `url_decode()`, `parse_url()`)
