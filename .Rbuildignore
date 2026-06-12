@@ -34,3 +34,4 @@ README\.html$
 ^CONTRIBUTING\.md$
 ^THIRD_PARTY_NOTICES\.md$
 ^cran-comments\.md$
+^CRAN-SUBMISSION$
