@@ -5,8 +5,7 @@
 
 <!-- badges: start -->
 
-[![R build
-status](https://github.com/bart-turczynski/punycoder/workflows/R-CMD-check/badge.svg)](https://github.com/bart-turczynski/punycoder/actions)
+[![R-CMD-check](https://github.com/bart-turczynski/punycoder/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/bart-turczynski/punycoder/actions/workflows/R-CMD-check.yaml)
 [![CRAN
 status](https://www.r-pkg.org/badges/version/punycoder)](https://CRAN.R-project.org/package=punycoder)
 <!-- badges: end -->
