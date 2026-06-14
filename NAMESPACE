@@ -2,8 +2,10 @@
 
 S3method(print,punycoder_parsed_url)
 S3method(print,punycoder_validation)
+export(host_normalize)
 export(is_idn)
 export(is_punycode)
+export(normalization_profile_info)
 export(parse_url)
 export(puny_decode)
 export(puny_encode)
