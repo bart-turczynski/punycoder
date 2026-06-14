@@ -1,0 +1,110 @@
+# Canonical-host normalization contract fixtures.
+# Seeds: docs/normalization-contract.md section 5. Source uses \u escapes so
+# the file stays ASCII-clean for CRAN.
+
+test_that("contract section 5 worked examples normalize as specified", {
+  expect_identical(host_normalize("Example.COM"), "example.com")
+  expect_identical(host_normalize("example.com."), "example.com.")
+  # "m\u00fcnchen.de" (munchen.de) -> A-label
+  expect_identical(host_normalize("m\u00fcnchen.de"), "xn--mnchen-3ya.de")
+  expect_identical(host_normalize("xn--mnchen-3ya.de"), "xn--mnchen-3ya.de")
+  # ACE prefix case is folded by UTS-46 mapping.
+  expect_identical(host_normalize("XN--MNCHEN-3YA.de"), "xn--mnchen-3ya.de")
+  # STD3 rejects "_".
+  expect_identical(host_normalize("a_b.com"), NA_character_)
+  # Leading dot -> empty label.
+  expect_identical(host_normalize(".com"), NA_character_)
+  # Consecutive dots -> empty label.
+  expect_identical(host_normalize("a..b"), NA_character_)
+  # IP literal is not rejected here; that is the caller's policy.
+  expect_identical(host_normalize("1.2.3.4"), "1.2.3.4")
+  expect_identical(host_normalize(""), NA_character_)
+  expect_identical(host_normalize(NA_character_), NA_character_)
+})
+
+test_that("the canonical fass.de regression keeps the sharp s (non-transitional)", {
+  # Contract section 5 correction: non-transitional UTS-46 keeps U+00DF, so the
+  # canonical output is the A-label xn--fa-hia.de (NOT the transitional
+  # fass.de). This is the load-bearing transitional/non-transitional fixture.
+  expect_identical(host_normalize("fa\u00df.de"), "xn--fa-hia.de")
+  expect_identical(host_normalize("xn--fa-hia.de"), "xn--fa-hia.de")
+})
+
+test_that("a non-canonical A-label payload is rejected", {
+  # An xn-- payload whose decoded U-label does not round-trip to the same
+  # canonical A-label is rejected.
+  expect_identical(host_normalize("xn--abc.com"), NA_character_)
+})
+
+test_that("mixed-case A-label payload normalizes via UTS-46 mapping (FLAG: contract row)", {
+  # docs/normalization-contract.md section 5 lists "xn--MNCHEN-3ya.de" -> NA as
+  # a "non-canonical A-label payload" row. That row is inconsistent with the
+  # adjacent "XN--MNCHEN-3YA.de" -> valid row: UTS-46 mapping case-folds the
+  # whole label before any canonical check, so both inputs map identically to
+  # "xn--mnchen-3ya" and no single rule can accept one and reject the other.
+  # We implement standard UTS-46 (both valid) and have flagged the contract
+  # defect on PSLR-pwwtqowh; update this assertion if the contract is revised.
+  expect_identical(host_normalize("xn--MNCHEN-3ya.de"), "xn--mnchen-3ya.de")
+})
+
+test_that("CheckBidi accepts valid RTL labels and rejects rule violations", {
+  # U+0634 U+0628 U+0643 U+0629 = the Arabic word "network"; .com is LTR.
+  expect_identical(
+    host_normalize("\u0634\u0628\u0643\u0629.com"),
+    "xn--ngbc5azd.com"
+  )
+  # An RTL label (starts with U+0627, an AL character) must not end in an L
+  # character (rule 3).
+  expect_identical(host_normalize("\u0627a.com"), NA_character_)
+})
+
+test_that("CheckJoiners rejects context-free ZWNJ/ZWJ", {
+  # U+200C = ZWNJ, U+200D = ZWJ. With no Virama and no joining context both
+  # are invalid.
+  expect_identical(host_normalize("a\u200cb.com"), NA_character_)
+  expect_identical(host_normalize("a\u200db.com"), NA_character_)
+})
+
+test_that("CheckHyphens rejects leading/trailing and 3rd-4th-position hyphens", {
+  expect_identical(host_normalize("-ab.com"), NA_character_)
+  expect_identical(host_normalize("ab-.com"), NA_character_)
+  expect_identical(host_normalize("ab--cd.com"), NA_character_)
+})
+
+test_that("terminal-dot handling matches the contract", {
+  expect_identical(host_normalize("."), NA_character_)
+  expect_identical(host_normalize("example.com.."), NA_character_)
+})
+
+test_that("host_normalize is vectorized and preserves names", {
+  x <- c(a = "Example.COM", b = NA, c = "a_b.com")
+  out <- host_normalize(x)
+  expect_identical(out, c(a = "example.com", b = NA_character_, c = NA_character_))
+  expect_identical(names(out), c("a", "b", "c"))
+  expect_length(host_normalize(character(0)), 0L)
+})
+
+test_that("host_normalize validates its arguments", {
+  expect_error(host_normalize(1L), "must be a character vector")
+  expect_error(host_normalize("x", strict = NA), "strict must be TRUE or FALSE")
+  expect_error(host_normalize("x", strict = c(TRUE, FALSE)),
+               "strict must be TRUE or FALSE")
+})
+
+test_that("normalization_profile_info reports the ratified profile identity", {
+  info <- normalization_profile_info()
+  expect_s3_class(info, "data.frame")
+  expect_identical(nrow(info), 1L)
+  expect_named(info, c(
+    "profile", "unicode_version", "idna", "transitional", "use_std3",
+    "check_hyphens", "check_bidi", "check_joiners", "backend"
+  ))
+  expect_identical(info$profile, "uts46-nontransitional-std3-v1")
+  expect_identical(info$unicode_version, "16.0.0")
+  expect_identical(info$idna, "uts46")
+  expect_false(info$transitional)
+  expect_true(info$use_std3)
+  expect_true(info$check_hyphens)
+  expect_true(info$check_bidi)
+  expect_true(info$check_joiners)
+})
