@@ -1,6 +1,8 @@
 ^\.DS_Store$
 ^\.git$
 ^\.gitignore$
+^docs$
+^docs/.*
 ^\.Rproj\.user$
 ^\.Rhistory$
 ^\.RData$
