@@ -40,6 +40,19 @@ IdnaStatus idna_lookup(uint32_t cp, const uint32_t *&map, uint32_t &len);
 // True if cp has general category Mn, Mc, or Me (UTS-46 rule V5).
 bool is_combining_mark(uint32_t cp);
 
+// Bidi_Class of cp (RFC 5893 CheckBidi). Unlisted code points return L; they
+// are disallowed by UTS-46 mapping and never reach CheckBidi.
+enum class BidiClass : uint8_t {
+  L = 0, R, AL, AN, EN, ES, ET, CS, NSM, BN, B, S, WS, ON,
+  LRE, LRO, RLE, RLO, PDF, LRI, RLI, FSI, PDI
+};
+BidiClass bidi_class(uint32_t cp);
+
+// Joining_Type of cp (IDNA2008 ContextJ CheckJoiners). Unlisted code points
+// return U (Non_Joining), the property default.
+enum class JoiningType : uint8_t { U = 0, C, D, L, R, T };
+JoiningType joining_type(uint32_t cp);
+
 }  // namespace u16
 }  // namespace punycoder
 

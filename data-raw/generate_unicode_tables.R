@@ -11,12 +11,13 @@
 # anything at build or run time. Downloaded UCD files are cached under
 # data-raw/.ucd-cache/ (git-ignored).
 #
-# This pass emits the tables needed by NFC (PSLR-pzeeruwe) and UTS-46 mapping +
-# label validation (PSLR-pwwtqowh): canonical combining class, canonical
-# decomposition (recursively expanded), canonical composition, the UTS-46
-# mapping/status table, and the combining-mark set (for the V5 "label must not
-# begin with a combining mark" rule). Bidi_Class and Joining_Type tables for
-# CheckBidi/CheckJoiners (PSLR-izaqpicn) are added by extending this script.
+# This pass emits the tables needed by NFC (PSLR-pzeeruwe), UTS-46 mapping +
+# label validation (PSLR-pwwtqowh), and the CheckBidi/CheckJoiners label rules
+# (PSLR-izaqpicn): canonical combining class, canonical decomposition
+# (recursively expanded), canonical composition, the UTS-46 mapping/status
+# table, the combining-mark set (for the V5 "label must not begin with a
+# combining mark" rule), and the Bidi_Class + Joining_Type properties (for
+# RFC 5893 CheckBidi and IDNA2008 ContextJ CheckJoiners).
 
 UNICODE_VERSION <- "16.0.0"
 
@@ -196,6 +197,54 @@ ccc_ranges <- to_ranges(ccc_cps, unname(ccc_map))
 mark_ranges <- to_ranges(mark_cps, rep(1L, length(mark_cps)))
 
 # ---------------------------------------------------------------------------
+# Bidi_Class (extracted/DerivedBidiClass.txt) for RFC 5893 CheckBidi and
+# Joining_Type (extracted/DerivedJoiningType.txt) for IDNA2008 ContextJ
+# CheckJoiners. These files give explicit [lo..hi]; value rows. Only code
+# points that survive UTS-46 mapping reach these checks, so unlisted code
+# points default to the dominant value (Bidi_Class L, Joining_Type U =
+# Non_Joining) in the C++ accessor without affecting any validatable label.
+# ---------------------------------------------------------------------------
+UCD_EXTRACTED <- sprintf("%s/extracted", UCD_BASE)
+
+parse_prop_ranges <- function(name, base, value_map) {
+  lines <- strip_comment(fetch(name, base))
+  lines <- lines[nzchar(lines)]
+  lo <- integer(0); hi <- integer(0); val <- integer(0)
+  for (line in lines) {
+    segs <- trimws(strsplit(line, ";", fixed = TRUE)[[1]])
+    rng <- strsplit(segs[[1]], "\\.\\.")[[1]]
+    l <- hex(rng[[1]]); h <- if (length(rng) > 1L) hex(rng[[2]]) else l
+    code <- value_map[[segs[[2]]]]
+    if (is.null(code)) stop("unmapped property value: ", segs[[2]])
+    lo <- c(lo, l); hi <- c(hi, h); val <- c(val, code)
+  }
+  o <- order(lo); lo <- lo[o]; hi <- hi[o]; val <- val[o]
+  # Coalesce adjacent ranges that carry the same value.
+  klo <- integer(0); khi <- integer(0); kval <- integer(0)
+  i <- 1L; n <- length(lo)
+  while (i <= n) {
+    j <- i
+    while (j < n && hi[j] + 1L == lo[j + 1L] && val[j + 1L] == val[i]) j <- j + 1L
+    klo <- c(klo, lo[i]); khi <- c(khi, hi[j]); kval <- c(kval, val[i])
+    i <- j + 1L
+  }
+  data.frame(lo = klo, hi = khi, value = kval)
+}
+
+# Codes must match the C++ BidiClass / JoiningType enums emitted below.
+bidi_values <- list(
+  L = 0L, R = 1L, AL = 2L, AN = 3L, EN = 4L, ES = 5L, ET = 6L, CS = 7L,
+  NSM = 8L, BN = 9L, B = 10L, S = 11L, WS = 12L, ON = 13L, LRE = 14L,
+  LRO = 15L, RLE = 16L, RLO = 17L, PDF = 18L, LRI = 19L, RLI = 20L,
+  FSI = 21L, PDI = 22L
+)
+joining_values <- list(U = 0L, C = 1L, D = 2L, L = 3L, R = 4L, T = 5L)
+
+bidi_ranges <- parse_prop_ranges("DerivedBidiClass.txt", UCD_EXTRACTED, bidi_values)
+joining_ranges <- parse_prop_ranges("DerivedJoiningType.txt", UCD_EXTRACTED,
+                                    joining_values)
+
+# ---------------------------------------------------------------------------
 # Emit the C++ header and source.
 # ---------------------------------------------------------------------------
 hexlit <- function(x) sprintf("0x%X", x)
@@ -248,6 +297,19 @@ IdnaStatus idna_lookup(uint32_t cp, const uint32_t *&map, uint32_t &len);
 
 // True if cp has general category Mn, Mc, or Me (UTS-46 rule V5).
 bool is_combining_mark(uint32_t cp);
+
+// Bidi_Class of cp (RFC 5893 CheckBidi). Unlisted code points return L; they
+// are disallowed by UTS-46 mapping and never reach CheckBidi.
+enum class BidiClass : uint8_t {
+  L = 0, R, AL, AN, EN, ES, ET, CS, NSM, BN, B, S, WS, ON,
+  LRE, LRO, RLE, RLO, PDF, LRI, RLI, FSI, PDI
+};
+BidiClass bidi_class(uint32_t cp);
+
+// Joining_Type of cp (IDNA2008 ContextJ CheckJoiners). Unlisted code points
+// return U (Non_Joining), the property default.
+enum class JoiningType : uint8_t { U = 0, C, D, L, R, T };
+JoiningType joining_type(uint32_t cp);
 
 }  // namespace u16
 }  // namespace punycoder
@@ -329,6 +391,20 @@ src <- c(src,
     sprintf('const uint32_t IDNA_MAP_DATA[] = {\n%s\n};', chunk(hexlit(idna_flat), 8L))
   } else 'const uint32_t IDNA_MAP_DATA[] = {0};',
   '',
+  '// --- Bidi_Class ranges (RFC 5893, sorted by lo) ---',
+  'struct BidiRange { uint32_t lo, hi; uint8_t value; };',
+  sprintf('const BidiRange BIDI_RANGES[] = {\n%s\n};',
+          chunk(sprintf("{%s, %s, %d}", hexlit(bidi_ranges$lo),
+                        hexlit(bidi_ranges$hi), bidi_ranges$value), 4L)),
+  sprintf('const size_t BIDI_N = %d;', nrow(bidi_ranges)),
+  '',
+  '// --- Joining_Type ranges (IDNA2008 ContextJ, sorted by lo) ---',
+  'struct JoiningRange { uint32_t lo, hi; uint8_t value; };',
+  sprintf('const JoiningRange JOINING_RANGES[] = {\n%s\n};',
+          chunk(sprintf("{%s, %s, %d}", hexlit(joining_ranges$lo),
+                        hexlit(joining_ranges$hi), joining_ranges$value), 4L)),
+  sprintf('const size_t JOINING_N = %d;', nrow(joining_ranges)),
+  '',
   '}  // namespace',
   '',
   'uint8_t combining_class(uint32_t cp) {',
@@ -395,6 +471,28 @@ src <- c(src,
   '  return IdnaStatus::disallowed;',
   '}',
   '',
+  'BidiClass bidi_class(uint32_t cp) {',
+  '  size_t lo = 0, hi = BIDI_N;',
+  '  while (lo < hi) {',
+  '    size_t mid = (lo + hi) / 2;',
+  '    if (cp < BIDI_RANGES[mid].lo) hi = mid;',
+  '    else if (cp > BIDI_RANGES[mid].hi) lo = mid + 1;',
+  '    else return static_cast<BidiClass>(BIDI_RANGES[mid].value);',
+  '  }',
+  '  return BidiClass::L;',
+  '}',
+  '',
+  'JoiningType joining_type(uint32_t cp) {',
+  '  size_t lo = 0, hi = JOINING_N;',
+  '  while (lo < hi) {',
+  '    size_t mid = (lo + hi) / 2;',
+  '    if (cp < JOINING_RANGES[mid].lo) hi = mid;',
+  '    else if (cp > JOINING_RANGES[mid].hi) lo = mid + 1;',
+  '    else return static_cast<JoiningType>(JOINING_RANGES[mid].value);',
+  '  }',
+  '  return JoiningType::U;',
+  '}',
+  '',
   '}  // namespace u16',
   '}  // namespace punycoder'
 )
@@ -402,6 +500,6 @@ src <- c(src,
 writeLines(src, "src/unicode_tables_16_0_0.cpp")
 
 message(sprintf(
-  "generated src/unicode_tables_16_0_0.{h,cpp}: ccc=%d ranges, marks=%d ranges, decomp=%d, comp=%d pairs, idna=%d ranges (map data %d)",
+  "generated src/unicode_tables_16_0_0.{h,cpp}: ccc=%d ranges, marks=%d ranges, decomp=%d, comp=%d pairs, idna=%d ranges (map data %d), bidi=%d ranges, joining=%d ranges",
   nrow(ccc_ranges), nrow(mark_ranges), length(decomp_keys), length(comp_a),
-  length(idna_lo), length(idna_flat)))
+  length(idna_lo), length(idna_flat), nrow(bidi_ranges), nrow(joining_ranges)))
