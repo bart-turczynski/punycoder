@@ -74,6 +74,9 @@ tests/testthat/_snaps/
 *.log
 *.gz
 
+# Agent scratch (raw planning notes, standalone conformance harnesses)
+_scratch/
+
 # Claude Cowork
 .claude/
 
