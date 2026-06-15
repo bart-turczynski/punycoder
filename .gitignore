@@ -5,6 +5,10 @@
 .Ruserdata
 *.Rproj
 
+# Cached upstream UCD files for data-raw/generate_unicode_tables.R (re-downloaded
+# on demand). The generated src/unicode_tables_*.cpp is committed; these are not.
+data-raw/.ucd-cache/
+
 # Compiled Object files
 *.o
 *.so
@@ -69,6 +73,9 @@ tests/testthat/_snaps/
 .env
 *.log
 *.gz
+
+# Agent scratch (raw planning notes, standalone conformance harnesses)
+_scratch/
 
 # Claude Cowork
 .claude/

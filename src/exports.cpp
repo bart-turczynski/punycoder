@@ -6,6 +6,8 @@
 #include <string>
 
 #include "punycoder_core.h"
+#include "punycoder_normalize.h"
+#include "unicode_tables_16_0_0.h"
 
 namespace {
 
@@ -291,4 +293,37 @@ Rcpp::List compare_backends_cpp(
         Rcpp::Named("fallback") = fallback,
         Rcpp::Named("libidn2") = libidn2
     );
+}
+
+// Canonical-host normalization (docs/normalization-contract.md). NA inputs pass
+// through as NA (missing); invalid inputs return NA (the contract's
+// NA-on-invalid signal). The result is always lowercase ASCII, so no element
+// encoding needs to be set. Names are preserved.
+//
+// [[Rcpp::export]]
+Rcpp::CharacterVector host_normalize_cpp(Rcpp::CharacterVector x, bool strict = true) {
+    R_xlen_t n = x.size();
+    Rcpp::CharacterVector out(n);
+
+    for (R_xlen_t i = 0; i < n; ++i) {
+        if (Rcpp::CharacterVector::is_na(x[i])) {
+            out[i] = NA_STRING;
+            continue;
+        }
+
+        const punycoder::HostNormalizeResult result =
+            punycoder::host_normalize_one(Rcpp::as<std::string>(x[i]), strict);
+        out[i] = result.valid ? Rcpp::String(result.value) : NA_STRING;
+    }
+
+    out.attr("names") = x.attr("names");
+    return out;
+}
+
+// Pinned Unicode version of the vendored UTS-46 + NFC data, the single source
+// of truth read by normalization_profile_info() (contract section 7).
+//
+// [[Rcpp::export]]
+std::string normalization_unicode_version_cpp() {
+    return std::string(punycoder::u16::UNICODE_VERSION);
 }

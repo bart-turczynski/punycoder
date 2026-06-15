@@ -105,3 +105,25 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// host_normalize_cpp
+Rcpp::CharacterVector host_normalize_cpp(Rcpp::CharacterVector x, bool strict);
+RcppExport SEXP _punycoder_host_normalize_cpp(SEXP xSEXP, SEXP strictSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< bool >::type strict(strictSEXP);
+    rcpp_result_gen = Rcpp::wrap(host_normalize_cpp(x, strict));
+    return rcpp_result_gen;
+END_RCPP
+}
+// normalization_unicode_version_cpp
+std::string normalization_unicode_version_cpp();
+RcppExport SEXP _punycoder_normalization_unicode_version_cpp() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(normalization_unicode_version_cpp());
+    return rcpp_result_gen;
+END_RCPP
+}

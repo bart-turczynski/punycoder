@@ -1,5 +1,17 @@
 # punycoder (development version)
 
+## New Features
+
+* `host_normalize()` converts hostnames to their canonical comparison form
+  under a pinned UTS-46 profile (non-transitional, `UseSTD3ASCIIRules`,
+  `CheckHyphens`, `CheckBidi`, `CheckJoiners`, NFC, DNS length verification),
+  returning lowercase ASCII A-labels or `NA` for invalid input. The
+  mapping/NFC/validation pipeline is implemented in-tree over vendored Unicode
+  16.0.0 data, so behavior is independent of whether libidn2 is present.
+* `normalization_profile_info()` exposes the machine-readable profile identity
+  (`profile`, `unicode_version`, and the profile parameters) for downstream
+  reproducibility keys.
+
 # punycoder 1.0.0
 
 First CRAN release.
