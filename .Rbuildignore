@@ -39,3 +39,5 @@ README\.html$
 ^THIRD_PARTY_NOTICES\.md$
 ^cran-comments\.md$
 ^CRAN-SUBMISSION$
+^\.lintr$
+^_scratch$

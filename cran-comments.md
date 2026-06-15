@@ -1,23 +1,27 @@
 ## R CMD check results
 
-0 errors | 0 warnings | 1 note
+0 errors | 0 warnings | 0 notes
 
-* This is a new submission.
+This is a minor feature release (1.0.0 -> 1.1.0).
 
-### Notes
+## Changes in this version
 
-**New submission**
-
-Standard note for first-time CRAN submissions; no action required.
+* New `host_normalize()` and `normalization_profile_info()` functions for
+  canonical-host normalization under a pinned UTS-46 profile (Unicode 16.0.0).
+  The mapping/NFC/validation pipeline is implemented in-tree, so behavior is
+  independent of whether the optional libidn2 backend is present.
 
 ## Platform
 
-Tested locally on:
+Tested locally and on GitHub Actions:
 
-* macOS Tahoe 26.4.1 (aarch64), R 4.6.0, Apple clang 17.0.0
-  * With libidn2 backend (brew install libidn2)
-  * With fallback C++ backend
+* macOS (aarch64), R release
+* Ubuntu, R devel / release / oldrel-1
+* Windows, R release
+* Both the libidn2 backend (Linux + macOS) and the fallback C++ backend
+  (Windows) are exercised, including fallback-vs-libidn2 parity tests.
 
 ## Downstream dependencies
 
-None — this is a new package.
+None on CRAN. The in-development 'pslr' package depends on this release but is
+not yet published.
