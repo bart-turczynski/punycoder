@@ -133,8 +133,8 @@ invalid, matching the caller's input contract.
 | `"münchen.de"` | `"xn--mnchen-3ya.de"` | U-label → A-label |
 | `"xn--mnchen-3ya.de"` | `"xn--mnchen-3ya.de"` | canonical A-label kept |
 | `"XN--MNCHEN-3YA.de"` | `"xn--mnchen-3ya.de"` | A-label ACE prefix case-folded; payload canonical |
-| `"xn--MNCHEN-3ya.de"` | `NA` | non-canonical A-label payload |
-| `"faß.de"` | `"fass.de"` | non-transitional maps `ß`→`ss`? **No** — non-transitional keeps `ß`; see below |
+| `"xn--MNCHEN-3ya.de"` | `"xn--mnchen-3ya.de"` | A-label payload case-folded (Punycode basic code points are case-insensitive) |
+| `"faß.de"` | `"xn--fa-hia.de"` | non-transitional maps `ß`→`ss`? **No** — non-transitional keeps `ß`; see below |
 | `"a_b.com"` | `NA` | STD3 rejects `_` |
 | `".com"` | `NA` | leading dot → empty label |
 | `"a..b"` | `NA` | consecutive dots → empty label |
