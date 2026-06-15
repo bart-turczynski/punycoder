@@ -1,7 +1,7 @@
 Package: punycoder
 Type: Package
 Title: Unicode and Punycode Domain Name Processing
-Version: 1.0.0.9000
+Version: 1.1.0
 Authors@R: person("Bart", "Turczynski", email = "bartek+punycoder@turczynski.pl",
                   role = c("aut", "cre"))
 Description: High-performance Unicode and Punycode encoding/decoding for 
