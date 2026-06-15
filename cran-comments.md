@@ -1,8 +1,15 @@
 ## R CMD check results
 
-0 errors | 0 warnings | 0 notes
+0 errors | 0 warnings | 1 note
 
 This is a minor feature release (1.0.0 -> 1.1.0).
+
+The NOTE is "Days since last update: 4". This update follows 1.0.0 closely on
+purpose: it only *adds* the canonical-host normalization API
+(`host_normalize()`, `normalization_profile_info()`) and changes nothing about
+the existing 1.0.0 functions or their behavior. The new API unblocks a
+downstream package ('pslr') that is ready for its own submission and depends on
+it. Apologies for the quick turnaround.
 
 ## Changes in this version
 
