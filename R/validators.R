@@ -12,7 +12,7 @@
 #' \donttest{
 #' is_punycode("xn--example") # TRUE
 #' is_punycode("example.com") # FALSE
-#' is_punycode(c("xn--caf-dma.com", "regular.com"))  # c(TRUE, FALSE)
+#' is_punycode(c("xn--caf-dma.com", "regular.com")) # c(TRUE, FALSE)
 #' }
 #' @export
 is_punycode <- function(x) {
@@ -34,12 +34,12 @@ is_punycode <- function(x) {
 #' @examples
 #' \donttest{
 #' is_idn("caf\u00E9.com") # TRUE
-#' is_idn("example.com")    # FALSE
+#' is_idn("example.com") # FALSE
 #' is_idn(c(
 #'   "caf\u00E9.com",
 #'   "\u043C\u043E\u0441\u043A\u0432\u0430.\u0440\u0444",
 #'   "test.com"
-#' ))  # c(TRUE, TRUE, FALSE)
+#' )) # c(TRUE, TRUE, FALSE)
 #' }
 #' @export
 is_idn <- function(x) {

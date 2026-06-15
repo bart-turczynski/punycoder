@@ -34,7 +34,7 @@ expect_backend_parity <- function(input, mode, strict = TRUE) {
   d <- backend_decisions(input, mode, strict)
   skip_if(!d$available, "libidn2 backend is not available")
   expect_equal(d$fb_reject, d$li_reject) # identical accept/reject decision
-  expect_equal(d$fb_out, d$li_out)       # identical canonical output (accepted)
+  expect_equal(d$fb_out, d$li_out) # identical canonical output (accepted)
   invisible(d)
 }
 
@@ -49,7 +49,7 @@ parity_accept_domains <- c(
   "例え.テスト",
   "δοκιμή.com", # δοκιμή.com (Greek)
   "xn--mnchen-3ya.de",
-  "faß.de",                              # faß.de (non-transitional)
+  "faß.de", # faß.de (non-transitional)
   "example.com.",
   "a.b.c.d.example"
 )
