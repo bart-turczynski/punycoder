@@ -1,5 +1,13 @@
 # punycoder 1.1.0.9000 (development version)
 
+## Internal
+
+* `host_normalize()` is now verified against the official Unicode UTS #46
+  conformance corpus (`IdnaTestV2.txt`, Unicode 16.0.0). The suite confirms
+  full non-transitional ToASCII conformance, with one documented profile
+  divergence: the trailing FQDN root dot is permitted (strict
+  `VerifyDnsLength` would reject the empty root label).
+
 # punycoder 1.1.0
 
 ## New Features
