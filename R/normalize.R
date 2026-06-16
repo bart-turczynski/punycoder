@@ -12,12 +12,27 @@
 #' The profile is fixed at one pinned Unicode version per release; see
 #' [normalization_profile_info()] for the machine-readable identity.
 #'
+#' The default applies the full strict UTS #46 profile
+#' (`uts46-nontransitional-std3-v1`). The `check_hyphens`, `use_std3`, and
+#' `verify_dns_length` arguments are UTS #46 processing flags that can each be
+#' relaxed independently; pass the *same* values to
+#' [normalization_profile_info()] to obtain the identity of the resulting
+#' profile. These are standard UTS #46 parameters, **not** a browser mode:
+#' `CheckBidi` and `CheckJoiners` always apply and are never knobs, and full
+#' WHATWG host policy (where `beStrict = false` flips exactly these three) lives
+#' upstack in `rurl`, not here.
+#'
 #' @param x Character vector of hostnames. `NA` elements pass through as `NA`
 #'   (missing, not invalid). Names are preserved.
-#' @param strict Logical scalar. `TRUE` (the default) applies the full profile.
-#'   `strict = FALSE` is reserved for a future documented relaxed variant and
-#'   currently behaves identically to `TRUE`. This function never reads the
-#'   `punycoder.strict` option.
+#' @param check_hyphens Logical scalar. When `TRUE` (the default) the UTS #46
+#'   `CheckHyphens` rule rejects `"--"` in the 3rd/4th positions and leading or
+#'   trailing hyphens. `FALSE` drops that check.
+#' @param use_std3 Logical scalar. When `TRUE` (the default) `UseSTD3ASCIIRules`
+#'   restricts ASCII to letters, digits, and hyphen. `FALSE` admits other ASCII
+#'   (e.g. `"_"`) that the pinned table marks STD3-disallowed-but-valid.
+#' @param verify_dns_length Logical scalar. When `TRUE` (the default) each
+#'   A-label must be 1-63 octets and the whole host <= 253. `FALSE` drops the
+#'   length limits (empty labels are still rejected as structural errors).
 #' @return A character vector the same length as `x`. Each element is the
 #'   canonical lowercase ASCII A-label host, or `NA_character_` when the input
 #'   is `NA` or invalid under the profile.
@@ -26,11 +41,16 @@
 #' @examples
 #' host_normalize(c("Example.COM", "münchen.de", "example.com."))
 #' host_normalize("a_b.com") # NA: STD3 rejects "_"
+#' host_normalize("a_b.com", use_std3 = FALSE) # "a_b.com"
 #' @export
-host_normalize <- function(x, strict = TRUE) {
+host_normalize <- function(x, check_hyphens = TRUE, use_std3 = TRUE,
+                           verify_dns_length = TRUE) {
   .assert_character(x, "x")
-  .assert_flag(strict, "strict")
-  out <- host_normalize_cpp(enc2utf8(x), strict)
+  .assert_flag(check_hyphens, "check_hyphens")
+  .assert_flag(use_std3, "use_std3")
+  .assert_flag(verify_dns_length, "verify_dns_length")
+  out <- host_normalize_cpp(enc2utf8(x), check_hyphens, use_std3,
+                            verify_dns_length)
   names(out) <- names(x)
   out
 }

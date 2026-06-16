@@ -4,16 +4,28 @@
 \alias{host_normalize}
 \title{Normalize hosts to canonical comparison form}
 \usage{
-host_normalize(x, strict = TRUE)
+host_normalize(
+  x,
+  check_hyphens = TRUE,
+  use_std3 = TRUE,
+  verify_dns_length = TRUE
+)
 }
 \arguments{
 \item{x}{Character vector of hostnames. `NA` elements pass through as `NA`
 (missing, not invalid). Names are preserved.}
 
-\item{strict}{Logical scalar. `TRUE` (the default) applies the full profile.
-`strict = FALSE` is reserved for a future documented relaxed variant and
-currently behaves identically to `TRUE`. This function never reads the
-`punycoder.strict` option.}
+\item{check_hyphens}{Logical scalar. When `TRUE` (the default) the UTS #46
+`CheckHyphens` rule rejects `"--"` in the 3rd/4th positions and leading or
+trailing hyphens. `FALSE` drops that check.}
+
+\item{use_std3}{Logical scalar. When `TRUE` (the default) `UseSTD3ASCIIRules`
+restricts ASCII to letters, digits, and hyphen. `FALSE` admits other ASCII
+(e.g. `"_"`) that the pinned table marks STD3-disallowed-but-valid.}
+
+\item{verify_dns_length}{Logical scalar. When `TRUE` (the default) each
+A-label must be 1-63 octets and the whole host <= 253. `FALSE` drops the
+length limits (empty labels are still rejected as structural errors).}
 }
 \value{
 A character vector the same length as `x`. Each element is the
@@ -33,10 +45,21 @@ Unlike [puny_encode()], invalid input is reported by returning
 `NA_character_` (never by aborting), so a caller can layer its own policy.
 The profile is fixed at one pinned Unicode version per release; see
 [normalization_profile_info()] for the machine-readable identity.
+
+The default applies the full strict UTS #46 profile
+(`uts46-nontransitional-std3-v1`). The `check_hyphens`, `use_std3`, and
+`verify_dns_length` arguments are UTS #46 processing flags that can each be
+relaxed independently; pass the *same* values to
+[normalization_profile_info()] to obtain the identity of the resulting
+profile. These are standard UTS #46 parameters, **not** a browser mode:
+`CheckBidi` and `CheckJoiners` always apply and are never knobs, and full
+WHATWG host policy (where `beStrict = false` flips exactly these three) lives
+upstack in `rurl`, not here.
 }
 \examples{
 host_normalize(c("Example.COM", "münchen.de", "example.com."))
 host_normalize("a_b.com") # NA: STD3 rejects "_"
+host_normalize("a_b.com", use_std3 = FALSE) # "a_b.com"
 }
 \seealso{
 [normalization_profile_info()] for the profile identity,

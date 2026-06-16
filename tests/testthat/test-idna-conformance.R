@@ -47,3 +47,60 @@ test_that("host_normalize matches UTS-46 IdnaTestV2 (Unicode 16.0.0)", {
   # or length handling shifts it and trips here.
   expect_identical(length(dev), 57L)
 })
+
+# Relaxing a UTS #46 flag must (1) never change a result the strict profile
+# already accepts, and (2) only ever newly-accept rows whose remaining error
+# codes are the ones that flag governs -- plus A4_2, the trailing-root-dot
+# divergence host_normalize already tolerates under every profile. The corpus
+# toAsciiN column carries the relaxed-accept output (e.g. "(4).four" under
+# [U1]), so newly-accepted rows must equal it. CheckBidi / CheckJoiners are not
+# knobs and are not exercised here.
+#
+# One documented exception: two xn-- rows carry [V2, V4]. V4 (a U-label that
+# itself re-prefixes to xn--) is not one of the three exposed flags and is the
+# only V4 in the corpus -- it never occurs without V2, so the strict profile
+# always rejects via V2 and host_normalize has never enforced V4 independently.
+# Relaxing CheckHyphens removes the V2 reason and these two slip through. This
+# is out of B's scope (parameterize existing checks, not add new criteria) and
+# is pinned here, exactly as the strict test pins its A4_2 root-dot divergences.
+.idna_known_divergence <- list(
+  check_hyphens = c("xn--xn--a--gua.pt", "xn--xn---epa")
+)
+
+test_that("relaxing a UTS-46 flag stays bounded against IdnaTestV2", {
+  path <- system.file("testdata", "IdnaTestV2.txt", package = "punycoder")
+  skip_if(!nzchar(path), "IdnaTestV2.txt fixture not installed")
+
+  df <- idna_load_v2(path)
+  expect_gt(nrow(df), 6000L)
+  strict <- host_normalize(df$source)
+  code_sets <- lapply(df$status, .idna_codes)
+
+  flags <- c("check_hyphens", "use_std3", "verify_dns_length")
+  for (flag in flags) {
+    got <- do.call(
+      host_normalize, setNames(list(df$source, FALSE), c("x", flag))
+    )
+
+    # (1) Relaxation is monotone: every strict acceptance is preserved verbatim.
+    kept <- !is.na(strict)
+    expect_identical(got[kept], strict[kept])
+
+    # (2) New acceptances are bounded to this flag's codes (plus tolerated A4_2)
+    # and must equal the corpus relaxed-accept output. Rows outside that bound
+    # must be exactly the documented divergence set for this flag.
+    tolerated <- c(.idna_flag_codes[[flag]], "A4_2")
+    newly <- which(is.na(strict) & !is.na(got))
+    bounded <- vapply(
+      code_sets[newly],
+      function(codes) length(codes) > 0L && all(codes %in% tolerated),
+      logical(1)
+    )
+    expect_identical(
+      sort(df$source[newly[!bounded]]),
+      sort(.idna_known_divergence[[flag]] %||% character(0)),
+      info = flag
+    )
+    expect_identical(got[newly[bounded]], df$to_ascii[newly[bounded]], info = flag)
+  }
+})

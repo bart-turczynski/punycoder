@@ -36,6 +36,16 @@
   nzchar(trimws(gsub("^\\[|\\]$", "", br)))
 }
 
+# Extract the set of status codes from a resolved status field, e.g.
+# "[V3, A4_2]" -> c("V3", "A4_2"). Returns character(0) for a blank or "[]".
+.idna_codes <- function(stat) {
+  br <- regmatches(stat, regexpr("\\[.*\\]", stat))
+  if (length(br) == 0L) return(character(0))
+  inner <- trimws(gsub("^\\[|\\]$", "", br))
+  if (!nzchar(inner)) return(character(0))
+  trimws(strsplit(inner, ",", fixed = TRUE)[[1]])
+}
+
 # Parse IdnaTestV2.txt into a data.frame with the resolved non-transitional
 # ToASCII expectation. Columns: source, to_ascii (resolved toAsciiN string),
 # status (resolved toAsciiNStatus). Ill-formed (surrogate) rows are dropped.

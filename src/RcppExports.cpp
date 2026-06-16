@@ -106,14 +106,16 @@ BEGIN_RCPP
 END_RCPP
 }
 // host_normalize_cpp
-Rcpp::CharacterVector host_normalize_cpp(Rcpp::CharacterVector x, bool strict);
-RcppExport SEXP _punycoder_host_normalize_cpp(SEXP xSEXP, SEXP strictSEXP) {
+Rcpp::CharacterVector host_normalize_cpp(Rcpp::CharacterVector x, bool check_hyphens, bool use_std3, bool verify_dns_length);
+RcppExport SEXP _punycoder_host_normalize_cpp(SEXP xSEXP, SEXP check_hyphensSEXP, SEXP use_std3SEXP, SEXP verify_dns_lengthSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type x(xSEXP);
-    Rcpp::traits::input_parameter< bool >::type strict(strictSEXP);
-    rcpp_result_gen = Rcpp::wrap(host_normalize_cpp(x, strict));
+    Rcpp::traits::input_parameter< bool >::type check_hyphens(check_hyphensSEXP);
+    Rcpp::traits::input_parameter< bool >::type use_std3(use_std3SEXP);
+    Rcpp::traits::input_parameter< bool >::type verify_dns_length(verify_dns_lengthSEXP);
+    rcpp_result_gen = Rcpp::wrap(host_normalize_cpp(x, check_hyphens, use_std3, verify_dns_length));
     return rcpp_result_gen;
 END_RCPP
 }
