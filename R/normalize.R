@@ -12,6 +12,15 @@
 #' The profile is fixed at one pinned Unicode version per release; see
 #' [normalization_profile_info()] for the machine-readable identity.
 #'
+#' This is a **UTS #46 profile, not IDNA2008 / RFC 5891 conformance.** UTS #46
+#' is compatibility processing and deliberately differs from IDNA2008 — it
+#' accepts labels IDNA2008 would reject (e.g. `"☕.example"` becomes
+#' `"xn--53h.example"`). The pipeline draws on RFC 3492 (the Punycode
+#' transform), NFC per UAX #15, the RFC 5892 ContextJ rules via `CheckJoiners`
+#' (ZWJ/ZWNJ only — full RFC 5892 CONTEXTO is **not** checked), the RFC 5893
+#' Bidi rule via `CheckBidi`, and STD 3 (RFC 952 + RFC 1123) host-name rules via
+#' `UseSTD3ASCIIRules`. IDNA2003 / Nameprep (RFC 3490/3491/3454) is not used.
+#'
 #' The default applies the full strict UTS #46 profile
 #' (`uts46-nontransitional-std3-v1`). The `check_hyphens`, `use_std3`, and
 #' `verify_dns_length` arguments are UTS #46 processing flags that can each be

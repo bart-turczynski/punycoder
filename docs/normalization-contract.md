@@ -246,3 +246,57 @@ punycoder release.
 
 Contract ratified. Implementation (PSLR-encodgsk), parity tests
 (PSLR-gnmvyymh), and release (PSLR-obdfxkqb) may proceed.
+
+## 10. Standards and references
+
+`host_normalize()` implements a **pinned UTS #46 non-transitional ToASCII
+profile**. UTS #46 is *compatibility processing* and is **deliberately not
+identical to IDNA2008**: it accepts labels IDNA2008 would reject (e.g.
+`☕.example` → `xn--53h.example`), and WHATWG specifies UTS #46 "and not
+IDNA2008". This function must therefore be described as a UTS #46 profile,
+**never** as IDNA2008 / RFC 5891 conformance.
+
+Standards this profile draws on, mapped to where each is used:
+
+- **UTS #46** (*Unicode IDNA Compatibility Processing*) — the overall mapping +
+  validation profile (section 3; algorithm steps 3a/3c/3d). UTS #46 §6 also
+  *recommends* UTR #36 / UTS #39 confusable checks as application/UI-layer
+  steps — out of scope here (section 1, Non-goals).
+- **RFC 3492** (*Punycode*, the IDNA parameterization of Bootstring) — the
+  deterministic A-label ↔ U-label transform (step 4, and the re-encode check in
+  step 3d). The only step the optional libidn2 backend may serve (section 6).
+- **RFC 5890** (*IDNA2008 Definitions/Framework*) — the `xn--` ACE prefix and
+  the A-label / U-label / LDH vocabulary. `puny_encode()` emitting `xn--` is RFC
+  5890 framing, not RFC 3492.
+- **RFC 5891** (*IDNA2008 Protocol*) — the §5.4 canonical-A-label requirement
+  enforced in step 3d. Cited for that specific check only; see the UTS #46 ≠
+  IDNA2008 note above — we do **not** claim RFC 5891 conformance.
+- **RFC 5892** (*The Unicode Code Points and IDNA*) — derived property values
+  and contextual rules. Our `CheckJoiners` uses the RFC 5892 **ContextJ** rules
+  for ZWJ/ZWNJ (`punycoder_normalize.cpp:69-86`, `Joining_Type` tables). We do
+  **NOT** implement full RFC 5892 **CONTEXTO** validation: CONTEXTO code points
+  that the UTS #46 mapping table marks `valid` (e.g. U+00B7 middle dot, Greek
+  keraia U+0375, Hebrew geresh/gershayim, Katakana middle dot U+30FB) are
+  accepted with no CONTEXTO check. That is conformant UTS #46 (which mandates
+  CheckJoiners, not CONTEXTO); adding CONTEXTO would be a separate, deliberate
+  change.
+- **RFC 5893** (*Right-to-Left Scripts for IDNA*) — the Bidi rule enforced by
+  `CheckBidi`.
+- **UAX #15** (*Unicode Normalization Forms*) — NFC (step 3b).
+- **UAX #44** (*Unicode Character Database*) — the property tables consumed:
+  `Bidi_Class`, `Joining_Type`, `General_Category`, `Canonical_Combining_Class`.
+- **STD 3** (= **RFC 952** + **RFC 1123**) — the host-name letter/digit/hyphen
+  rules behind `UseSTD3ASCIIRules`.
+- **RFC 8753** (*IDNA Review for New Unicode Versions*) — rationale for pinning
+  one Unicode version per release (sections 7, 8).
+
+Consciously **not** used (rejected alternative): **RFC 3490 / 3491 / 3454**
+(IDNA2003 / Nameprep / Stringprep). The UTS #46 non-transitional profile
+supersedes them. **RFC 5894** (IDNA2008 rationale, informational) is background
+reading, not a normative dependency.
+
+The best-effort URL helpers (`url_*` / `parse_url()`, `punycoder_url.cpp`) are
+**not** conformant to **RFC 3986** (URI), **RFC 3987** (IRI), the **WHATWG URL
+Standard**, **RFC 5952** (IPv6 text form), **RFC 4291** (IPv6 addressing), or
+**RFC 6874** (IPv6 zone IDs); those citations belong with that surface and move
+with it if it migrates to a dedicated URL package.
