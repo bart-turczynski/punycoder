@@ -2,21 +2,29 @@
 
 0 errors | 0 warnings | 1 note
 
-This is a minor feature release (1.0.0 -> 1.1.0).
-
-The NOTE is "Days since last update: 4". This update follows 1.0.0 closely on
-purpose: it only *adds* the canonical-host normalization API
-(`host_normalize()`, `normalization_profile_info()`) and changes nothing about
-the existing 1.0.0 functions or their behavior. The new API unblocks a
-downstream package ('pslr') that is ready for its own submission and depends on
-it. Apologies for the quick turnaround.
+The NOTE is the standard incoming-feasibility note flagging a short interval
+since the last update (1.1.0). The quick turnaround is to land a coordinated
+breaking change before the ecosystem grows: 1.1.0 introduced `host_normalize()`
+only yesterday, so the inert `strict` argument removed here has essentially no
+installed base, and removing it now (rather than after wider adoption) keeps the
+disruption to the single, already-coordinated reverse dependency. Apologies for
+the quick turnaround.
 
 ## Changes in this version
 
-* New `host_normalize()` and `normalization_profile_info()` functions for
-  canonical-host normalization under a pinned UTS-46 profile (Unicode 16.0.0).
-  The mapping/NFC/validation pipeline is implemented in-tree, so behavior is
-  independent of whether the optional libidn2 backend is present.
+This is a feature release (1.1.0 -> 1.2.0) for the UTS #46 host-normalization
+API introduced in 1.1.0.
+
+* Breaking: `host_normalize()` no longer accepts the `strict` argument. It was
+  inert in 1.1.0 (the full profile always applied) and is replaced by three
+  explicit UTS #46 flags below.
+* New: `host_normalize()` gains `check_hyphens`, `use_std3`, and
+  `verify_dns_length`, each defaulting to the strict
+  `uts46-nontransitional-std3-v1` profile and independently relaxable.
+  `normalization_profile_info()` reflects the chosen flags in its identity.
+* Deprecated: `url_encode()`, `url_decode()`, and `parse_url()` now emit a
+  `.Deprecated()` warning. They remain exported and functional this release and
+  are scheduled for removal next release.
 
 ## Platform
 
@@ -28,7 +36,11 @@ Tested locally and on GitHub Actions:
 * Both the libidn2 backend (Linux + macOS) and the fallback C++ backend
   (Windows) are exercised, including fallback-vs-libidn2 parity tests.
 
-## Downstream dependencies
+## Reverse dependencies
 
-None on CRAN. The in-development 'pslr' package depends on this release but is
-not yet published.
+The only CRAN reverse dependency is 'pslr'. The breaking removal of the
+`host_normalize()` `strict` argument was coordinated with 'pslr': its CRAN
+version no longer passes that argument (it calls `host_normalize()` with
+defaults, which is behavior-preserving and compatible with both 1.1.0 and
+1.2.0). 'pslr' was updated on CRAN ahead of this submission, so its
+reverse-dependency check passes against punycoder 1.2.0.

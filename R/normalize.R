@@ -14,8 +14,9 @@
 #'
 #' This is a **UTS #46 profile, not IDNA2008 / RFC 5891 conformance.** UTS #46
 #' is compatibility processing and deliberately differs from IDNA2008 — it
-#' accepts labels IDNA2008 would reject (e.g. `"☕.example"` becomes
-#' `"xn--53h.example"`). The pipeline draws on RFC 3492 (the Punycode
+#' accepts labels IDNA2008 would reject (e.g. a label whose first character is
+#' the symbol U+2615 HOT BEVERAGE becomes `"xn--53h.example"`). The pipeline
+#' draws on RFC 3492 (the Punycode
 #' transform), NFC per UAX #15, the RFC 5892 ContextJ rules via `CheckJoiners`
 #' (ZWJ/ZWNJ only — full RFC 5892 CONTEXTO is **not** checked), the RFC 5893
 #' Bidi rule via `CheckBidi`, and STD 3 (RFC 952 + RFC 1123) host-name rules via

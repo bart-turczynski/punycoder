@@ -1,7 +1,7 @@
 Package: punycoder
 Type: Package
 Title: Unicode and Punycode Domain Name Processing
-Version: 1.1.0.9000
+Version: 1.2.0
 Authors@R: person("Bart", "Turczynski", email = "bartek+punycoder@turczynski.pl",
                   role = c("aut", "cre"),
                   comment = c(ORCID = "0000-0002-8788-7980"))
@@ -16,9 +16,9 @@ Description: High-performance Unicode and Punycode processing for
     profile, pinned Unicode version). The 'url_encode()' / 'url_decode()' /
     'parse_url()' helpers do best-effort host extraction and rewriting in
     URL-shaped strings and are deliberately not RFC 3986 / WHATWG URL
-    parsers or canonicalizers. Aimed at host normalization and data
-    analysis workflows. Used as the Punycode and IDNA engine by the 'pslr'
-    and 'rurl' packages.
+    parsers or canonicalizers; they are deprecated in favour of dedicated
+    URL packages. Aimed at host normalization and data analysis workflows.
+    Used as the Punycode and IDNA engine by the 'pslr' and 'rurl' packages.
 Depends: R (>= 3.5.0)
 Imports: Rcpp (>= 1.0.0)
 LinkingTo: Rcpp

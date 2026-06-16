@@ -1,4 +1,10 @@
-# punycoder (development version)
+# punycoder 1.2.0
+
+## Breaking changes
+
+* `host_normalize()` no longer takes a `strict` argument. It was inert (always
+  applied the full profile) and reserved for exactly this relaxed variant, which
+  the three explicit flags below now provide.
 
 ## New features
 
@@ -19,12 +25,6 @@
   parsing; use the `rurl` package for URL parsing and canonicalization, or pass
   the host alone to `host_normalize()` / `puny_encode()` / `puny_decode()` for
   host-only needs.
-
-## Breaking changes
-
-* `host_normalize()` no longer takes a `strict` argument. It was inert (always
-  applied the full profile) and reserved for exactly this relaxed variant, which
-  the three explicit flags above now provide.
 
 ## Internal
 
