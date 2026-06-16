@@ -2,7 +2,7 @@
 % Please edit documentation in R/punycoder.R
 \name{puny_decode}
 \alias{puny_decode}
-\title{Decode ASCII punycode to Unicode domains}
+\title{Decode ASCII Punycode to Unicode domain labels (low-level)}
 \usage{
 puny_decode(x, strict = getOption("punycoder.strict", TRUE))
 }
@@ -19,9 +19,14 @@ A character vector the same length as \code{x}, with each element
   that fail decoding are also returned as \code{NA_character_}.
 }
 \description{
-Converts ASCII punycode domain names back to their Unicode representation.
-This is the reverse operation of puny_encode and is useful for displaying
-human-readable domain names.
+Converts ASCII Punycode (`xn--`) domain names back to their Unicode
+representation. This is the inverse of [puny_encode()] and is the raw RFC
+3492 transform with A-label framing checks.
+}
+\details{
+Like [puny_encode()], this is a **low-level ASCII-Compatible Encoding
+helper, not an IDNA normalization API**: it does not apply UTS #46 mapping
+or NFC. For IDNA/UTS-46 host normalization, see [host_normalize()].
 }
 \examples{
 \donttest{
@@ -36,5 +41,6 @@ puny_decode(ascii_domains)
 }
 \seealso{
 \code{\link{puny_encode}} for the reverse operation,
+  \code{\link{host_normalize}} for IDNA/UTS-46 host normalization,
   \code{\link{url_decode}} for full URL decoding.
 }
