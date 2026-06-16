@@ -89,11 +89,48 @@ test_that("host_normalize is vectorized and preserves names", {
 
 test_that("host_normalize validates its arguments", {
   expect_error(host_normalize(1L), "must be a character vector")
-  expect_error(host_normalize("x", strict = NA), "strict must be TRUE or FALSE")
+  expect_error(host_normalize("x", check_hyphens = NA), "check_hyphens must be")
   expect_error(
-    host_normalize("x", strict = c(TRUE, FALSE)),
-    "strict must be TRUE or FALSE"
+    host_normalize("x", use_std3 = c(TRUE, FALSE)), "use_std3 must be"
   )
+  expect_error(
+    host_normalize("x", verify_dns_length = 1L), "verify_dns_length must be"
+  )
+})
+
+test_that("host_normalize relaxes exactly the named UTS #46 flag", {
+  # use_std3: "_" is STD3-disallowed-but-valid; default rejects, flag admits it.
+  expect_identical(host_normalize("a_b.com"), NA_character_)
+  expect_identical(host_normalize("a_b.com", use_std3 = FALSE), "a_b.com")
+
+  # check_hyphens: leading/trailing hyphen and "--" in 3rd/4th positions.
+  expect_identical(host_normalize("-lead.com"), NA_character_)
+  expect_identical(host_normalize("-lead.com", check_hyphens = FALSE), "-lead.com")
+  expect_identical(host_normalize("trail-.com"), NA_character_)
+  expect_identical(
+    host_normalize("ab--cd.com", check_hyphens = FALSE), "ab--cd.com"
+  )
+
+  # verify_dns_length: a label over 63 octets, host within other limits.
+  long_label <- strrep("a", 64L)
+  long_host <- paste0(long_label, ".com")
+  expect_identical(host_normalize(long_host), NA_character_)
+  expect_identical(
+    host_normalize(long_host, verify_dns_length = FALSE), long_host
+  )
+
+  # Each flag is independent: relaxing one does not relax the others.
+  expect_identical(host_normalize("a_b.com", check_hyphens = FALSE), NA_character_)
+  expect_identical(host_normalize("-lead.com", use_std3 = FALSE), NA_character_)
+})
+
+test_that("relaxing a flag never changes an already-accepted result", {
+  accepted <- c("Example.COM", "münchen.de", "example.com.", "a.b.c")
+  strict <- host_normalize(accepted)
+  relaxed <- host_normalize(
+    accepted, check_hyphens = FALSE, use_std3 = FALSE, verify_dns_length = FALSE
+  )
+  expect_identical(relaxed, strict)
 })
 
 test_that("normalization_profile_info reports the ratified profile identity", {

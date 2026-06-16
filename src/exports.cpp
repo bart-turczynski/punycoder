@@ -301,9 +301,17 @@ Rcpp::List compare_backends_cpp(
 // encoding needs to be set. Names are preserved.
 //
 // [[Rcpp::export]]
-Rcpp::CharacterVector host_normalize_cpp(Rcpp::CharacterVector x, bool strict = true) {
+Rcpp::CharacterVector host_normalize_cpp(Rcpp::CharacterVector x,
+                                         bool check_hyphens = true,
+                                         bool use_std3 = true,
+                                         bool verify_dns_length = true) {
     R_xlen_t n = x.size();
     Rcpp::CharacterVector out(n);
+
+    punycoder::NormalizeOptions opts;
+    opts.check_hyphens = check_hyphens;
+    opts.use_std3 = use_std3;
+    opts.verify_dns_length = verify_dns_length;
 
     for (R_xlen_t i = 0; i < n; ++i) {
         if (Rcpp::CharacterVector::is_na(x[i])) {
@@ -312,7 +320,7 @@ Rcpp::CharacterVector host_normalize_cpp(Rcpp::CharacterVector x, bool strict = 
         }
 
         const punycoder::HostNormalizeResult result =
-            punycoder::host_normalize_one(Rcpp::as<std::string>(x[i]), strict);
+            punycoder::host_normalize_one(Rcpp::as<std::string>(x[i]), opts);
         out[i] = result.valid ? Rcpp::String(result.value) : NA_STRING;
     }
 

@@ -40,8 +40,11 @@ HostNormalizeResult invalid() { return {false, std::string()}; }
 // Returns false if any code point is disallowed under the profile. With
 // UseSTD3ASCIIRules = true the disallowed_std3_* statuses are treated as
 // disallowed; non-LDH ASCII that the 16.0.0 table marks `valid` is rejected
-// later by the per-label STD3 check, not here.
-bool map_codepoints(const std::vector<uint32_t>& in, std::vector<uint32_t>& out) {
+// later by the per-label STD3 check. With use_std3 = false the table's
+// disallowed_std3_valid / disallowed_std3_mapped entries are instead treated
+// as valid / mapped (UTS #46 §5), so characters such as "_" survive mapping.
+bool map_codepoints(const std::vector<uint32_t>& in, std::vector<uint32_t>& out,
+                    bool use_std3) {
     out.clear();
     out.reserve(in.size());
     for (uint32_t cp : in) {
@@ -57,9 +60,15 @@ bool map_codepoints(const std::vector<uint32_t>& in, std::vector<uint32_t>& out)
         case IdnaStatus::mapped:
             for (uint32_t i = 0; i < len; ++i) out.push_back(map[i]);
             break;
-        case IdnaStatus::disallowed:
         case IdnaStatus::disallowed_std3_valid:
+            if (use_std3) return false;
+            out.push_back(cp);
+            break;
         case IdnaStatus::disallowed_std3_mapped:
+            if (use_std3) return false;
+            for (uint32_t i = 0; i < len; ++i) out.push_back(map[i]);
+            break;
+        case IdnaStatus::disallowed:
             return false;
         }
     }
@@ -183,7 +192,8 @@ bool check_bidi(const std::vector<uint32_t>& label) {
 // requires every code point to have UTS-46 status valid/deviation (a mapped,
 // ignored, or disallowed code point means the A-label was non-canonical).
 // CheckBidi is whole-domain and is applied separately by the caller.
-bool validate_label(const std::vector<uint32_t>& label, bool from_alabel) {
+bool validate_label(const std::vector<uint32_t>& label, bool from_alabel,
+                    const NormalizeOptions& opts) {
     if (label.empty()) return false;  // empty label (leading/consecutive dots)
 
     // V1: label must be in NFC. (Whole-string NFC was applied before the
@@ -194,20 +204,26 @@ bool validate_label(const std::vector<uint32_t>& label, bool from_alabel) {
     if (u16::is_combining_mark(label.front())) return false;
 
     // V2/V3 (CheckHyphens): no "--" in the 3rd/4th positions, and no leading or
-    // trailing hyphen.
-    if (label.size() >= 4 && label[2] == kHyphen && label[3] == kHyphen) {
-        return false;
+    // trailing hyphen. Gated by check_hyphens; WHATWG beStrict=false drops it.
+    if (opts.check_hyphens) {
+        if (label.size() >= 4 && label[2] == kHyphen && label[3] == kHyphen) {
+            return false;
+        }
+        if (label.front() == kHyphen || label.back() == kHyphen) return false;
     }
-    if (label.front() == kHyphen || label.back() == kHyphen) return false;
 
     for (uint32_t cp : label) {
         if (cp < 0x80) {
             // STD3 (UseSTD3ASCIIRules): ASCII labels may contain only
             // letters, digits, and hyphen. Mapping has already case-folded
-            // A-Z to a-z, so only lowercase letters appear here.
-            const bool ldh = (cp >= 'a' && cp <= 'z') ||
-                             (cp >= '0' && cp <= '9') || cp == kHyphen;
-            if (!ldh) return false;
+            // A-Z to a-z, so only lowercase letters appear here. With
+            // use_std3 = false the LDH restriction is dropped (non-LDH ASCII
+            // that survived mapping is accepted).
+            if (opts.use_std3) {
+                const bool ldh = (cp >= 'a' && cp <= 'z') ||
+                                 (cp >= '0' && cp <= '9') || cp == kHyphen;
+                if (!ldh) return false;
+            }
         } else if (from_alabel) {
             // V6: a canonical A-label decodes only to valid/deviation code
             // points. A mapped/ignored/disallowed code point here means the
@@ -257,8 +273,9 @@ bool resolve_label(const std::vector<uint32_t>& piece, LabelWork& work) {
 
 // Validate one resolved label and emit its canonical A-label form. `bidi_domain`
 // selects whether CheckBidi applies (contract section 3).
-bool finalize_label(const LabelWork& work, bool bidi_domain, std::string& out) {
-    if (!validate_label(work.cps, work.from_alabel)) return false;
+bool finalize_label(const LabelWork& work, bool bidi_domain,
+                    const NormalizeOptions& opts, std::string& out) {
+    if (!validate_label(work.cps, work.from_alabel, opts)) return false;
     if (bidi_domain && !check_bidi(work.cps)) return false;
 
     if (work.from_alabel) {
@@ -290,9 +307,8 @@ bool finalize_label(const LabelWork& work, bool bidi_domain, std::string& out) {
 
 }  // namespace
 
-HostNormalizeResult host_normalize_one(const std::string& input, bool strict) {
-    (void)strict;  // v1 always applies the full profile (contract section 2/8).
-
+HostNormalizeResult host_normalize_one(const std::string& input,
+                                       const NormalizeOptions& opts) {
     // Step 1: reject ill-formed / non-UTF-8 input.
     std::vector<uint32_t> cps;
     try {
@@ -314,7 +330,7 @@ HostNormalizeResult host_normalize_one(const std::string& input, bool strict) {
 
     // Step 3a: UTS-46 map. Step 3b: NFC.
     std::vector<uint32_t> mapped;
-    if (!map_codepoints(cps, mapped)) return invalid();
+    if (!map_codepoints(cps, mapped, opts.use_std3)) return invalid();
     const std::vector<uint32_t> normalized = nfc(mapped);
 
     // Step 3c: split into labels on U+002E and resolve each to its U-label form
@@ -352,18 +368,24 @@ HostNormalizeResult host_normalize_one(const std::string& input, bool strict) {
     out_labels.reserve(labels.size());
     for (const LabelWork& work : labels) {
         std::string encoded;
-        if (!finalize_label(work, bidi_domain, encoded)) return invalid();
+        if (!finalize_label(work, bidi_domain, opts, encoded)) return invalid();
         out_labels.push_back(std::move(encoded));
     }
 
     // Step 5: VerifyDnsLength. Each A-label 1-63 octets; total joined (the
     // labels plus the separating dots, excluding the optional root dot) <= 253.
+    // Empty labels are a structural error (rejected in validate_label above)
+    // and stay rejected regardless of the flag; only the length *limits* are
+    // gated by verify_dns_length.
     std::size_t total = out_labels.empty() ? 0 : out_labels.size() - 1;
     for (const std::string& l : out_labels) {
-        if (l.empty() || l.size() > kMaxLabelOctets) return invalid();
+        if (l.empty()) return invalid();
+        if (opts.verify_dns_length && l.size() > kMaxLabelOctets) {
+            return invalid();
+        }
         total += l.size();
     }
-    if (total > kMaxHostOctets) return invalid();
+    if (opts.verify_dns_length && total > kMaxHostOctets) return invalid();
 
     // Step 6: reassemble with dots; re-append the single root dot if present.
     std::string result;

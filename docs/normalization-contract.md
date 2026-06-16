@@ -54,21 +54,22 @@ Out of scope (the caller's concern, e.g. `pslr`):
 ## 2. Signature
 
 ```r
-host_normalize(x, strict = TRUE)
+host_normalize(x, check_hyphens = TRUE, use_std3 = TRUE, verify_dns_length = TRUE)
 ```
 
 - `x`: character vector of hostnames. `NA_character_` is passed through as
   `NA_character_` (missing, not invalid).
-- `strict`: logical scalar, explicit. Always passed by callers; behavior must
-  **not** read the process-wide `punycoder.strict` option (PRD §4). `TRUE`
-  applies the full profile including `UseSTD3ASCIIRules`, `CheckHyphens`,
-  `CheckBidi`, `CheckJoiners`, and DNS length verification. `strict = FALSE` is
-  reserved for a documented relaxed variant and is **not** used by `pslr`; its
-  exact relaxations are deferred and out of scope for v1 of this contract.
+- `check_hyphens`, `use_std3`, `verify_dns_length`: logical scalars, the three
+  UTS #46 processing flags exposed as knobs. Each defaults to `TRUE` (the full
+  `uts46-nontransitional-std3-v1` profile); each may be relaxed independently.
+  Behavior must **not** read the process-wide `punycoder.strict` option
+  (PRD §4). `CheckBidi` and `CheckJoiners` always apply and are **not** knobs.
+  These are UTS #46 parameters, not a browser mode: full WHATWG host policy
+  (where `beStrict = false` flips exactly these three) lives upstack in `rurl`.
 - Returns: character vector, `length(x)`, names preserved. Each element is the
   canonical lowercase ASCII A-label host, or `NA_character_` when the input is
   invalid under the profile. The function never aborts on invalid *data*; it
-  aborts only on programming errors (wrong type, non-scalar `strict`).
+  aborts only on programming errors (wrong type, non-scalar flag).
 
 Returning `NA` for invalid input — rather than throwing under `strict = TRUE`,
 as the existing `puny_encode()` does — is intentional and lets the caller layer
@@ -207,8 +208,10 @@ punycoder release.
   the punycoder version, record old/new `unicode_version` in `NEWS.md`, and
   trigger a `pslr` compatibility review before `pslr` raises its accepted
   punycoder version.
-- Adding the relaxed `strict = FALSE` variant later must not change any
-  `strict = TRUE` result.
+- The relaxed flags (`check_hyphens`, `use_std3`, `verify_dns_length`) are
+  monotone: relaxing any of them must never change a result the full profile
+  already accepts, only ever turn rejections into acceptances. Verified across
+  the IdnaTestV2 corpus.
 
 ## 9. Acceptance criteria for this contract (PSLR-bibhwmuf)
 

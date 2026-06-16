@@ -33,8 +33,8 @@ compare_backends_cpp <- function(input, mode, strict = TRUE) {
     .Call(`_punycoder_compare_backends_cpp`, input, mode, strict)
 }
 
-host_normalize_cpp <- function(x, strict = TRUE) {
-    .Call(`_punycoder_host_normalize_cpp`, x, strict)
+host_normalize_cpp <- function(x, check_hyphens = TRUE, use_std3 = TRUE, verify_dns_length = TRUE) {
+    .Call(`_punycoder_host_normalize_cpp`, x, check_hyphens, use_std3, verify_dns_length)
 }
 
 normalization_unicode_version_cpp <- function() {

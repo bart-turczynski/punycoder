@@ -1,5 +1,21 @@
 # punycoder 1.1.0.9000 (development version)
 
+## New features
+
+* `host_normalize()` gains three UTS #46 processing flags --- `check_hyphens`,
+  `use_std3`, and `verify_dns_length` --- each defaulting to `TRUE` (the strict
+  `uts46-nontransitional-std3-v1` profile) and each independently relaxable.
+  These are standard UTS #46 parameters, not a browser mode: `CheckBidi` and
+  `CheckJoiners` always apply, and full WHATWG host policy lives upstack. Pass
+  the same flag values to `normalization_profile_info()` for the matching
+  profile identity.
+
+## Breaking changes
+
+* `host_normalize()` no longer takes a `strict` argument. It was inert (always
+  applied the full profile) and reserved for exactly this relaxed variant, which
+  the three explicit flags above now provide.
+
 ## Internal
 
 * `host_normalize()` is now verified against the official Unicode UTS #46
