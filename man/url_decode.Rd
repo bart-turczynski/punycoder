@@ -2,12 +2,12 @@
 % Please edit documentation in R/url-utils.R
 \name{url_decode}
 \alias{url_decode}
-\title{Decode URLs with ASCII punycode domains to Unicode}
+\title{Best-effort host rewriting in a URL-shaped string (ASCII punycode to Unicode)}
 \usage{
 url_decode(url, strict = getOption("punycoder.strict", TRUE))
 }
 \arguments{
-\item{url}{Character vector of URLs with ASCII punycode domains}
+\item{url}{Character vector of URL-shaped strings with ASCII punycode hosts}
 
 \item{strict}{Logical; whether to apply strict validation. Defaults to
 `getOption("punycoder.strict", TRUE)`.}
@@ -20,9 +20,15 @@ A character vector the same length as \code{url}, with each element
   \code{NA_character_}.
 }
 \description{
-Converts URLs containing ASCII punycode domain names back to their Unicode
-representation for display purposes. This function makes internationalized
-URLs human-readable.
+Locates the host portion of a URL-shaped string with a hand-rolled
+splitter, decodes that host from ASCII punycode to Unicode, and
+substitutes it back, leaving the rest of the string untouched.
+}
+\details{
+Like [url_encode()], this is **best-effort host extraction and rewriting,
+not URL parsing or canonicalization**, and is not RFC 3986 / WHATWG URL
+conformant (no percent encoding/decoding, scheme/port/path semantics, full
+IPv6, or serialization). Those concerns live upstack in `rurl`.
 }
 \examples{
 \donttest{

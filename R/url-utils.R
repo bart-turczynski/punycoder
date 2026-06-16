@@ -1,10 +1,20 @@
-#' Encode URLs with Unicode domains to ASCII
+#' Best-effort host rewriting in a URL-shaped string (Unicode host to ASCII)
 #'
-#' Converts URLs containing Unicode domain names to their ASCII representation
-#' while preserving the rest of the URL structure. This function is essential
-#' for preparing URLs for systems that require ASCII-only domain names.
+#' Locates the host portion of a URL-shaped string with a hand-rolled
+#' splitter, ASCII-encodes that host, and substitutes it back, leaving the
+#' rest of the string untouched.
 #'
-#' @param url Character vector of URLs with potential Unicode domains
+#' This is **best-effort host extraction and rewriting, not URL parsing or
+#' canonicalization.** It is deliberately *not* RFC 3986 / WHATWG URL
+#' conformant. Non-goals (handled upstack, e.g. by `rurl`): percent
+#' encoding/decoding, scheme validation, port/path/query semantics, full
+#' IPv6 (including zone IDs / RFC 6874), and URL serialization. Pass only the
+#' host to [host_normalize()] / [puny_encode()] when you control the parse;
+#' use this helper only for quick host rewriting in an already-trusted
+#' URL-shaped string.
+#'
+#' @param url Character vector of URL-shaped strings with potential Unicode
+#'   hosts
 #' @param strict Logical; whether to apply strict validation. Defaults to
 #'   `getOption("punycoder.strict", TRUE)`.
 #' @return A character vector the same length as \code{url}, with each element
@@ -34,13 +44,18 @@ url_encode <- function(url, strict = getOption("punycoder.strict", TRUE)) {
   .call_with_validation(url, strict, url_encode_cpp, "url")
 }
 
-#' Decode URLs with ASCII punycode domains to Unicode
+#' Best-effort host rewriting in a URL-shaped string (ASCII punycode to Unicode)
 #'
-#' Converts URLs containing ASCII punycode domain names back to their Unicode
-#' representation for display purposes. This function makes internationalized
-#' URLs human-readable.
+#' Locates the host portion of a URL-shaped string with a hand-rolled
+#' splitter, decodes that host from ASCII punycode to Unicode, and
+#' substitutes it back, leaving the rest of the string untouched.
 #'
-#' @param url Character vector of URLs with ASCII punycode domains
+#' Like [url_encode()], this is **best-effort host extraction and rewriting,
+#' not URL parsing or canonicalization**, and is not RFC 3986 / WHATWG URL
+#' conformant (no percent encoding/decoding, scheme/port/path semantics, full
+#' IPv6, or serialization). Those concerns live upstack in `rurl`.
+#'
+#' @param url Character vector of URL-shaped strings with ASCII punycode hosts
 #' @param strict Logical; whether to apply strict validation. Defaults to
 #'   `getOption("punycoder.strict", TRUE)`.
 #' @return A character vector the same length as \code{url}, with each element
@@ -69,13 +84,22 @@ url_decode <- function(url, strict = getOption("punycoder.strict", TRUE)) {
   .call_with_validation(url, strict, url_decode_cpp, "url")
 }
 
-#' Parse URLs with internationalized domain name handling
+#' Best-effort host extraction from a URL-shaped string
 #'
-#' Parses URLs and returns a structured list with proper handling of
-#' internationalized domain names. This function provides both Unicode
-#' and ASCII representations of domain components.
+#' Splits a URL-shaped string into coarse components with a hand-rolled
+#' splitter, primarily to extract the host for internationalized-domain-name
+#' handling, optionally ASCII-encoding it.
 #'
-#' @param url Character vector of URLs to parse
+#' This is **best-effort host extraction, not a conformant URL parser.** It is
+#' *not* RFC 3986 / WHATWG URL compliant: there is no percent encoding/decoding,
+#' no scheme validation, no robust port/path/query semantics, no full IPv6
+#' (zone IDs / RFC 6874 are unhandled), and no serialization guarantees. The
+#' non-host components are returned as a convenience only; for real URL parsing
+#' and canonicalization use a dedicated URL package (e.g. `rurl`). This surface
+#' is slated for eventual removal in favour of `rurl` consuming punycoder's host
+#' functions.
+#'
+#' @param url Character vector of URL-shaped strings to split
 #' @param encode_domains Logical flag; encode parsed host names to ASCII.
 #' @return An object of class \code{"punycoder_parsed_url"} (a named list)
 #'   with components:

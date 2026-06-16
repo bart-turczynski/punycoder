@@ -99,7 +99,7 @@ validate_domain("test.com")
 ## Key Features
 
 - **Reliable Encoding/Decoding**: RFC 3492 compliant punycode conversion
-- **URL-Aware Processing**: Handle complete URLs with international domains  
+- **Best-effort host rewriting**: Swap the host of a URL-shaped string in place (not a full URL parser; see below)
 - **High Performance**: Vectorized operations for processing large datasets
 - **Comprehensive Validation**: Robust error handling with informative messages
 - **Flexible Backend**: Automatically uses `libidn2` when available, with a built-in fallback backend
@@ -116,9 +116,18 @@ international_urls <- c(
   "https://北京.中国/info"
 )
 
-# Convert for HTTP requests
+# Convert for HTTP requests (best-effort host rewriting only)
 ascii_urls <- url_encode(international_urls)
 ```
+
+> `url_encode()`, `url_decode()`, and `parse_url()` do **best-effort host
+> extraction and rewriting**, not RFC 3986 / WHATWG URL parsing or
+> canonicalization. They have no percent encoding/decoding, scheme validation,
+> robust port/path/query semantics, full IPv6 (zone IDs / RFC 6874), or
+> serialization guarantees, and are slated for eventual removal in favour of a
+> dedicated URL package consuming punycoder's host functions. Use
+> `host_normalize()` / `puny_encode()` directly when you control the host
+> parse.
 
 ### Data Analysis
 Clean and standardize URL datasets:
@@ -136,11 +145,11 @@ validate_domain(c("valid.com", "invalid..domain"))
 `punycoder` currently provides:
 
 - Domain encoding/decoding: `puny_encode()`, `puny_decode()`
-- URL host processing: `url_encode()`, `url_decode()`, `parse_url()`
+- Best-effort URL host rewriting/extraction (not URL parsing/canonicalization): `url_encode()`, `url_decode()`, `parse_url()`
 - Domain validation utilities: `is_punycode()`, `is_idn()`, `validate_domain()`
 - Vectorized operations and strict/non-strict handling for malformed input
 - Build-time backend selection (`libidn2` when present, built-in fallback otherwise)
-- Structured URL parsing where invalid inputs are returned as missing components
+- Best-effort structured host extraction where invalid inputs are returned as missing components
 
 ## Acknowledgments
 

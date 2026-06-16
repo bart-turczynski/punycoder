@@ -12,7 +12,10 @@ Description: High-performance Unicode and Punycode processing for
     apply Unicode IDNA normalization. 'host_normalize()' is the Unicode
     Technical Standard #46 host-normalization entry point, mapping a host
     name to a canonical lowercase ASCII comparison form (non-transitional
-    profile, pinned Unicode version). Aimed at URL processing and data
+    profile, pinned Unicode version). The 'url_encode()' / 'url_decode()' /
+    'parse_url()' helpers do best-effort host extraction and rewriting in
+    URL-shaped strings and are deliberately not RFC 3986 / WHATWG URL
+    parsers or canonicalizers. Aimed at host normalization and data
     analysis workflows.
 Depends: R (>= 3.5.0)
 Imports: Rcpp (>= 1.0.0)

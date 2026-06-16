@@ -2,12 +2,12 @@
 % Please edit documentation in R/url-utils.R
 \name{parse_url}
 \alias{parse_url}
-\title{Parse URLs with internationalized domain name handling}
+\title{Best-effort host extraction from a URL-shaped string}
 \usage{
 parse_url(url, encode_domains = FALSE)
 }
 \arguments{
-\item{url}{Character vector of URLs to parse}
+\item{url}{Character vector of URL-shaped strings to split}
 
 \item{encode_domains}{Logical flag; encode parsed host names to ASCII.}
 }
@@ -27,9 +27,19 @@ An object of class \code{"punycoder_parsed_url"} (a named list)
   \code{path} is returned as \code{""}.
 }
 \description{
-Parses URLs and returns a structured list with proper handling of
-internationalized domain names. This function provides both Unicode
-and ASCII representations of domain components.
+Splits a URL-shaped string into coarse components with a hand-rolled
+splitter, primarily to extract the host for internationalized-domain-name
+handling, optionally ASCII-encoding it.
+}
+\details{
+This is **best-effort host extraction, not a conformant URL parser.** It is
+*not* RFC 3986 / WHATWG URL compliant: there is no percent encoding/decoding,
+no scheme validation, no robust port/path/query semantics, no full IPv6
+(zone IDs / RFC 6874 are unhandled), and no serialization guarantees. The
+non-host components are returned as a convenience only; for real URL parsing
+and canonicalization use a dedicated URL package (e.g. `rurl`). This surface
+is slated for eventual removal in favour of `rurl` consuming punycoder's host
+functions.
 }
 \examples{
 \donttest{
