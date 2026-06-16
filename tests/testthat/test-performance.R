@@ -35,23 +35,26 @@ test_that("Unicode domain throughput stays high for encode and decode", {
   expect_rate_at_least(puny_decode, ascii_domains, 10000)
 })
 
-test_that("mixed URL throughput stays high for encode and decode", {
-  skip_on_cran()
+test_that(
+  "mixed URL throughput stays high for encode and decode",
+  suppress_url_deprecation({
+    skip_on_cran()
 
-  unicode_urls <- rep(
-    c(
-      "https://café.example.com/path?query=value",
-      "https://user:pass@παράδειγμα.ελ:8443/path#frag",
-      "http://127.0.0.1/path",
-      "http://[2001:db8::1]/path"
-    ),
-    4000
-  )
-  ascii_urls <- url_encode(unicode_urls)
+    unicode_urls <- rep(
+      c(
+        "https://café.example.com/path?query=value",
+        "https://user:pass@παράδειγμα.ελ:8443/path#frag",
+        "http://127.0.0.1/path",
+        "http://[2001:db8::1]/path"
+      ),
+      4000
+    )
+    ascii_urls <- url_encode(unicode_urls)
 
-  expect_rate_at_least(url_encode, unicode_urls, 5000)
-  expect_rate_at_least(url_decode, ascii_urls, 5000)
-})
+    expect_rate_at_least(url_encode, unicode_urls, 5000)
+    expect_rate_at_least(url_decode, ascii_urls, 5000)
+  })
+)
 
 test_that("large vector workloads remain scalable for encode and decode", {
   skip_on_cran()

@@ -10,6 +10,16 @@
   the same flag values to `normalization_profile_info()` for the matching
   profile identity.
 
+## Deprecated
+
+* `url_encode()`, `url_decode()`, and `parse_url()` are deprecated and now emit
+  a `.Deprecated()` warning on use. They remain exported and fully functional
+  for this release and are scheduled for removal in the next one. These were
+  always best-effort host extraction/rewriting, not RFC 3986 / WHATWG URL
+  parsing; use the `rurl` package for URL parsing and canonicalization, or pass
+  the host alone to `host_normalize()` / `puny_encode()` / `puny_decode()` for
+  host-only needs.
+
 ## Breaking changes
 
 * `host_normalize()` no longer takes a `strict` argument. It was inert (always

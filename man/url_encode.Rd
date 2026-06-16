@@ -34,6 +34,14 @@ host to [host_normalize()] / [puny_encode()] when you control the parse;
 use this helper only for quick host rewriting in an already-trusted
 URL-shaped string.
 }
+\section{Deprecated}{
+
+This function is deprecated and slated for removal in a future release. For
+URL parsing and canonicalization use a dedicated URL package (e.g. `rurl`);
+for host-only encoding pass the host alone to [host_normalize()] or
+[puny_encode()].
+}
+
 \examples{
 \donttest{
 # Basic URL encoding
@@ -55,3 +63,4 @@ url_encode(urls)
   \code{\link{puny_encode}} for domain-only encoding,
   \code{\link{parse_url}} for URL component extraction.
 }
+\keyword{internal}

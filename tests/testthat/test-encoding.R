@@ -132,11 +132,16 @@ test_that("strict defaults follow global punycoder.strict option", {
   on.exit(options(old), add = TRUE)
 
   expect_true(is.na(puny_encode("invalid..domain")))
-  expect_true(is.na(url_decode("https://xn--.example.com")))
+  expect_true(
+    is.na(suppress_url_deprecation(url_decode("https://xn--.example.com")))
+  )
 
   options(punycoder.strict = TRUE)
   expect_error(puny_encode("invalid..domain"), "Error encoding domain")
-  expect_error(url_decode("https://xn--.example.com"), "Error decoding URL")
+  expect_error(
+    suppress_url_deprecation(url_decode("https://xn--.example.com")),
+    "Error decoding URL"
+  )
 })
 
 test_that("punycode handles uppercase and trailing dots", {
