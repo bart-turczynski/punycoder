@@ -105,7 +105,9 @@ test_that("host_normalize relaxes exactly the named UTS #46 flag", {
 
   # check_hyphens: leading/trailing hyphen and "--" in 3rd/4th positions.
   expect_identical(host_normalize("-lead.com"), NA_character_)
-  expect_identical(host_normalize("-lead.com", check_hyphens = FALSE), "-lead.com")
+  expect_identical(
+    host_normalize("-lead.com", check_hyphens = FALSE), "-lead.com"
+  )
   expect_identical(host_normalize("trail-.com"), NA_character_)
   expect_identical(
     host_normalize("ab--cd.com", check_hyphens = FALSE), "ab--cd.com"
@@ -120,7 +122,9 @@ test_that("host_normalize relaxes exactly the named UTS #46 flag", {
   )
 
   # Each flag is independent: relaxing one does not relax the others.
-  expect_identical(host_normalize("a_b.com", check_hyphens = FALSE), NA_character_)
+  expect_identical(
+    host_normalize("a_b.com", check_hyphens = FALSE), NA_character_
+  )
   expect_identical(host_normalize("-lead.com", use_std3 = FALSE), NA_character_)
 })
 
@@ -153,7 +157,7 @@ test_that("normalization_profile_info reports the ratified profile identity", {
   expect_true(info$verify_dns_length)
 })
 
-test_that("normalization_profile_info reports identity for a specific flag set", {
+test_that("normalization_profile_info reports identity for a flag set", {
   # Each knob is reflected in its own column.
   expect_false(normalization_profile_info(check_hyphens = FALSE)$check_hyphens)
   expect_false(normalization_profile_info(use_std3 = FALSE)$use_std3)
@@ -170,7 +174,7 @@ test_that("normalization_profile_info reports identity for a specific flag set",
   expect_true(relaxed$check_joiners)
 })
 
-test_that("profile token is byte-stable for defaults and distinct per flag set", {
+test_that("profile token is byte-stable for defaults, distinct per flag set", {
   # The default call is byte-identical to the historical token, so a zero-arg
   # downstream reader (e.g. pslr) sees no change.
   expect_identical(
@@ -194,7 +198,10 @@ test_that("profile token is byte-stable for defaults and distinct per flag set",
     normalization_profile_info(
       check_hyphens = FALSE, use_std3 = FALSE, verify_dns_length = FALSE
     )$profile,
-    "uts46-nontransitional-std3-v1+no-check-hyphens+no-std3+no-verify-dns-length"
+    paste0(
+      "uts46-nontransitional-std3-v1",
+      "+no-check-hyphens+no-std3+no-verify-dns-length"
+    )
   )
 
   # Distinct flag sets never collide on the token.
