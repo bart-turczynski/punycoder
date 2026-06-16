@@ -49,7 +49,27 @@ Out of scope (the caller's concern, e.g. `pslr`):
 - IP-address-literal detection and rejection — under STD3 rules `1.2.3.4`
   normalizes to `1.2.3.4`; rejecting IP literals is the caller's job;
 - the policy for what to *do* with an invalid element (return `NA` vs. abort) —
-  this function reports invalidity; the caller chooses the policy.
+  this function reports invalidity; the caller chooses the policy;
+- **spoof / homograph / mixed-script / display-safety detection** — see the
+  Non-goals section below.
+
+### Non-goals: spoofing and display safety (normative)
+
+`host_normalize()` is **not a safety gate.** Confusable, homograph,
+mixed-script, and display-safety detection — the concerns of **UTS #39**
+(Unicode Security Mechanisms) and **UTR #36** (Unicode Security
+Considerations) — are explicitly **not part of this function's acceptance
+criteria.** A successful (non-`NA`) result asserts only that the host is valid
+and normalized under the pinned UTS #46 profile; it asserts **nothing** about
+whether the host is visually safe, non-deceptive, or distinguishable from
+another host.
+
+This is a deliberate scope boundary, not an oversight. UTS #46 §6 itself
+*recommends* applying UTR #36 / UTS #39 confusable and restriction-level checks
+as additional **application/UI-layer** steps on top of normalization — which is
+precisely the argument for placing them upstack (in `rurl` or a dedicated
+policy layer), not inside the normalization primitive. "Not part of the
+acceptance criteria" means not in punycoder, not "never relevant".
 
 ## 2. Signature
 
