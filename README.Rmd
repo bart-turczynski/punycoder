@@ -151,6 +151,24 @@ validate_domain(c("valid.com", "invalid..domain"))
 - Build-time backend selection (`libidn2` when present, built-in fallback otherwise)
 - Best-effort structured host extraction where invalid inputs are returned as missing components
 
+## Non-goals
+
+`punycoder` is a standards primitive for Punycode and host normalization. It is
+deliberately agnostic about resolvability and safety; the following are **not**
+part of its acceptance criteria:
+
+- **No spoof / homograph / mixed-script / display-safety detection.**
+  `host_normalize()` is not a safety gate — a successful result says the host is
+  valid and normalized under the pinned UTS #46 profile, nothing about whether it
+  is visually safe or non-deceptive. Confusable and restriction-level checks
+  (UTS #39 / UTR #36, which UTS #46 itself recommends only as application/UI-layer
+  steps) belong upstack.
+- **No URL canonicalization.** The `url_*` / `parse_url()` helpers do best-effort
+  host rewriting only (see above), not RFC 3986 / WHATWG URL parsing.
+- **No DNS resolvability or registrability / PSL classification.**
+
+These opinions belong in higher layers that consume punycoder's host functions.
+
 ## Acknowledgments
 
 - Core C++/R integration is powered by `Rcpp`.
