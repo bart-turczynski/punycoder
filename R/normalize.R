@@ -66,11 +66,12 @@ host_normalize <- function(x, check_hyphens = TRUE, use_std3 = TRUE,
 
 # Derive the coarse `profile` cache token from a flag set. The default profile
 # (all checks on) yields the byte-stable historical token; any deviation appends
-# a deterministic, fixed-order tag so a token minted under one flag set can never
-# `identical()`-match one minted under another. The token is a COARSE cache key
-# only: the precise identity lives in the per-parameter columns, which downstream
-# keys on (PUNY-nblrvplp). check_bidi / check_joiners / transitional are not
-# knobs (fixed by the profile), so they never enter the token.
+# a deterministic, fixed-order tag so a token minted under one flag set can
+# never `identical()`-match one minted under another. The token is a COARSE
+# cache key only: the precise identity lives in the per-parameter columns,
+# which downstream keys on (PUNY-nblrvplp). check_bidi / check_joiners /
+# transitional are not knobs (fixed by the profile), so they never enter the
+# token.
 .normalization_profile_token <- function(check_hyphens, use_std3,
                                          verify_dns_length) {
   base <- "uts46-nontransitional-std3-v1"

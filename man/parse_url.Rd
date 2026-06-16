@@ -41,6 +41,14 @@ and canonicalization use a dedicated URL package (e.g. `rurl`). This surface
 is slated for eventual removal in favour of `rurl` consuming punycoder's host
 functions.
 }
+\section{Deprecated}{
+
+This function is deprecated and slated for removal in a future release. For
+URL parsing and canonicalization use a dedicated URL package (e.g. `rurl`);
+for host-only encoding pass the host alone to [host_normalize()] or
+[puny_encode()].
+}
+
 \examples{
 \donttest{
 # Parse URL with Unicode domain
@@ -60,3 +68,4 @@ parse_url(urls)
 \code{\link{url_encode}}, \code{\link{url_decode}} for URL
   transformation with IDN handling.
 }
+\keyword{internal}

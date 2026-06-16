@@ -101,6 +101,10 @@ test_that("relaxing a UTS-46 flag stays bounded against IdnaTestV2", {
       sort(.idna_known_divergence[[flag]] %||% character(0)),
       info = flag
     )
-    expect_identical(got[newly[bounded]], df$to_ascii[newly[bounded]], info = flag)
+    expect_identical(
+      got[newly[bounded]],
+      df$to_ascii[newly[bounded]],
+      info = flag
+    )
   }
 })

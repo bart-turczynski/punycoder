@@ -30,6 +30,13 @@ not URL parsing or canonicalization**, and is not RFC 3986 / WHATWG URL
 conformant (no percent encoding/decoding, scheme/port/path semantics, full
 IPv6, or serialization). Those concerns live upstack in `rurl`.
 }
+\section{Deprecated}{
+
+This function is deprecated and slated for removal in a future release. For
+URL parsing and canonicalization use a dedicated URL package (e.g. `rurl`);
+for host-only decoding pass the host alone to [puny_decode()].
+}
+
 \examples{
 \donttest{
 # Basic URL decoding
@@ -49,3 +56,4 @@ url_decode(ascii_urls)
   \code{\link{puny_decode}} for domain-only decoding,
   \code{\link{parse_url}} for URL component extraction.
 }
+\keyword{internal}
