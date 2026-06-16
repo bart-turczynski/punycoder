@@ -102,7 +102,8 @@ test_that("normalization_profile_info reports the ratified profile identity", {
   expect_identical(nrow(info), 1L)
   expect_named(info, c(
     "profile", "unicode_version", "idna", "transitional", "use_std3",
-    "check_hyphens", "check_bidi", "check_joiners", "backend"
+    "check_hyphens", "check_bidi", "check_joiners", "verify_dns_length",
+    "backend"
   ))
   expect_identical(info$profile, "uts46-nontransitional-std3-v1")
   expect_identical(info$unicode_version, "16.0.0")
@@ -112,4 +113,75 @@ test_that("normalization_profile_info reports the ratified profile identity", {
   expect_true(info$check_hyphens)
   expect_true(info$check_bidi)
   expect_true(info$check_joiners)
+  expect_true(info$verify_dns_length)
+})
+
+test_that("normalization_profile_info reports identity for a specific flag set", {
+  # Each knob is reflected in its own column.
+  expect_false(normalization_profile_info(check_hyphens = FALSE)$check_hyphens)
+  expect_false(normalization_profile_info(use_std3 = FALSE)$use_std3)
+  expect_false(
+    normalization_profile_info(verify_dns_length = FALSE)$verify_dns_length
+  )
+
+  # Fixed (non-knob) columns never move.
+  relaxed <- normalization_profile_info(
+    check_hyphens = FALSE, use_std3 = FALSE, verify_dns_length = FALSE
+  )
+  expect_false(relaxed$transitional)
+  expect_true(relaxed$check_bidi)
+  expect_true(relaxed$check_joiners)
+})
+
+test_that("profile token is byte-stable for defaults and distinct per flag set", {
+  # The default call is byte-identical to the historical token, so a zero-arg
+  # downstream reader (e.g. pslr) sees no change.
+  expect_identical(
+    normalization_profile_info()$profile, "uts46-nontransitional-std3-v1"
+  )
+
+  # Any deviation appends a deterministic, fixed-order tag.
+  expect_identical(
+    normalization_profile_info(check_hyphens = FALSE)$profile,
+    "uts46-nontransitional-std3-v1+no-check-hyphens"
+  )
+  expect_identical(
+    normalization_profile_info(use_std3 = FALSE)$profile,
+    "uts46-nontransitional-std3-v1+no-std3"
+  )
+  expect_identical(
+    normalization_profile_info(verify_dns_length = FALSE)$profile,
+    "uts46-nontransitional-std3-v1+no-verify-dns-length"
+  )
+  expect_identical(
+    normalization_profile_info(
+      check_hyphens = FALSE, use_std3 = FALSE, verify_dns_length = FALSE
+    )$profile,
+    "uts46-nontransitional-std3-v1+no-check-hyphens+no-std3+no-verify-dns-length"
+  )
+
+  # Distinct flag sets never collide on the token.
+  tokens <- vapply(
+    list(
+      normalization_profile_info(),
+      normalization_profile_info(check_hyphens = FALSE),
+      normalization_profile_info(use_std3 = FALSE),
+      normalization_profile_info(verify_dns_length = FALSE)
+    ),
+    function(info) info$profile, character(1)
+  )
+  expect_identical(anyDuplicated(tokens), 0L)
+})
+
+test_that("normalization_profile_info validates its flag arguments", {
+  expect_error(
+    normalization_profile_info(check_hyphens = NA), "check_hyphens must be"
+  )
+  expect_error(
+    normalization_profile_info(use_std3 = c(TRUE, FALSE)), "use_std3 must be"
+  )
+  expect_error(
+    normalization_profile_info(verify_dns_length = 1L),
+    "verify_dns_length must be"
+  )
 })

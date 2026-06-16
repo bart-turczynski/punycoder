@@ -4,22 +4,40 @@
 \alias{normalization_profile_info}
 \title{Canonical-host normalization profile identity}
 \usage{
-normalization_profile_info()
+normalization_profile_info(
+  check_hyphens = TRUE,
+  use_std3 = TRUE,
+  verify_dns_length = TRUE
+)
+}
+\arguments{
+\item{check_hyphens, use_std3, verify_dns_length}{Logical scalars selecting the
+flag set to report. Each defaults to `TRUE` (the strict profile).}
 }
 \value{
 A one-row `data.frame` with columns `profile`, `unicode_version`,
   `idna`, `transitional`, `use_std3`, `check_hyphens`, `check_bidi`,
-  `check_joiners`, and `backend`.
+  `check_joiners`, `verify_dns_length`, and `backend`.
 }
 \description{
-Returns the stable, machine-readable identity of the normalization profile
-applied by [host_normalize()]. Downstream packages read `profile` and
-`unicode_version` to key reproducibility on the exact normalization
-behavior; the `backend` column is diagnostic only and must never enter a
+Returns the stable, machine-readable identity of a normalization profile.
+Called with no arguments it reports the default (fully strict) profile
+[host_normalize()] applies; the `check_hyphens`, `use_std3`, and
+`verify_dns_length` arguments report the identity of a specific flag set so a
+caller can describe the exact profile a given normalization used. Downstream
+packages key reproducibility on the full per-parameter column set; `profile`
+is a coarse cache token (distinct per flag set, but no longer load-bearing
+alone) and the `backend` column is diagnostic only and must never enter a
 reproducibility or cache key.
+}
+\details{
+`check_bidi`, `check_joiners`, and `transitional` are fixed by the profile
+(UTS #46 non-transitional, both bidi and joiner checks always on) and are
+reported as constant columns rather than arguments.
 }
 \examples{
 normalization_profile_info()
+normalization_profile_info(use_std3 = FALSE)
 }
 \seealso{
 [host_normalize()].

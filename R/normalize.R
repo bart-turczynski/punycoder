@@ -35,31 +35,70 @@ host_normalize <- function(x, strict = TRUE) {
   out
 }
 
+# Derive the coarse `profile` cache token from a flag set. The default profile
+# (all checks on) yields the byte-stable historical token; any deviation appends
+# a deterministic, fixed-order tag so a token minted under one flag set can never
+# `identical()`-match one minted under another. The token is a COARSE cache key
+# only: the precise identity lives in the per-parameter columns, which downstream
+# keys on (PUNY-nblrvplp). check_bidi / check_joiners / transitional are not
+# knobs (fixed by the profile), so they never enter the token.
+.normalization_profile_token <- function(check_hyphens, use_std3,
+                                         verify_dns_length) {
+  base <- "uts46-nontransitional-std3-v1"
+  deviations <- c(
+    if (!check_hyphens) "no-check-hyphens",
+    if (!use_std3) "no-std3",
+    if (!verify_dns_length) "no-verify-dns-length"
+  )
+  if (length(deviations) == 0L) {
+    return(base)
+  }
+  paste0(base, "+", paste(deviations, collapse = "+"))
+}
+
 #' Canonical-host normalization profile identity
 #'
-#' Returns the stable, machine-readable identity of the normalization profile
-#' applied by [host_normalize()]. Downstream packages read `profile` and
-#' `unicode_version` to key reproducibility on the exact normalization
-#' behavior; the `backend` column is diagnostic only and must never enter a
+#' Returns the stable, machine-readable identity of a normalization profile.
+#' Called with no arguments it reports the default (fully strict) profile
+#' [host_normalize()] applies; the `check_hyphens`, `use_std3`, and
+#' `verify_dns_length` arguments report the identity of a specific flag set so a
+#' caller can describe the exact profile a given normalization used. Downstream
+#' packages key reproducibility on the full per-parameter column set; `profile`
+#' is a coarse cache token (distinct per flag set, but no longer load-bearing
+#' alone) and the `backend` column is diagnostic only and must never enter a
 #' reproducibility or cache key.
 #'
+#' `check_bidi`, `check_joiners`, and `transitional` are fixed by the profile
+#' (UTS #46 non-transitional, both bidi and joiner checks always on) and are
+#' reported as constant columns rather than arguments.
+#'
+#' @param check_hyphens,use_std3,verify_dns_length Logical scalars selecting the
+#'   flag set to report. Each defaults to `TRUE` (the strict profile).
 #' @return A one-row `data.frame` with columns `profile`, `unicode_version`,
 #'   `idna`, `transitional`, `use_std3`, `check_hyphens`, `check_bidi`,
-#'   `check_joiners`, and `backend`.
+#'   `check_joiners`, `verify_dns_length`, and `backend`.
 #' @seealso [host_normalize()].
 #' @examples
 #' normalization_profile_info()
+#' normalization_profile_info(use_std3 = FALSE)
 #' @export
-normalization_profile_info <- function() {
+normalization_profile_info <- function(check_hyphens = TRUE, use_std3 = TRUE,
+                                       verify_dns_length = TRUE) {
+  .assert_flag(check_hyphens, "check_hyphens")
+  .assert_flag(use_std3, "use_std3")
+  .assert_flag(verify_dns_length, "verify_dns_length")
   data.frame(
-    profile = "uts46-nontransitional-std3-v1",
+    profile = .normalization_profile_token(
+      check_hyphens, use_std3, verify_dns_length
+    ),
     unicode_version = normalization_unicode_version_cpp(),
     idna = "uts46",
     transitional = FALSE,
-    use_std3 = TRUE,
-    check_hyphens = TRUE,
+    use_std3 = use_std3,
+    check_hyphens = check_hyphens,
     check_bidi = TRUE,
     check_joiners = TRUE,
+    verify_dns_length = verify_dns_length,
     # Normalization always uses the in-tree Punycode transform, so the
     # mapping/NFC/validation pipeline is independent of whether libidn2 is
     # present (contract section 6).
