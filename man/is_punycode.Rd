@@ -21,7 +21,7 @@ in punycode format (starts with xn-- prefix).
 \donttest{
 is_punycode("xn--example") # TRUE
 is_punycode("example.com") # FALSE
-is_punycode(c("xn--caf-dma.com", "regular.com"))  # c(TRUE, FALSE)
+is_punycode(c("xn--caf-dma.com", "regular.com")) # c(TRUE, FALSE)
 }
 }
 \seealso{

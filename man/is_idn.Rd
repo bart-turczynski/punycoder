@@ -20,12 +20,12 @@ would require punycode encoding for ASCII compatibility.
 \examples{
 \donttest{
 is_idn("caf\u00E9.com") # TRUE
-is_idn("example.com")    # FALSE
+is_idn("example.com") # FALSE
 is_idn(c(
   "caf\u00E9.com",
   "\u043C\u043E\u0441\u043A\u0432\u0430.\u0440\u0444",
   "test.com"
-))  # c(TRUE, TRUE, FALSE)
+)) # c(TRUE, TRUE, FALSE)
 }
 }
 \seealso{
