@@ -1,6 +1,6 @@
 ---
 title: "Introduction to punycoder"
-author: "Package Author"
+author: "Bart Turczynski"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
