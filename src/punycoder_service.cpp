@@ -51,10 +51,24 @@ std::string materialize_domain(
 }  // namespace
 
 PunycodeService::PunycodeService(bool strict)
-    : backend_(select_label_backend()), strict_(strict) {}
+    : PunycodeService(strict, true) {}
+
+PunycodeService::PunycodeService(bool strict, bool verify_dns_length)
+    : backend_(select_label_backend()),
+      strict_(strict),
+      verify_dns_length_(verify_dns_length) {}
 
 PunycodeService::PunycodeService(bool strict, const LabelBackend& backend)
-    : backend_(backend), strict_(strict) {}
+    : PunycodeService(strict, backend, true) {}
+
+PunycodeService::PunycodeService(
+    bool strict,
+    const LabelBackend& backend,
+    bool verify_dns_length
+)
+    : backend_(backend),
+      strict_(strict),
+      verify_dns_length_(verify_dns_length) {}
 
 std::string PunycodeService::encode_domain(const std::string& unicode_domain) const {
     return transform_domain(unicode_domain, DomainTransform::encode);
@@ -74,7 +88,13 @@ std::string PunycodeService::decode_url(const std::string& url) const {
 
 bool PunycodeService::is_valid_domain(const std::string& domain) const {
     try {
-        validate_and_parse_domain(domain, backend_, strict_, DomainTransform::none);
+        validate_and_parse_domain(
+            domain,
+            backend_,
+            strict_,
+            verify_dns_length_,
+            DomainTransform::none
+        );
         return true;
     } catch (const std::exception&) {
         return false;
@@ -85,7 +105,13 @@ std::string PunycodeService::transform_domain(
     const std::string& domain,
     DomainTransform transform
 ) const {
-    ParsedDomain parsed = validate_and_parse_domain(domain, backend_, strict_, transform);
+    ParsedDomain parsed = validate_and_parse_domain(
+        domain,
+        backend_,
+        strict_,
+        verify_dns_length_,
+        transform
+    );
     return materialize_domain(parsed, transform);
 }
 

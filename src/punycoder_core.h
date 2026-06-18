@@ -67,6 +67,7 @@ private:
 
 [[noreturn]] void throw_error(ErrorCode code);
 [[noreturn]] void throw_error(ErrorCode code, const std::string& detail);
+const char* error_code_name(ErrorCode code) noexcept;
 
 struct LabelInfo {
     std::string value;
@@ -140,6 +141,7 @@ ParsedDomain validate_and_parse_domain(
     const std::string& domain,
     const LabelBackend& backend,
     bool strict,
+    bool verify_dns_length,
     DomainTransform transform = DomainTransform::none
 );
 bool looks_like_url_input(const std::string& input);
@@ -150,7 +152,13 @@ std::string rebuild_url_with_host(const ParsedURL& parsed, const std::string& ho
 class PunycodeService {
 public:
     explicit PunycodeService(bool strict);
+    PunycodeService(bool strict, bool verify_dns_length);
     PunycodeService(bool strict, const LabelBackend& backend);
+    PunycodeService(
+        bool strict,
+        const LabelBackend& backend,
+        bool verify_dns_length
+    );
 
     std::string encode_domain(const std::string& unicode_domain) const;
     std::string decode_domain(const std::string& punycode_domain) const;
@@ -169,6 +177,7 @@ private:
 
     LabelBackend backend_;
     bool strict_;
+    bool verify_dns_length_;
 };
 
 }  // namespace punycoder

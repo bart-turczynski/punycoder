@@ -65,6 +65,9 @@ is_idn <- function(x) {
 #'     \item{valid}{Logical vector indicating whether each domain is valid.}
 #'     \item{errors}{List of character vectors, each containing error messages
 #'       for the corresponding domain (empty for valid domains).}
+#'     \item{error_codes}{List of character vectors, each containing stable
+#'       machine-readable error codes for the corresponding domain (empty for
+#'       valid domains). Missing input uses \code{"domain_na"}.}
 #'   }
 #' @seealso \code{\link{puny_encode}} for encoding validated domains.
 #' @examples

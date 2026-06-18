@@ -10,7 +10,8 @@ puny_decode(x, strict = getOption("punycoder.strict", TRUE))
 \item{x}{Character vector of ASCII punycode domains to decode}
 
 \item{strict}{Logical; whether to apply strict validation. Defaults to
-`getOption("punycoder.strict", TRUE)`.}
+`getOption("punycoder.strict", TRUE)`. In strict mode the raw codec
+enforces structural checks but not DNS host length limits.}
 }
 \value{
 A character vector the same length as \code{x}, with each element
@@ -21,7 +22,9 @@ A character vector the same length as \code{x}, with each element
 \description{
 Converts ASCII Punycode (`xn--`) domain names back to their Unicode
 representation. This is the inverse of [puny_encode()] and is the raw RFC
-3492 transform with A-label framing checks.
+3492 transform with A-label framing checks. DNS host length limits are
+intentionally not applied by this raw codec; use [validate_domain()] or
+[host_normalize()] when you need DNS host validation.
 }
 \details{
 Like [puny_encode()], this is a **low-level ASCII-Compatible Encoding

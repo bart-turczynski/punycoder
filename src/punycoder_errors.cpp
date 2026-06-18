@@ -82,6 +82,63 @@ ErrorCode PunycoderError::code() const noexcept {
     return code_;
 }
 
+const char* error_code_name(ErrorCode code) noexcept {
+    switch (code) {
+    case ErrorCode::invalid_punycode_digit:
+        return "invalid_punycode_digit";
+    case ErrorCode::invalid_utf8_sequence:
+        return "invalid_utf8_sequence";
+    case ErrorCode::truncated_utf8_sequence:
+        return "truncated_utf8_sequence";
+    case ErrorCode::invalid_utf8_continuation:
+        return "invalid_utf8_continuation";
+    case ErrorCode::overlong_utf8_sequence:
+        return "overlong_utf8_sequence";
+    case ErrorCode::invalid_utf8_code_point:
+        return "invalid_utf8_code_point";
+    case ErrorCode::invalid_unicode_code_point:
+        return "invalid_unicode_code_point";
+    case ErrorCode::empty_domain_label:
+        return "empty_domain_label";
+    case ErrorCode::invalid_punycode_label:
+        return "invalid_punycode_label";
+    case ErrorCode::punycode_overflow:
+        return "punycode_overflow";
+    case ErrorCode::invalid_basic_code_point:
+        return "invalid_basic_code_point";
+    case ErrorCode::truncated_punycode_input:
+        return "truncated_punycode_input";
+    case ErrorCode::decoded_code_point_out_of_range:
+        return "decoded_code_point_out_of_range";
+    case ErrorCode::domain_empty:
+        return "domain_empty";
+    case ErrorCode::domain_too_long:
+        return "domain_too_long";
+    case ErrorCode::domain_empty_label:
+        return "domain_empty_label";
+    case ErrorCode::domain_label_too_long:
+        return "domain_label_too_long";
+    case ErrorCode::domain_label_hyphen:
+        return "domain_label_hyphen";
+    case ErrorCode::ascii_domain_characters:
+        return "ascii_domain_characters";
+    case ErrorCode::encoded_label_too_long:
+        return "encoded_label_too_long";
+    case ErrorCode::label_length_limit:
+        return "label_length_limit";
+    case ErrorCode::invalid_ipv6_authority:
+        return "invalid_ipv6_authority";
+    case ErrorCode::invalid_authority:
+        return "invalid_authority";
+    case ErrorCode::empty_url:
+        return "empty_url";
+    case ErrorCode::backend_failure:
+        return "backend_failure";
+    }
+
+    return "unknown_error";
+}
+
 [[noreturn]] void throw_error(ErrorCode code) {
     throw PunycoderError(code, format_error(code, ""));
 }

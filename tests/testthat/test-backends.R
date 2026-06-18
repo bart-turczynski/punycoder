@@ -78,7 +78,8 @@ roundtrip_domains <- c(
 
 # Inputs both backends must reject, spanning the validation pipeline: empty
 # name, STD3-illegal char, empty label, leading dot, hyphen placement,
-# whitespace, malformed ACE payload, and an over-long (>63 octet) label.
+# whitespace, and malformed ACE payload. DNS length validation is covered by
+# validate_domain()/URL host tests, not the raw punycode codec.
 parity_reject_domains <- c(
   "",
   "a_b.com",
@@ -86,8 +87,7 @@ parity_reject_domains <- c(
   ".com",
   "-bad-.com",
   "exa mple.com",
-  "xn--zzz999.com",
-  paste0(strrep("a", 64), ".com")
+  "xn--zzz999.com"
 )
 
 # --- Backend metadata -----------------------------------------------------
@@ -109,10 +109,10 @@ test_that("fallback and libidn2 agree on RFC 3492 vectors", {
     stringsAsFactors = FALSE
   )
 
-  # RFC vectors include generic strings, not only DNS-valid labels, so strict
-  # validation is relaxed for this fixture.
-  expect_backend_parity(vectors$unicode, "encode_domain", strict = FALSE)
-  expect_backend_parity(vectors$ascii, "decode_domain", strict = FALSE)
+  # RFC vectors include generic strings, not only DNS-valid labels. The raw
+  # codec's strict mode keeps structural checks without DNS length caps.
+  expect_backend_parity(vectors$unicode, "encode_domain", strict = TRUE)
+  expect_backend_parity(vectors$ascii, "decode_domain", strict = TRUE)
 })
 
 test_that("fallback and libidn2 agree on multi-script PSL-shaped domains", {

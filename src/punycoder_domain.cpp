@@ -39,15 +39,18 @@ void validate_encoded_label_length(const std::string& encoded) {
     }
 }
 
-LabelInfo classify_label(const std::string& label, bool strict) {
+LabelInfo classify_label(
+    const std::string& label,
+    bool strict,
+    bool verify_dns_length
+) {
     if (label.empty()) {
         throw_error(ErrorCode::domain_empty_label);
     }
 
-    // Hard length cap applied in both strict and non-strict mode. Strict mode
-    // additionally enforces the precise 63-octet RFC limit below; this guard
-    // exists so the non-strict path still refuses pathologically long labels
-    // rather than handing them to the O(n^2) encoder/decoder unbounded.
+    // Hard length cap applied independently of DNS validation. This guard
+    // keeps non-DNS raw codec modes from handing pathologically long labels to
+    // the O(n^2) encoder/decoder unbounded.
     if (label.size() > kMaxLabelLength) {
         throw_error(ErrorCode::label_length_limit);
     }
@@ -57,9 +60,6 @@ LabelInfo classify_label(const std::string& label, bool strict) {
     info.has_xn_prefix = starts_with_xn_prefix(label);
 
     if (strict) {
-        if (label.size() > 63) {
-            throw_error(ErrorCode::domain_label_too_long);
-        }
         if (label.front() == '-' || label.back() == '-') {
             throw_error(ErrorCode::domain_label_hyphen);
         }
@@ -78,6 +78,10 @@ LabelInfo classify_label(const std::string& label, bool strict) {
     info.needs_encoding = !info.is_ascii;
     info.needs_decoding = info.is_ascii && info.has_xn_prefix;
 
+    if (strict && verify_dns_length && info.is_ascii && label.size() > 63) {
+        throw_error(ErrorCode::domain_label_too_long);
+    }
+
     return info;
 }
 
@@ -85,6 +89,7 @@ void plan_label_transform(
     LabelInfo* label,
     const LabelBackend& backend,
     bool strict,
+    bool verify_dns_length,
     DomainTransform transform
 ) {
     if (label->needs_decoding) {
@@ -125,7 +130,7 @@ void plan_label_transform(
     }
 
     std::string encoded = backend.encode(label->value);
-    if (strict) {
+    if (strict && verify_dns_length) {
         validate_encoded_label_length(encoded);
     }
     if (transform == DomainTransform::encode) {
@@ -174,6 +179,7 @@ ParsedDomain validate_and_parse_domain(
     const std::string& domain,
     const LabelBackend& backend,
     bool strict,
+    bool verify_dns_length,
     DomainTransform transform
 ) {
     if (domain.empty()) {
@@ -192,15 +198,15 @@ ParsedDomain validate_and_parse_domain(
         throw_error(ErrorCode::domain_empty);
     }
 
-    if (strict && core.size() > 253) {
+    if (strict && verify_dns_length && core.size() > 253) {
         throw_error(ErrorCode::domain_too_long);
     }
 
     std::vector<std::string> raw_labels = split_on_dot(core);
     result.labels.reserve(raw_labels.size());
     for (const std::string& raw_label : raw_labels) {
-        LabelInfo label = classify_label(raw_label, strict);
-        plan_label_transform(&label, backend, strict, transform);
+        LabelInfo label = classify_label(raw_label, strict, verify_dns_length);
+        plan_label_transform(&label, backend, strict, verify_dns_length, transform);
         result.labels.push_back(std::move(label));
     }
 

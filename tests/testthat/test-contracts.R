@@ -29,7 +29,7 @@ test_that("validate_domain preserves result attributes", {
 
   expect_s3_class(result, "punycoder_validation")
   expect_identical(attr(result, "strict"), FALSE)
-  expect_named(result, c("domains", "valid", "errors"))
+  expect_named(result, c("domains", "valid", "errors", "error_codes"))
 })
 
 test_that("strict wrappers preserve user-facing error prefixes", {
