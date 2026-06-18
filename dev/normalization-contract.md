@@ -232,6 +232,12 @@ punycoder release.
   monotone: relaxing any of them must never change a result the full profile
   already accepts, only ever turn rejections into acceptances. Verified across
   the IdnaTestV2 corpus.
+- Embedder note: the C++ normalization helpers implement their per-input
+  invalid-result contract by catching internal `PunycoderError` exceptions. R
+  package builds use normal C++ exception support; vendored builds, including
+  Emscripten/WASM builds, must compile this code with C++ exceptions enabled or
+  invalid input may abort the embedding module instead of returning the
+  row-level invalid result.
 
 ## 9. Acceptance criteria for this contract (PSLR-bibhwmuf)
 

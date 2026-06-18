@@ -35,9 +35,11 @@ struct NormalizeOptions {
 
 // Normalize a single host to its canonical comparison form per the ratified
 // contract under the given profile flags. Never throws on invalid *data*
-// (returns {false, ""}); the input is a well-formed (possibly empty) UTF-8
-// std::string. With the default `opts` (all flags true) this is the strict
-// uts46-nontransitional-std3-v1 profile.
+// (returns {false, ""}); that NA-on-invalid style contract is implemented by
+// catching internal PunycoderError exceptions, so embedders must compile this
+// code with C++ exception handling enabled. The input is a well-formed
+// (possibly empty) UTF-8 std::string. With the default `opts` (all flags true)
+// this is the strict uts46-nontransitional-std3-v1 profile.
 HostNormalizeResult host_normalize_one(const std::string& input,
                                        const NormalizeOptions& opts);
 
