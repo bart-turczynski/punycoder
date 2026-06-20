@@ -8,6 +8,12 @@
 [![Verify](https://github.com/bart-turczynski/punycoder/actions/workflows/verify.yml/badge.svg)](https://github.com/bart-turczynski/punycoder/actions/workflows/verify.yml)
 [![CRAN
 status](https://www.r-pkg.org/badges/version/punycoder)](https://CRAN.R-project.org/package=punycoder)
+[![CRAN
+downloads](https://cranlogs.r-pkg.org/badges/punycoder)](https://CRAN.R-project.org/package=punycoder)
+[![Codecov
+coverage](https://codecov.io/gh/bart-turczynski/punycoder/branch/main/graph/badge.svg)](https://app.codecov.io/gh/bart-turczynski/punycoder)
+[![Lifecycle:
+stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
 <!-- badges: end -->
 
 High-performance Unicode and Punycode encoding/decoding for
