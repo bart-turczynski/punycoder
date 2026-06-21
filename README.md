@@ -216,6 +216,13 @@ functions.
   robust fix for punycode encode/decode issues that may arise in
   `urltools` workflows.
 
+## Related packages
+
+`punycoder` is part of a small ecosystem of R packages by the same author:
+
+- **[pslr](https://bart-turczynski.github.io/pslr/)** — Public Suffix List engine that uses `punycoder` for IDNA canonicalization. Use it for eTLD and registrable-domain queries.
+- **[rurl](https://bart-turczynski.github.io/rurl/)** — Full URL parsing, normalization, and joining toolkit built on top of both `punycoder` and `pslr`.
+
 ## Contributing
 
 We welcome contributions. See
