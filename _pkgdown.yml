@@ -49,6 +49,12 @@ reference:
       - url_decode
       - parse_url
 
+  - title: "Internals"
+    desc: S3 print methods and package overview.
+    contents:
+      - punycoder-package
+      - starts_with("print.")
+
 news:
   releases:
     - text: "punycoder 1.2.0"
