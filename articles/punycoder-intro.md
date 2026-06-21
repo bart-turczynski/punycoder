@@ -216,7 +216,7 @@ urls_df <- data.frame(
 ### Next Steps
 
 - Explore the function documentation:
-  [`help(package = "punycoder")`](https://rdrr.io/pkg/punycoder/man)
+  [`help(package = "punycoder")`](https://bart-turczynski.github.io/punycoder/reference)
 - Check out the test suite for more examples
 - Report issues at:
   <https://github.com/bart-turczynski/punycoder/issues>
@@ -227,3 +227,16 @@ The package uses a C++ backend with Rcpp for performance, and follows
 RFC 3492 standards for punycode implementation. When `libidn2` is
 available at build time, `punycoder` uses it behind the same R-level API
 and falls back to the built-in implementation otherwise.
+
+### See also
+
+`punycoder` is used as the Punycode and IDNA engine by two sibling
+packages:
+
+- **[pslr](https://bart-turczynski.github.io/pslr/)** — Public Suffix
+  List engine. Uses `punycoder` for host canonicalization before PSL
+  matching. Reach for it when you need eTLD or registrable-domain
+  queries.
+- **[rurl](https://bart-turczynski.github.io/rurl/)** — Full URL
+  parsing, normalization, cleaning, and joining toolkit. Builds on both
+  `punycoder` and `pslr` to handle the complete URL processing pipeline.

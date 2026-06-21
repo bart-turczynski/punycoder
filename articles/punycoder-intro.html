@@ -309,7 +309,7 @@ packages:</p>
 </h3>
 <ul>
 <li>Explore the function documentation:
-<code><a href="https://rdrr.io/pkg/punycoder/man" class="external-link">help(package = "punycoder")</a></code>
+<code><a href="https://bart-turczynski.github.io/punycoder/reference">help(package = "punycoder")</a></code>
 </li>
 <li>Check out the test suite for more examples</li>
 <li>Report issues at: <a href="https://github.com/bart-turczynski/punycoder/issues" class="external-link uri">https://github.com/bart-turczynski/punycoder/issues</a>
@@ -325,6 +325,24 @@ RFC 3492 standards for punycode implementation. When
 uses it behind the same R-level API and falls back to the built-in
 implementation otherwise.</p>
 </div>
+<div class="section level3">
+<h3 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a>
+</h3>
+<p><code>punycoder</code> is used as the Punycode and IDNA engine by two
+sibling packages:</p>
+<ul>
+<li>
+<strong><a href="https://bart-turczynski.github.io/pslr/" class="external-link">pslr</a></strong> —
+Public Suffix List engine. Uses <code>punycoder</code> for host
+canonicalization before PSL matching. Reach for it when you need eTLD or
+registrable-domain queries.</li>
+<li>
+<strong><a href="https://bart-turczynski.github.io/rurl/" class="external-link">rurl</a></strong> — Full
+URL parsing, normalization, cleaning, and joining toolkit. Builds on
+both <code>punycoder</code> and <code>pslr</code> to handle the complete
+URL processing pipeline.</li>
+</ul>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -333,11 +351,11 @@ implementation otherwise.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Bart Turczynski.</p>
+  <p>Developed by <a href="https://turczynski.pl" class="external-link">Bart Turczynski</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0. Related: <a href="https://bart-turczynski.github.io/pslr/" class="external-link">pslr</a> · <a href="https://bart-turczynski.github.io/rurl/" class="external-link">rurl</a></p>
 </div>
 
     </footer>
