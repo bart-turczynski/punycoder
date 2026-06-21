@@ -41,3 +41,4 @@ README\.html$
 ^CRAN-SUBMISSION$
 ^\.lintr$
 ^_scratch$
+^_pkgdown\.yml$

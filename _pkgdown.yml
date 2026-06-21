@@ -1,0 +1,55 @@
+url: https://bart-turczynski.github.io/punycoder/
+
+template:
+  bootstrap: 5
+
+home:
+  title: "punycoder — Punycode & IDN Processing for R"
+
+navbar:
+  structure:
+    left:  [intro, reference, articles, news]
+    right: [search, github]
+  components:
+    github:
+      icon: fab fa-github fa-lg
+      href: https://github.com/bart-turczynski/punycoder
+      aria-label: GitHub
+
+reference:
+  - title: "Host Normalization"
+    desc: >
+      Entry point for UTS#46 IDNA host normalization — maps a hostname to
+      a canonical lowercase ASCII comparison form.
+    contents:
+      - host_normalize
+      - normalization_profile_info
+
+  - title: "Punycode Codec"
+    desc: >
+      Low-level RFC 3492 encoder/decoder for individual domain labels
+      (`xn--` ASCII-Compatible Encoding).
+    contents:
+      - puny_encode
+      - puny_decode
+
+  - title: "Validators"
+    desc: Predicates for classifying domain names and labels.
+    contents:
+      - validate_domain
+      - is_idn
+      - is_punycode
+
+  - title: "Deprecated URL Helpers"
+    desc: >
+      Best-effort URL host extraction and rewriting. Deprecated in favour
+      of dedicated URL packages.
+    contents:
+      - url_encode
+      - url_decode
+      - parse_url
+
+news:
+  releases:
+    - text: "punycoder 1.2.0"
+      href: https://github.com/bart-turczynski/punycoder/releases/tag/v1.2.0
