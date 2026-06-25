@@ -39,6 +39,12 @@ components:
   List of character vectors, each containing error messages for the
   corresponding domain (empty for valid domains).
 
+- error_codes:
+
+  List of character vectors, each containing stable machine-readable
+  error codes for the corresponding domain (empty for valid domains).
+  Missing input uses `"domain_na"`.
+
 ## See also
 
 [`puny_encode`](https://bart-turczynski.github.io/punycoder/reference/puny_encode.md)

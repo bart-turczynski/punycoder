@@ -25,7 +25,7 @@ distinct surfaces:
 is a **UTS \#46 profile, not IDNA2008 conformance** — UTS \#46 is
 compatibility processing and deliberately accepts labels IDNA2008 would
 reject (e.g. `☕.example` → `xn--53h.example`). See
-[`docs/normalization-contract.md`](https://bart-turczynski.github.io/punycoder/docs/normalization-contract.md)
+[`dev/normalization-contract.md`](https://bart-turczynski.github.io/punycoder/dev/normalization-contract.md)
 for the normative profile and full standards references (RFC
 3492/5890/5891/5892/5893, UTS \#46, UAX \#15/#44, STD 3, RFC 8753).
 

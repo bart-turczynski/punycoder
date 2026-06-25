@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">punycoder</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,24 +43,24 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="punycoder-development-version">punycoder (development version)<a class="anchor" aria-label="anchor" href="#punycoder-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.2.0" id="punycoder-120">punycoder 1.2.0<a class="anchor" aria-label="anchor" href="#punycoder-120"></a></h2>
 <div class="section level3">
-<h3 id="new-features-development-version">New features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
+<h3 id="breaking-changes-1-2-0">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-1-2-0"></a></h3>
+<ul><li>
+<code><a href="../reference/host_normalize.html">host_normalize()</a></code> no longer takes a <code>strict</code> argument. It was inert (always applied the full profile) and reserved for exactly this relaxed variant, which the three explicit flags below now provide.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="new-features-1-2-0">New features<a class="anchor" aria-label="anchor" href="#new-features-1-2-0"></a></h3>
 <ul><li>
 <code><a href="../reference/host_normalize.html">host_normalize()</a></code> gains three UTS <a href="https://github.com/bart-turczynski/punycoder/issues/46" class="external-link">#46</a> processing flags — <code>check_hyphens</code>, <code>use_std3</code>, and <code>verify_dns_length</code> — each defaulting to <code>TRUE</code> (the strict <code>uts46-nontransitional-std3-v1</code> profile) and each independently relaxable. These are standard UTS <a href="https://github.com/bart-turczynski/punycoder/issues/46" class="external-link">#46</a> parameters, not a browser mode: <code>CheckBidi</code> and <code>CheckJoiners</code> always apply, and full WHATWG host policy lives upstack. Pass the same flag values to <code><a href="../reference/normalization_profile_info.html">normalization_profile_info()</a></code> for the matching profile identity.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="deprecated-development-version">Deprecated<a class="anchor" aria-label="anchor" href="#deprecated-development-version"></a></h3>
+<h3 id="deprecated-1-2-0">Deprecated<a class="anchor" aria-label="anchor" href="#deprecated-1-2-0"></a></h3>
 <ul><li>
 <code><a href="../reference/url_encode.html">url_encode()</a></code>, <code><a href="../reference/url_decode.html">url_decode()</a></code>, and <code><a href="../reference/parse_url.html">parse_url()</a></code> are deprecated and now emit a <code><a href="https://rdrr.io/r/base/Deprecated.html" class="external-link">.Deprecated()</a></code> warning on use. They remain exported and fully functional for this release and are scheduled for removal in the next one. These were always best-effort host extraction/rewriting, not RFC 3986 / WHATWG URL parsing; use the <code>rurl</code> package for URL parsing and canonicalization, or pass the host alone to <code><a href="../reference/host_normalize.html">host_normalize()</a></code> / <code><a href="../reference/puny_encode.html">puny_encode()</a></code> / <code><a href="../reference/puny_decode.html">puny_decode()</a></code> for host-only needs.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="breaking-changes-development-version">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-development-version"></a></h3>
-<ul><li>
-<code><a href="../reference/host_normalize.html">host_normalize()</a></code> no longer takes a <code>strict</code> argument. It was inert (always applied the full profile) and reserved for exactly this relaxed variant, which the three explicit flags above now provide.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="internal-development-version">Internal<a class="anchor" aria-label="anchor" href="#internal-development-version"></a></h3>
+<h3 id="internal-1-2-0">Internal<a class="anchor" aria-label="anchor" href="#internal-1-2-0"></a></h3>
 <ul><li>
 <code><a href="../reference/host_normalize.html">host_normalize()</a></code> is now verified against the official Unicode UTS <a href="https://github.com/bart-turczynski/punycoder/issues/46" class="external-link">#46</a> conformance corpus (<code>IdnaTestV2.txt</code>, Unicode 16.0.0). The suite confirms full non-transitional ToASCII conformance, with one documented profile divergence: the trailing FQDN root dot is permitted (strict <code>VerifyDnsLength</code> would reject the empty root label).</li>
 </ul></div>

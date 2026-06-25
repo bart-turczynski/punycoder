@@ -1,6 +1,13 @@
 # Changelog
 
-## punycoder (development version)
+## punycoder 1.2.0
+
+### Breaking changes
+
+- [`host_normalize()`](https://bart-turczynski.github.io/punycoder/reference/host_normalize.md)
+  no longer takes a `strict` argument. It was inert (always applied the
+  full profile) and reserved for exactly this relaxed variant, which the
+  three explicit flags below now provide.
 
 ### New features
 
@@ -37,13 +44,6 @@
   /
   [`puny_decode()`](https://bart-turczynski.github.io/punycoder/reference/puny_decode.md)
   for host-only needs.
-
-### Breaking changes
-
-- [`host_normalize()`](https://bart-turczynski.github.io/punycoder/reference/host_normalize.md)
-  no longer takes a `strict` argument. It was inert (always applied the
-  full profile) and reserved for exactly this relaxed variant, which the
-  three explicit flags above now provide.
 
 ### Internal
 

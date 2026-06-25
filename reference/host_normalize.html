@@ -17,7 +17,7 @@ preserving whether the input carried a single terminal root dot."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">punycoder</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -113,8 +113,9 @@ The profile is fixed at one pinned Unicode version per release; see
 [normalization_profile_info()] for the machine-readable identity.</p>
 <p>This is a **UTS #46 profile, not IDNA2008 / RFC 5891 conformance.** UTS #46
 is compatibility processing and deliberately differs from IDNA2008 — it
-accepts labels IDNA2008 would reject (e.g. `"☕.example"` becomes
-`"xn–53h.example"`). The pipeline draws on RFC 3492 (the Punycode
+accepts labels IDNA2008 would reject (e.g. a label whose first character is
+the symbol U+2615 HOT BEVERAGE becomes `"xn–53h.example"`). The pipeline
+draws on RFC 3492 (the Punycode
 transform), NFC per UAX #15, the RFC 5892 ContextJ rules via `CheckJoiners`
 (ZWJ/ZWNJ only — full RFC 5892 CONTEXTO is **not** checked), the RFC 5893
 Bidi rule via `CheckBidi`, and STD 3 (RFC 952 + RFC 1123) host-name rules via

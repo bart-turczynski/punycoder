@@ -2,8 +2,10 @@
 
 Converts Unicode domain names to their ASCII Punycode (\`xn–\`)
 representation: the raw RFC 3492 Bootstring transform wrapped in the RFC
-5890/5891 A-label framing, plus letter-digit-hyphen and length/hyphen
-checks per label.
+5890/5891 A-label framing, plus letter-digit-hyphen and leading/trailing
+hyphen checks per label. DNS host length limits are intentionally not
+applied by this raw codec; use \[validate_domain()\] or
+\[host_normalize()\] when you need DNS host validation.
 
 ## Usage
 
@@ -20,7 +22,8 @@ puny_encode(x, strict = getOption("punycoder.strict", TRUE))
 - strict:
 
   Logical; whether to apply strict validation. Defaults to
-  \`getOption("punycoder.strict", TRUE)\`.
+  \`getOption("punycoder.strict", TRUE)\`. In strict mode the raw codec
+  enforces structural checks but not DNS host length limits.
 
 ## Value
 
