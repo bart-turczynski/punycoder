@@ -1,5 +1,5 @@
 // Canonical-host normalization (UTS-46, non-transitional, STD3).
-// Implements docs/normalization-contract.md section 4 over the vendored
+// Implements dev/normalization-contract.md section 4 over the vendored
 // Unicode 16.0.0 tables: UTS-46 mapping, NFC, label validation, A-label
 // canonical check, Punycode encode, and DNS length verification.
 //

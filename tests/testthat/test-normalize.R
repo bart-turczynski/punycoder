@@ -1,5 +1,5 @@
 # Canonical-host normalization contract fixtures.
-# Seeds: docs/normalization-contract.md section 5. Source uses \u escapes so
+# Seeds: dev/normalization-contract.md section 5. Source uses \u escapes so
 # the file stays ASCII-clean for CRAN.
 
 test_that("contract section 5 worked examples normalize as specified", {
@@ -37,7 +37,7 @@ test_that("a non-canonical A-label payload is rejected", {
 })
 
 test_that("mixed-case A-label payload normalizes via UTS-46 mapping", {
-  # docs/normalization-contract.md section 5 lists "xn--MNCHEN-3ya.de" -> NA as
+  # dev/normalization-contract.md section 5 lists "xn--MNCHEN-3ya.de" -> NA as
   # a "non-canonical A-label payload" row. That row is inconsistent with the
   # adjacent "XN--MNCHEN-3YA.de" -> valid row: UTS-46 mapping case-folds the
   # whole label before any canonical check, so both inputs map identically to

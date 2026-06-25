@@ -1,5 +1,5 @@
 // Unicode Normalization Form C (NFC) for canonical-host normalization.
-// See docs/normalization-contract.md section 4 step 3b.
+// See dev/normalization-contract.md section 4 step 3b.
 #ifndef PUNYCODER_NFC_H
 #define PUNYCODER_NFC_H
 

@@ -310,7 +310,7 @@ Rcpp::List compare_backends_cpp(
     );
 }
 
-// Canonical-host normalization (docs/normalization-contract.md). NA inputs pass
+// Canonical-host normalization (dev/normalization-contract.md). NA inputs pass
 // through as NA (missing); invalid inputs return NA (the contract's
 // NA-on-invalid signal). The result is always lowercase ASCII, so no element
 // encoding needs to be set. Names are preserved.

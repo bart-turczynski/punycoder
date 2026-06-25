@@ -2,7 +2,7 @@
 #
 # Generate the vendored Unicode data tables that punycoder's in-tree
 # canonical-host normalization depends on (NFC + UTS-46), pinned to one Unicode
-# version. See docs/normalization-contract.md (section 0, decision 3).
+# version. See dev/normalization-contract.md (section 0, decision 3).
 #
 # Run from the package root:  Rscript data-raw/generate_unicode_tables.R
 #
