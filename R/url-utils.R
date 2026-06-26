@@ -1,5 +1,5 @@
 # Emit the standard .Deprecated() warning for the URL surface. These functions
-# (url_encode/url_decode/parse_url) are wound down in favour of `rurl` for URL
+# (url_encode/url_decode/parse_url) are wound down in favor of `rurl` for URL
 # parsing/canonicalization and host_normalize()/puny_encode()/puny_decode() for
 # host-only needs; removal is scheduled for the next release.
 .deprecate_url_surface <- function(old) {
@@ -134,7 +134,7 @@ url_decode <- function(url, strict = getOption("punycoder.strict", TRUE)) {
 #' (zone IDs / RFC 6874 are unhandled), and no serialization guarantees. The
 #' non-host components are returned as a convenience only; for real URL parsing
 #' and canonicalization use a dedicated URL package (e.g. `rurl`). This surface
-#' is slated for eventual removal in favour of `rurl` consuming punycoder's host
+#' is slated for eventual removal in favor of `rurl` consuming punycoder's host
 #' functions.
 #'
 #' @section Deprecated:

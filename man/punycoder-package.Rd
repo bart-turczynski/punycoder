@@ -28,6 +28,7 @@ comparison form for a host name.
 \seealso{
 Useful links:
 \itemize{
+  \item \url{https://bart-turczynski.github.io/punycoder/}
   \item \url{https://github.com/bart-turczynski/punycoder}
   \item \url{https://CRAN.R-project.org/package=punycoder}
   \item Report bugs at \url{https://github.com/bart-turczynski/punycoder/issues}
@@ -35,11 +36,11 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Bart Turczynski \email{bartek+punycoder@turczynski.pl}
+\strong{Maintainer}: Bart Turczynski \email{bartek+punycoder@turczynski.pl} (\href{https://orcid.org/0000-0002-8788-7980}{ORCID})
 
 Authors:
 \itemize{
-  \item Bart Turczynski \email{bartek+punycoder@turczynski.pl}
+  \item Bart Turczynski \email{bartek+punycoder@turczynski.pl} (\href{https://orcid.org/0000-0002-8788-7980}{ORCID})
 }
 
 }
