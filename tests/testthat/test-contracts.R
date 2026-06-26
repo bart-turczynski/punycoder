@@ -4,7 +4,7 @@ test_that(
     parsed <- parse_url("https://example.com", encode_domains = TRUE)
 
     expect_s3_class(parsed, "punycoder_parsed_url")
-    expect_identical(attr(parsed, "encode_domains"), TRUE)
+    expect_true(attr(parsed, "encode_domains"))
     expect_identical(parsed$path[[1]], "")
     expect_identical(parsed$domain[[1]], "example.com")
   })
@@ -28,7 +28,7 @@ test_that("validate_domain preserves result attributes", {
   result <- validate_domain("example.com", strict = FALSE)
 
   expect_s3_class(result, "punycoder_validation")
-  expect_identical(attr(result, "strict"), FALSE)
+  expect_false(attr(result, "strict"))
   expect_named(result, c("domains", "valid", "errors", "error_codes"))
 })
 
