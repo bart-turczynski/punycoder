@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# punycoder <img src="man/figures/logo.png" align="right" height="139" alt="punycoder hex logo" />
+# punycoder
 
 <!-- badges: start -->
 [![Verify](https://github.com/bart-turczynski/punycoder/actions/workflows/verify.yml/badge.svg)](https://github.com/bart-turczynski/punycoder/actions/workflows/verify.yml)
