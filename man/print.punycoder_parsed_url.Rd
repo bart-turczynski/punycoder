@@ -17,3 +17,10 @@ Invisibly returns \code{x}.
 \description{
 Print method for punycoder parsed URL results
 }
+\examples{
+\donttest{
+parsed <- parse_url("https://caf\u00E9.example.com/path")
+print(parsed)
+}
+}
+\keyword{internal}
