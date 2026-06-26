@@ -2,12 +2,6 @@ url: https://bart-turczynski.github.io/punycoder/
 
 template:
   bootstrap: 5
-  opengraph:
-    image:
-      src: man/figures/logo.png
-      alt: "punycoder hex logo — café to xn-- Punycode"
-    twitter:
-      card: summary
 
 authors:
   "Bart Turczynski":
