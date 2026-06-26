@@ -7,7 +7,7 @@ test_that("RFC 3492 vectors encode to expected punycode", {
   # RFC vectors include generic strings, not only DNS-valid labels. Strict raw
   # punycode validation does not apply DNS label length limits.
   encoded <- puny_encode(vectors$unicode, strict = TRUE)
-  expect_equal(encoded, vectors$ascii)
+  expect_identical(encoded, vectors$ascii)
 })
 
 test_that("RFC 3492 vectors decode to expected unicode", {
@@ -17,7 +17,7 @@ test_that("RFC 3492 vectors decode to expected unicode", {
   )
 
   decoded <- puny_decode(vectors$ascii, strict = TRUE)
-  expect_equal(decoded, vectors$unicode)
+  expect_identical(decoded, vectors$unicode)
 })
 
 test_that("raw punycode strict mode does not apply DNS label length limits", {
@@ -32,7 +32,7 @@ test_that("raw punycode strict mode does not apply DNS label length limits", {
   ), ]
   expect_true(all(nchar(dns_valid$unicode, type = "bytes") > 63))
   expect_true(all(nchar(dns_valid$ascii, type = "bytes") <= 63))
-  expect_equal(
+  expect_identical(
     puny_encode(dns_valid$unicode, strict = TRUE),
     dns_valid$ascii
   )
@@ -41,11 +41,11 @@ test_that("raw punycode strict mode does not apply DNS label length limits", {
   overlong <- vectors[vectors$description == "Korean (Hangul syllables)", ]
   expect_gt(nchar(overlong$unicode, type = "bytes"), 63)
   expect_gt(nchar(overlong$ascii, type = "bytes"), 63)
-  expect_equal(
+  expect_identical(
     puny_encode(overlong$unicode, strict = TRUE),
     overlong$ascii
   )
-  expect_equal(
+  expect_identical(
     puny_decode(overlong$ascii, strict = TRUE),
     overlong$unicode
   )

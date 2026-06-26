@@ -15,7 +15,7 @@ test_that("is_punycode handles vectorized input", {
   result <- is_punycode(domains)
 
   expect_length(result, 4)
-  expect_equal(result, c(TRUE, FALSE, TRUE, FALSE))
+  expect_identical(result, c(TRUE, FALSE, TRUE, FALSE))
 })
 
 test_that("is_punycode validates input", {
@@ -69,15 +69,15 @@ test_that("validate_domain handles invalid domains", {
 
   expect_false(result$valid[1])
   expect_length(result$errors[[1]], 1)
-  expect_equal(result$errors[[1]][1], "Domain is NA")
-  expect_equal(result$error_codes[[1]], "domain_na")
+  expect_identical(result$errors[[1]][1], "Domain is NA")
+  expect_identical(result$error_codes[[1]], "domain_na")
 
   invalid <- validate_domain("invalid..domain")
   expect_false(invalid$valid[1])
   expect_true(any(
     grepl("empty label", invalid$errors[[1]], fixed = TRUE)
   ))
-  expect_equal(invalid$error_codes[[1]], "domain_empty_label")
+  expect_identical(invalid$error_codes[[1]], "domain_empty_label")
 })
 
 test_that("validate_domain exposes machine-readable error codes", {
@@ -89,12 +89,12 @@ test_that("validate_domain exposes machine-readable error codes", {
   ))
 
   expect_true(result$valid[1])
-  expect_equal(result$errors[[1]], character())
-  expect_equal(result$error_codes[[1]], character())
+  expect_identical(result$errors[[1]], character())
+  expect_identical(result$error_codes[[1]], character())
 
-  expect_equal(result$error_codes[[2]], "domain_label_hyphen")
-  expect_equal(result$error_codes[[3]], "ascii_domain_characters")
-  expect_equal(result$error_codes[[4]], "truncated_punycode_input")
+  expect_identical(result$error_codes[[2]], "domain_label_hyphen")
+  expect_identical(result$error_codes[[3]], "ascii_domain_characters")
+  expect_identical(result$error_codes[[4]], "truncated_punycode_input")
   expect_true(all(lengths(result$errors[-1]) == 1L))
 })
 
@@ -127,7 +127,7 @@ test_that("validation summaries include valid and invalid messages", {
   result <- validate_domain(c("example.com", "invalid..domain"))
   summary <- punycoder:::get_validation_summary(result)
 
-  expect_equal(summary[[1]], "Valid")
+  expect_identical(summary[[1]], "Valid")
   expect_true(grepl(
     "empty label", summary[[2]], fixed = TRUE
   ))
@@ -148,7 +148,7 @@ test_that("validation summaries collapse multiple errors", {
     class = c("punycoder_validation", "list")
   )
 
-  expect_equal(
+  expect_identical(
     punycoder:::get_validation_summary(result),
     "first problem; second problem"
   )
@@ -168,36 +168,36 @@ test_that("validate_domain exposes lower-level domain error messages", {
     "xn--z"
   ))
 
-  expect_equal(result$error_codes[[1]], "domain_empty")
+  expect_identical(result$error_codes[[1]], "domain_empty")
   expect_match(result$errors[[1]], "cannot be empty")
 
-  expect_equal(result$error_codes[[2]], "domain_empty_label")
+  expect_identical(result$error_codes[[2]], "domain_empty_label")
   expect_match(result$errors[[2]], "empty label")
 
-  expect_equal(result$error_codes[[3]], "domain_label_hyphen")
+  expect_identical(result$error_codes[[3]], "domain_label_hyphen")
   expect_match(result$errors[[3]], "start or end with hyphen")
 
-  expect_equal(result$error_codes[[4]], "ascii_domain_characters")
+  expect_identical(result$error_codes[[4]], "ascii_domain_characters")
   expect_match(result$errors[[4]], "letters, numbers and hyphens")
 
-  expect_equal(result$error_codes[[5]], "encoded_label_too_long")
+  expect_identical(result$error_codes[[5]], "encoded_label_too_long")
   expect_match(result$errors[[5]], "exceeds 63 characters")
 
-  expect_equal(result$error_codes[[6]], "domain_too_long")
+  expect_identical(result$error_codes[[6]], "domain_too_long")
   expect_match(result$errors[[6]], "max 253 characters")
 
-  expect_equal(result$error_codes[[7]], "truncated_punycode_input")
+  expect_identical(result$error_codes[[7]], "truncated_punycode_input")
   expect_match(result$errors[[7]], "Truncated punycode input")
 })
 
 test_that("strict domain validation catches length and character constraints", {
   long_label <- strrep("a", 64)
   overlong_domain <- paste0(long_label, ".com")
-  expect_equal(puny_encode(overlong_domain, strict = TRUE), overlong_domain)
+  expect_identical(puny_encode(overlong_domain, strict = TRUE), overlong_domain)
   expect_false(validate_domain(overlong_domain, strict = TRUE)$valid)
 
   huge_domain <- paste0(strrep("a", 254), ".com")
-  expect_equal(puny_encode(huge_domain, strict = TRUE), huge_domain)
+  expect_identical(puny_encode(huge_domain, strict = TRUE), huge_domain)
   expect_false(validate_domain(huge_domain, strict = TRUE)$valid)
 
   expect_error(puny_encode("bad_label.com", strict = TRUE), "hyphens")
@@ -223,6 +223,6 @@ test_that("domain at 253-char boundary", {
     strrep("d", 62)
   )
   stopifnot(nchar(domain_254) == 254)
-  expect_equal(puny_encode(domain_254, strict = TRUE), domain_254)
+  expect_identical(puny_encode(domain_254, strict = TRUE), domain_254)
   expect_false(validate_domain(domain_254, strict = TRUE)$valid)
 })

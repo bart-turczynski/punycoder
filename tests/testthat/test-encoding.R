@@ -1,20 +1,22 @@
 test_that("puny_encode handles ASCII domains", {
   # ASCII domains should pass through unchanged
-  expect_equal(puny_encode("example.com"), "example.com")
-  expect_equal(puny_encode("test.org"), "test.org")
-  expect_equal(puny_encode("subdomain.example.net"), "subdomain.example.net")
+  expect_identical(puny_encode("example.com"), "example.com")
+  expect_identical(puny_encode("test.org"), "test.org")
+  expect_identical(
+    puny_encode("subdomain.example.net"), "subdomain.example.net"
+  )
 })
 
 test_that("puny_encode encodes common Unicode domains", {
-  expect_equal(puny_encode("café.com"), "xn--caf-dma.com")
-  expect_equal(puny_encode("москва.рф"), "xn--80adxhks.xn--p1ai")
+  expect_identical(puny_encode("café.com"), "xn--caf-dma.com")
+  expect_identical(puny_encode("москва.рф"), "xn--80adxhks.xn--p1ai")
 })
 
 test_that("puny_encode handles NA values", {
   expect_warning(result <- puny_encode(c("test.com", NA, "example.org")))
-  expect_equal(result[1], "test.com")
+  expect_identical(result[1], "test.com")
   expect_true(is.na(result[2]))
-  expect_equal(result[3], "example.org")
+  expect_identical(result[3], "example.org")
 })
 
 test_that("puny_encode validates input types", {
@@ -23,13 +25,13 @@ test_that("puny_encode validates input types", {
 
 test_that("puny_decode handles ASCII domains", {
   # Non-punycode domains should pass through unchanged
-  expect_equal(puny_decode("example.com"), "example.com")
-  expect_equal(puny_decode("test.org"), "test.org")
+  expect_identical(puny_decode("example.com"), "example.com")
+  expect_identical(puny_decode("test.org"), "test.org")
 })
 
 test_that("puny_decode handles punycode domains", {
-  expect_equal(puny_decode("xn--caf-dma.com"), "café.com")
-  expect_equal(puny_decode("xn--80adxhks.xn--p1ai"), "москва.рф")
+  expect_identical(puny_decode("xn--caf-dma.com"), "café.com")
+  expect_identical(puny_decode("xn--80adxhks.xn--p1ai"), "москва.рф")
 })
 
 test_that("puny_decode validates input types", {
@@ -42,7 +44,7 @@ test_that("encoding and decoding are symmetric for ASCII", {
   for (domain in ascii_domains) {
     encoded <- puny_encode(domain)
     decoded <- puny_decode(encoded)
-    expect_equal(decoded, domain)
+    expect_identical(decoded, domain)
   }
 })
 
@@ -52,7 +54,7 @@ test_that("encoding and decoding are symmetric for Unicode domains", {
   for (domain in unicode_domains) {
     encoded <- puny_encode(domain)
     decoded <- puny_decode(encoded)
-    expect_equal(decoded, domain)
+    expect_identical(decoded, domain)
   }
 })
 
@@ -96,22 +98,22 @@ test_that("vectorized operations work", {
   encoded <- puny_encode(domains)
   expect_length(encoded, 3)
   expect_type(encoded, "character")
-  expect_equal(encoded[2], "xn--caf-dma.com")
+  expect_identical(encoded[2], "xn--caf-dma.com")
 
   decoded <- puny_decode(encoded)
   expect_length(decoded, 3)
   expect_type(decoded, "character")
-  expect_equal(decoded, domains)
+  expect_identical(decoded, domains)
 })
 
 test_that("mixed ASCII, Unicode, xn labels keep strict decode behavior", {
   inputs <- c("example.com", "xn--caf-dma.com", "bücher.de")
 
-  expect_equal(
+  expect_identical(
     puny_decode(inputs, strict = TRUE),
     c("example.com", "café.com", "bücher.de")
   )
-  expect_equal(
+  expect_identical(
     puny_encode(inputs, strict = TRUE),
     c("example.com", "xn--caf-dma.com", "xn--bcher-kva.de")
   )
@@ -147,7 +149,7 @@ test_that("strict defaults follow global punycoder.strict option", {
 test_that("punycode handles uppercase and trailing dots", {
   # The xn-- prefix is matched case-insensitively, so an uppercase prefix on
   # an otherwise canonical A-label still decodes in strict mode.
-  expect_equal(puny_decode("XN--caf-dma.com", strict = TRUE), "café.com")
+  expect_identical(puny_decode("XN--caf-dma.com", strict = TRUE), "café.com")
 
   # An uppercase *payload* is a non-canonical A-label (RFC 5891 canonical
   # form): strict decode rejects it because it does not round-trip, while
@@ -156,12 +158,12 @@ test_that("punycode handles uppercase and trailing dots", {
     puny_decode("XN--CAF-DMA.COM", strict = TRUE),
     "Error decoding domain"
   )
-  expect_equal(puny_decode("XN--CAF-DMA.COM", strict = FALSE), "CAFé.COM")
-  expect_equal(puny_encode("caf\u00E9.com."), "xn--caf-dma.com.")
-  expect_equal(puny_decode("xn--caf-dma.com."), "caf\u00E9.com.")
+  expect_identical(puny_decode("XN--CAF-DMA.COM", strict = FALSE), "CAFé.COM")
+  expect_identical(puny_encode("caf\u00E9.com."), "xn--caf-dma.com.")
+  expect_identical(puny_decode("xn--caf-dma.com."), "caf\u00E9.com.")
 
   expect_warning(decoded <- puny_decode(c("xn--caf-dma.com", NA_character_)))
-  expect_equal(decoded[[1]], "café.com")
+  expect_identical(decoded[[1]], "café.com")
   expect_true(is.na(decoded[[2]]))
 })
 
@@ -172,8 +174,10 @@ test_that("punycode decode reports invalid payload characters", {
 
 test_that("strict decode enforces canonical A-label round-trip", {
   # Canonical A-labels decode unchanged in strict mode.
-  expect_equal(puny_decode("xn--caf-dma.com", strict = TRUE), "café.com")
-  expect_equal(puny_decode("xn--80adxhks.xn--p1ai", strict = TRUE), "москва.рф")
+  expect_identical(puny_decode("xn--caf-dma.com", strict = TRUE), "café.com")
+  expect_identical(
+    puny_decode("xn--80adxhks.xn--p1ai", strict = TRUE), "москва.рф"
+  )
 
   # A non-canonical encoding (uppercase digit in the payload) decodes to the
   # same Unicode but does not re-encode to itself, so strict mode rejects it.
@@ -183,7 +187,7 @@ test_that("strict decode enforces canonical A-label round-trip", {
   )
 
   # Non-strict mode keeps the lenient best-effort decode unchanged.
-  expect_equal(puny_decode("xn--caf-dMA.com", strict = FALSE), "café.com")
+  expect_identical(puny_decode("xn--caf-dMA.com", strict = FALSE), "café.com")
 })
 
 test_that("empty string edge cases", {
@@ -200,8 +204,8 @@ test_that("mixed valid/invalid/NA in same vector", {
       strict = FALSE
     )
   )
-  expect_equal(result[1], "example.com")
+  expect_identical(result[1], "example.com")
   expect_true(is.na(result[2]))
   expect_true(is.na(result[3]))
-  expect_equal(result[4], "xn--caf-dma.com")
+  expect_identical(result[4], "xn--caf-dma.com")
 })

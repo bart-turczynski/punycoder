@@ -9,12 +9,12 @@ test_that(
 
     punycoder:::.onLoad("", "punycoder")
     expect_false(getOption("punycoder.strict"))
-    expect_equal(getOption("punycoder.encoding"), "latin1")
+    expect_identical(getOption("punycoder.encoding"), "latin1")
 
     options(punycoder.strict = NULL, punycoder.encoding = NULL)
     punycoder:::.onLoad("", "punycoder")
     expect_true(getOption("punycoder.strict"))
-    expect_equal(getOption("punycoder.encoding"), "UTF-8")
+    expect_identical(getOption("punycoder.encoding"), "UTF-8")
   }
 )
 

@@ -33,8 +33,8 @@ backend_decisions <- function(input, mode, strict = TRUE) {
 expect_backend_parity <- function(input, mode, strict = TRUE) {
   d <- backend_decisions(input, mode, strict)
   skip_if(!d$available, "libidn2 backend is not available")
-  expect_equal(d$fb_reject, d$li_reject) # identical accept/reject decision
-  expect_equal(d$fb_out, d$li_out) # identical canonical output (accepted)
+  expect_identical(d$fb_reject, d$li_reject) # identical accept/reject decision
+  expect_identical(d$fb_out, d$li_out) # identical canonical output (accepted)
   invisible(d)
 }
 
@@ -138,7 +138,7 @@ test_that("fallback and libidn2 agree to reject malformed domains", {
   # payload), which is exactly why parity is asserted on the decision, not text.
   d <- backend_decisions(parity_reject_domains, "encode_domain")
   skip_if(!d$available, "libidn2 backend is not available")
-  expect_equal(d$fb_reject, d$li_reject)
+  expect_identical(d$fb_reject, d$li_reject)
   expect_true(all(d$fb_reject))
 })
 
@@ -176,5 +176,5 @@ test_that("fallback backend round-trips valid IDN domains on its own", {
   expect_false(anyNA(enc)) # all accepted
 
   dec <- backend_decisions(enc, "decode_domain")$fb_out
-  expect_equal(dec, roundtrip_domains)
+  expect_identical(dec, roundtrip_domains)
 })
