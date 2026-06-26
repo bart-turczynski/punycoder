@@ -12,26 +12,26 @@ normalization_profile_info(
 }
 \arguments{
 \item{check_hyphens, use_std3, verify_dns_length}{Logical scalars selecting the
-flag set to report. Each defaults to `TRUE` (the strict profile).}
+flag set to report. Each defaults to \code{TRUE} (the strict profile).}
 }
 \value{
-A one-row `data.frame` with columns `profile`, `unicode_version`,
-  `idna`, `transitional`, `use_std3`, `check_hyphens`, `check_bidi`,
-  `check_joiners`, `verify_dns_length`, and `backend`.
+A one-row \code{data.frame} with columns \code{profile}, \code{unicode_version},
+\code{idna}, \code{transitional}, \code{use_std3}, \code{check_hyphens}, \code{check_bidi},
+\code{check_joiners}, \code{verify_dns_length}, and \code{backend}.
 }
 \description{
 Returns the stable, machine-readable identity of a normalization profile.
 Called with no arguments it reports the default (fully strict) profile
-[host_normalize()] applies; the `check_hyphens`, `use_std3`, and
-`verify_dns_length` arguments report the identity of a specific flag set so a
+\code{\link[=host_normalize]{host_normalize()}} applies; the \code{check_hyphens}, \code{use_std3}, and
+\code{verify_dns_length} arguments report the identity of a specific flag set so a
 caller can describe the exact profile a given normalization used. Downstream
-packages key reproducibility on the full per-parameter column set; `profile`
+packages key reproducibility on the full per-parameter column set; \code{profile}
 is a coarse cache token (distinct per flag set, but no longer load-bearing
-alone) and the `backend` column is diagnostic only and must never enter a
+alone) and the \code{backend} column is diagnostic only and must never enter a
 reproducibility or cache key.
 }
 \details{
-`check_bidi`, `check_joiners`, and `transitional` are fixed by the profile
+\code{check_bidi}, \code{check_joiners}, and \code{transitional} are fixed by the profile
 (UTS #46 non-transitional, both bidi and joiner checks always on) and are
 reported as constant columns rather than arguments.
 }
@@ -40,5 +40,5 @@ normalization_profile_info()
 normalization_profile_info(use_std3 = FALSE)
 }
 \seealso{
-[host_normalize()].
+\code{\link[=host_normalize]{host_normalize()}}.
 }

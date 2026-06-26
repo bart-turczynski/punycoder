@@ -10,20 +10,20 @@ validate_domain(x, strict = getOption("punycoder.strict", TRUE))
 \item{x}{Character vector of domain names to validate}
 
 \item{strict}{Logical; whether to apply strict validation. Defaults to
-`getOption("punycoder.strict", TRUE)`.}
+\code{getOption("punycoder.strict", TRUE)}.}
 }
 \value{
 An object of class \code{"punycoder_validation"} (a named list)
-  with components:
-  \describe{
-    \item{domains}{Character vector of the input domain names.}
-    \item{valid}{Logical vector indicating whether each domain is valid.}
-    \item{errors}{List of character vectors, each containing error messages
-      for the corresponding domain (empty for valid domains).}
-    \item{error_codes}{List of character vectors, each containing stable
-      machine-readable error codes for the corresponding domain (empty for
-      valid domains). Missing input uses \code{"domain_na"}.}
-  }
+with components:
+\describe{
+\item{domains}{Character vector of the input domain names.}
+\item{valid}{Logical vector indicating whether each domain is valid.}
+\item{errors}{List of character vectors, each containing error messages
+for the corresponding domain (empty for valid domains).}
+\item{error_codes}{List of character vectors, each containing stable
+machine-readable error codes for the corresponding domain (empty for
+valid domains). Missing input uses \code{"domain_na"}.}
+}
 }
 \description{
 Validates domain names according to RFC standards, checking for

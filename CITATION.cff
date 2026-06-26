@@ -1,0 +1,29 @@
+# Powers GitHub's "Cite this repository" and r-universe.
+# `version`/`date-released` track the latest CRAN release; bump on release.
+cff-version: 1.2.0
+message: "If you use this software, please cite it using these metadata."
+title: "punycoder: Unicode and Punycode Domain Name Processing"
+abstract: >-
+  High-performance Unicode and Punycode processing for internationalized
+  domain names (RFC 3492 Punycode codec and a UTS #46 host normalizer).
+type: software
+authors:
+  - family-names: Turczynski
+    given-names: Bart
+    orcid: "https://orcid.org/0000-0002-8788-7980"
+repository-code: "https://github.com/bart-turczynski/punycoder"
+url: "https://bart-turczynski.github.io/punycoder/"
+repository: "https://CRAN.R-project.org/package=punycoder"
+license: MIT
+version: 1.2.0
+date-released: "2026-06-26"
+keywords:
+  - punycode
+  - IDNA
+  - IDN
+  - internationalized domain names
+  - UTS-46
+  - RFC 3492
+  - Unicode
+  - host normalization
+  - domain names

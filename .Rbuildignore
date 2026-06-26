@@ -43,3 +43,5 @@ README\.html$
 ^\.lintr$
 ^_scratch$
 ^_pkgdown\.yml$
+^CITATION\.cff$
+^codemeta\.json$

@@ -13,16 +13,16 @@ domain names, split across two tiers.
 The package exposes two distinct surfaces, deliberately kept separate:
 
 \itemize{
-  \item A **low-level Punycode codec** ([puny_encode()] / [puny_decode()]):
-    the raw RFC 3492 transform with `xn--` A-label framing (RFC 5890/5891)
-    and letter-digit-hyphen checks. It performs no Unicode normalization.
-  \item An **IDNA/UTS-46 host-normalization surface** ([host_normalize()]):
-    Unicode NFC, UTS #46 mapping and validation, and conversion to a
-    canonical lowercase ASCII comparison form under a pinned profile.
+\item A \strong{low-level Punycode codec} (\code{\link[=puny_encode]{puny_encode()}} / \code{\link[=puny_decode]{puny_decode()}}):
+the raw RFC 3492 transform with \verb{xn--} A-label framing (RFC 5890/5891)
+and letter-digit-hyphen checks. It performs no Unicode normalization.
+\item An \strong{IDNA/UTS-46 host-normalization surface} (\code{\link[=host_normalize]{host_normalize()}}):
+Unicode NFC, UTS #46 mapping and validation, and conversion to a
+canonical lowercase ASCII comparison form under a pinned profile.
 }
 
 Use the codec when you need the literal ASCII-Compatible Encoding of a
-label; use [host_normalize()] when you need a standards-profiled
+label; use \code{\link[=host_normalize]{host_normalize()}} when you need a standards-profiled
 comparison form for a host name.
 }
 \seealso{
@@ -30,17 +30,18 @@ Useful links:
 \itemize{
   \item \url{https://bart-turczynski.github.io/punycoder/}
   \item \url{https://github.com/bart-turczynski/punycoder}
+  \item \url{https://bart-turczynski.r-universe.dev/punycoder}
   \item \url{https://CRAN.R-project.org/package=punycoder}
   \item Report bugs at \url{https://github.com/bart-turczynski/punycoder/issues}
 }
 
 }
 \author{
-\strong{Maintainer}: Bart Turczynski \email{bartek+punycoder@turczynski.pl} (\href{https://orcid.org/0000-0002-8788-7980}{ORCID})
+\strong{Maintainer}: Bart Turczynski \email{bartek@turczynski.pl} (\href{https://orcid.org/0000-0002-8788-7980}{ORCID})
 
 Authors:
 \itemize{
-  \item Bart Turczynski \email{bartek+punycoder@turczynski.pl} (\href{https://orcid.org/0000-0002-8788-7980}{ORCID})
+  \item Bart Turczynski \email{bartek@turczynski.pl} (\href{https://orcid.org/0000-0002-8788-7980}{ORCID})
 }
 
 }
