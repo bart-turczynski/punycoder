@@ -22,3 +22,21 @@ print(x, ...)
 ## Value
 
 Invisibly returns `x`.
+
+## Examples
+
+``` r
+result <- validate_domain(c("example.com", "xn--bad-label-"))
+print(result)
+#> Punycoder Domain Validation Results
+#> ==================================
+#> 
+#> Domain: example.com 
+#> Valid:  TRUE 
+#> 
+#> Domain: xn--bad-label- 
+#> Valid:  FALSE 
+#> Errors:
+#>   - Domain label cannot start or end with hyphen 
+#> 
+```

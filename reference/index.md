@@ -52,7 +52,5 @@ S3 print methods and package overview.
 - [`punycoder`](https://bart-turczynski.github.io/punycoder/reference/punycoder-package.md)
   [`punycoder-package`](https://bart-turczynski.github.io/punycoder/reference/punycoder-package.md)
   : Unicode and Punycode Domain Name Processing
-- [`print(`*`<punycoder_parsed_url>`*`)`](https://bart-turczynski.github.io/punycoder/reference/print.punycoder_parsed_url.md)
-  : Print method for punycoder parsed URL results
 - [`print(`*`<punycoder_validation>`*`)`](https://bart-turczynski.github.io/punycoder/reference/print.punycoder_validation.md)
   : Print method for punycoder validation results
