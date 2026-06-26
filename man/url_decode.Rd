@@ -10,14 +10,14 @@ url_decode(url, strict = getOption("punycoder.strict", TRUE))
 \item{url}{Character vector of URL-shaped strings with ASCII punycode hosts}
 
 \item{strict}{Logical; whether to apply strict validation. Defaults to
-`getOption("punycoder.strict", TRUE)`.}
+\code{getOption("punycoder.strict", TRUE)}.}
 }
 \value{
 A character vector the same length as \code{url}, with each element
-  containing the URL with its host portion decoded to Unicode. Only the
-  domain component is transformed; scheme, path, query, and fragment are
-  preserved. Elements corresponding to \code{NA} inputs are
-  \code{NA_character_}.
+containing the URL with its host portion decoded to Unicode. Only the
+domain component is transformed; scheme, path, query, and fragment are
+preserved. Elements corresponding to \code{NA} inputs are
+\code{NA_character_}.
 }
 \description{
 Locates the host portion of a URL-shaped string with a hand-rolled
@@ -25,16 +25,16 @@ splitter, decodes that host from ASCII punycode to Unicode, and
 substitutes it back, leaving the rest of the string untouched.
 }
 \details{
-Like [url_encode()], this is **best-effort host extraction and rewriting,
-not URL parsing or canonicalization**, and is not RFC 3986 / WHATWG URL
+Like \code{\link[=url_encode]{url_encode()}}, this is \strong{best-effort host extraction and rewriting,
+not URL parsing or canonicalization}, and is not RFC 3986 / WHATWG URL
 conformant (no percent encoding/decoding, scheme/port/path semantics, full
-IPv6, or serialization). Those concerns live upstack in `rurl`.
+IPv6, or serialization). Those concerns live upstack in \code{rurl}.
 }
 \section{Deprecated}{
 
 This function is deprecated and slated for removal in a future release. For
-URL parsing and canonicalization use a dedicated URL package (e.g. `rurl`);
-for host-only decoding pass the host alone to [puny_decode()].
+URL parsing and canonicalization use a dedicated URL package (e.g. \code{rurl});
+for host-only decoding pass the host alone to \code{\link[=puny_decode]{puny_decode()}}.
 }
 
 \examples{
@@ -53,7 +53,7 @@ url_decode(ascii_urls)
 }
 \seealso{
 \code{\link{url_encode}} for the reverse operation,
-  \code{\link{puny_decode}} for domain-only decoding,
-  \code{\link{parse_url}} for URL component extraction.
+\code{\link{puny_decode}} for domain-only decoding,
+\code{\link{parse_url}} for URL component extraction.
 }
 \keyword{internal}

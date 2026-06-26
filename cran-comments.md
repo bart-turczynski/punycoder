@@ -2,13 +2,18 @@
 
 0 errors | 0 warnings | 1 note
 
-The NOTE is the standard incoming-feasibility note flagging a short interval
-since the last update (1.1.0). The quick turnaround is to land a coordinated
-breaking change before the ecosystem grows: 1.1.0 introduced `host_normalize()`
-only yesterday, so the inert `strict` argument removed here has essentially no
-installed base, and removing it now (rather than after wider adoption) keeps the
-disruption to the single, already-coordinated reverse dependency. Apologies for
-the quick turnaround.
+The incoming-feasibility NOTE flags two things:
+
+* A short interval since the last update (1.1.0). The quick turnaround is to land
+  a coordinated breaking change before the ecosystem grows: 1.1.0 introduced
+  `host_normalize()` only yesterday, so the inert `strict` argument removed here
+  has essentially no installed base, and removing it now (rather than after wider
+  adoption) keeps the disruption to the single, already-coordinated reverse
+  dependency. Apologies for the quick turnaround.
+* A maintainer email change, from `bartek+punycoder@turczynski.pl` to
+  `bartek@turczynski.pl`. This is the same maintainer (Bart Turczynski); the
+  address was normalized to drop the per-package plus-tag alias. No change of
+  person or organization.
 
 ## Changes in this version
 

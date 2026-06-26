@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# punycoder
+# punycoder <img src="man/figures/logo.png" align="right" height="139" alt="punycoder hex logo" />
 
 <!-- badges: start -->
 
@@ -37,8 +37,8 @@ distinct surfaces:
 UTS \#46 is compatibility processing and deliberately accepts labels
 IDNA2008 would reject (e.g. `☕.example` → `xn--53h.example`). See
 `?host_normalize` and `normalization_profile_info()` for the normative
-profile and full standards references (RFC 3492/5890/5891/5892/5893,
-UTS \#46, UAX \#15/#44, STD 3, RFC 8753).
+profile and full standards references (RFC 3492/5890/5891/5892/5893, UTS
+\#46, UAX \#15/#44, STD 3, RFC 8753).
 
 ## Dependencies
 
@@ -152,9 +152,9 @@ ascii_urls <- url_encode(international_urls)
 > canonicalization. They have no percent encoding/decoding, scheme
 > validation, robust port/path/query semantics, full IPv6 (zone IDs /
 > RFC 6874), or serialization guarantees, and are slated for eventual
-> removal in favor of a dedicated URL package consuming punycoder’s
-> host functions. Use `host_normalize()` / `puny_encode()` directly when
-> you control the host parse.
+> removal in favor of a dedicated URL package consuming punycoder’s host
+> functions. Use `host_normalize()` / `puny_encode()` directly when you
+> control the host parse.
 
 ### Data Analysis
 

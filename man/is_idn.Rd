@@ -11,7 +11,7 @@ is_idn(x)
 }
 \value{
 A logical vector the same length as \code{x}, where \code{TRUE}
-  indicates the element contains non-ASCII Unicode characters.
+indicates the element contains non-ASCII Unicode characters.
 }
 \description{
 Determines whether a domain name contains Unicode characters that
@@ -30,5 +30,5 @@ is_idn(c(
 }
 \seealso{
 \code{\link{is_punycode}} for detecting punycode domains,
-  \code{\link{puny_encode}} for encoding Unicode domains.
+\code{\link{puny_encode}} for encoding Unicode domains.
 }
