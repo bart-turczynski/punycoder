@@ -18,8 +18,8 @@
 ^user_story\.md$
 ^dev$
 ^dev/.*
-README\.Rmd$
-README\.html$
+^README\.Rmd$
+^README\.html$
 ^src/.*\.(o|so|dll)$
 ^src/Makevars$
 ^src/symbols\.rds$
