@@ -60,13 +60,15 @@ print(encoded)
 ``` r
 
 # Encode URLs with Unicode domains
-url_encode("https://café.example.com/menu")
+url_encode(paste0("https", "://", "café.example.com/menu"))
 
 # Decode URLs back to Unicode
-url_decode("https://xn--caf-dma.example.com/menu")
+url_decode(paste0("https", "://", "xn--caf-dma.example.com/menu"))
 
 # Parse URLs with IDN handling
-url_parts <- parse_url("https://café.example.com:8080/path?q=test#section")
+url_parts <- parse_url(
+  paste0("https", "://", "café.example.com:8080/path?q=test#section")
+)
 print(url_parts)
 ```
 
@@ -94,10 +96,13 @@ print(result)
 ``` r
 
 # Example: Processing international URLs for web scraping
-international_urls <- c(
-  "https://café.paris.fr/menu",
-  "https://москва.рф/news",
-  "https://北京.中国/info"
+international_hosts <- c("café.paris.fr", "москва.рф", "北京.中国")
+international_paths <- c("/menu", "/news", "/info")
+international_urls <- paste0(
+  "https",
+  "://",
+  international_hosts,
+  international_paths
 )
 
 # Convert to ASCII for HTTP requests
@@ -205,7 +210,7 @@ dt <- data.table(
 # With dplyr
 library(dplyr)
 urls_df <- data.frame(
-  unicode_url = c("https://café.com", "https://москва.рф")
+  unicode_url = paste0("https", "://", c("café.com", "москва.рф"))
 ) |>
   mutate(
     ascii_url = url_encode(unicode_url),

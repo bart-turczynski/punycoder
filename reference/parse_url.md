@@ -62,7 +62,7 @@ port/path/query semantics, no full IPv6 (zone IDs / RFC 6874 are
 unhandled), and no serialization guarantees. The non-host components are
 returned as a convenience only; for real URL parsing and
 canonicalization use a dedicated URL package (e.g. \`rurl\`). This
-surface is slated for eventual removal in favour of \`rurl\` consuming
+surface is slated for eventual removal in favor of \`rurl\` consuming
 punycoder's host functions.
 
 ## Deprecated

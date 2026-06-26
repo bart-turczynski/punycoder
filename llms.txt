@@ -25,7 +25,9 @@ distinct surfaces:
 is a **UTS \#46 profile, not IDNA2008 conformance** — UTS \#46 is
 compatibility processing and deliberately accepts labels IDNA2008 would
 reject (e.g. `☕.example` → `xn--53h.example`). See
-[`dev/normalization-contract.md`](https://bart-turczynski.github.io/punycoder/dev/normalization-contract.md)
+[`?host_normalize`](https://bart-turczynski.github.io/punycoder/reference/host_normalize.md)
+and
+[`normalization_profile_info()`](https://bart-turczynski.github.io/punycoder/reference/normalization_profile_info.md)
 for the normative profile and full standards references (RFC
 3492/5890/5891/5892/5893, UTS \#46, UAX \#15/#44, STD 3, RFC 8753).
 
@@ -150,7 +152,7 @@ ascii_urls <- url_encode(international_urls)
 > WHATWG URL parsing or canonicalization. They have no percent
 > encoding/decoding, scheme validation, robust port/path/query
 > semantics, full IPv6 (zone IDs / RFC 6874), or serialization
-> guarantees, and are slated for eventual removal in favour of a
+> guarantees, and are slated for eventual removal in favor of a
 > dedicated URL package consuming punycoder’s host functions. Use
 > [`host_normalize()`](https://bart-turczynski.github.io/punycoder/reference/host_normalize.md)
 > /

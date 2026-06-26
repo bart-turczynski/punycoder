@@ -25,6 +25,8 @@ comparison form for a host name.
 
 Useful links:
 
+- <https://bart-turczynski.github.io/punycoder/>
+
 - <https://github.com/bart-turczynski/punycoder>
 
 - <https://CRAN.R-project.org/package=punycoder>
@@ -34,7 +36,9 @@ Useful links:
 ## Author
 
 **Maintainer**: Bart Turczynski <bartek+punycoder@turczynski.pl>
+([ORCID](https://orcid.org/0000-0002-8788-7980))
 
 Authors:
 
 - Bart Turczynski <bartek+punycoder@turczynski.pl>
+  ([ORCID](https://orcid.org/0000-0002-8788-7980))
