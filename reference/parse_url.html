@@ -73,38 +73,38 @@ handling, optionally ASCII-encoding it.</p>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An object of class <code>"punycoder_parsed_url"</code> (a named list)
-  with components:</p><dl><dt>scheme</dt>
+with components:</p><dl><dt>scheme</dt>
 <dd><p>Character vector of URL schemes (e.g., <code>"https"</code>).</p></dd>
 
-    <dt>domain</dt>
+<dt>domain</dt>
 <dd><p>Character vector of domain names.</p></dd>
 
-    <dt>port</dt>
+<dt>port</dt>
 <dd><p>Integer vector of port numbers.</p></dd>
 
-    <dt>path</dt>
+<dt>path</dt>
 <dd><p>Character vector of URL paths.</p></dd>
 
-    <dt>query</dt>
+<dt>query</dt>
 <dd><p>Character vector of query strings.</p></dd>
 
-    <dt>fragment</dt>
+<dt>fragment</dt>
 <dd><p>Character vector of fragment identifiers.</p></dd>
 
 
 </dl><p>Each component has one element per input URL. Invalid URLs yield
-  <code>NA</code> components. For valid URLs without an explicit path,
-  <code>path</code> is returned as <code>""</code>.</p>
+<code>NA</code> components. For valid URLs without an explicit path,
+<code>path</code> is returned as <code>""</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>This is **best-effort host extraction, not a conformant URL parser.** It is
-*not* RFC 3986 / WHATWG URL compliant: there is no percent encoding/decoding,
+    <p>This is <strong>best-effort host extraction, not a conformant URL parser.</strong> It is
+<em>not</em> RFC 3986 / WHATWG URL compliant: there is no percent encoding/decoding,
 no scheme validation, no robust port/path/query semantics, no full IPv6
 (zone IDs / RFC 6874 are unhandled), and no serialization guarantees. The
 non-host components are returned as a convenience only; for real URL parsing
-and canonicalization use a dedicated URL package (e.g. `rurl`). This surface
-is slated for eventual removal in favor of `rurl` consuming punycoder's host
+and canonicalization use a dedicated URL package (e.g. <code>rurl</code>). This surface
+is slated for eventual removal in favor of <code>rurl</code> consuming punycoder's host
 functions.</p>
     </div>
     <div class="section level2">
@@ -112,14 +112,14 @@ functions.</p>
 
 
 <p>This function is deprecated and slated for removal in a future release. For
-URL parsing and canonicalization use a dedicated URL package (e.g. `rurl`);
-for host-only encoding pass the host alone to [host_normalize()] or
-[puny_encode()].</p>
+URL parsing and canonicalization use a dedicated URL package (e.g. <code>rurl</code>);
+for host-only encoding pass the host alone to <code><a href="host_normalize.html">host_normalize()</a></code> or
+<code><a href="puny_encode.html">puny_encode()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="url_encode.html">url_encode</a></code>, <code><a href="url_decode.html">url_decode</a></code> for URL
-  transformation with IDN handling.</p></div>
+transformation with IDN handling.</p></div>
     </div>
 
     <div class="section level2">

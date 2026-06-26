@@ -19,7 +19,7 @@ url_encode(url, strict = getOption("punycoder.strict", TRUE))
 - strict:
 
   Logical; whether to apply strict validation. Defaults to
-  \`getOption("punycoder.strict", TRUE)\`.
+  `getOption("punycoder.strict", TRUE)`.
 
 ## Value
 
@@ -30,21 +30,26 @@ preserved. Elements corresponding to `NA` inputs are `NA_character_`.
 
 ## Details
 
-This is \*\*best-effort host extraction and rewriting, not URL parsing
-or canonicalization.\*\* It is deliberately \*not\* RFC 3986 / WHATWG
-URL conformant. Non-goals (handled upstack, e.g. by \`rurl\`): percent
+This is **best-effort host extraction and rewriting, not URL parsing or
+canonicalization.** It is deliberately *not* RFC 3986 / WHATWG URL
+conformant. Non-goals (handled upstack, e.g. by `rurl`): percent
 encoding/decoding, scheme validation, port/path/query semantics, full
 IPv6 (including zone IDs / RFC 6874), and URL serialization. Pass only
-the host to \[host_normalize()\] / \[puny_encode()\] when you control
-the parse; use this helper only for quick host rewriting in an
-already-trusted URL-shaped string.
+the host to
+[`host_normalize()`](https://bart-turczynski.github.io/punycoder/reference/host_normalize.md)
+/
+[`puny_encode()`](https://bart-turczynski.github.io/punycoder/reference/puny_encode.md)
+when you control the parse; use this helper only for quick host
+rewriting in an already-trusted URL-shaped string.
 
 ## Deprecated
 
 This function is deprecated and slated for removal in a future release.
 For URL parsing and canonicalization use a dedicated URL package (e.g.
-\`rurl\`); for host-only encoding pass the host alone to
-\[host_normalize()\] or \[puny_encode()\].
+`rurl`); for host-only encoding pass the host alone to
+[`host_normalize()`](https://bart-turczynski.github.io/punycoder/reference/host_normalize.md)
+or
+[`puny_encode()`](https://bart-turczynski.github.io/punycoder/reference/puny_encode.md).
 
 ## See also
 

@@ -68,37 +68,37 @@ substitutes it back, leaving the rest of the string untouched.</p>
 
 <dt id="arg-strict">strict<a class="anchor" aria-label="anchor" href="#arg-strict"></a></dt>
 <dd><p>Logical; whether to apply strict validation. Defaults to
-`getOption("punycoder.strict", TRUE)`.</p></dd>
+<code>getOption("punycoder.strict", TRUE)</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A character vector the same length as <code>url</code>, with each element
-  containing the URL with its host portion decoded to Unicode. Only the
-  domain component is transformed; scheme, path, query, and fragment are
-  preserved. Elements corresponding to <code>NA</code> inputs are
-  <code>NA_character_</code>.</p>
+containing the URL with its host portion decoded to Unicode. Only the
+domain component is transformed; scheme, path, query, and fragment are
+preserved. Elements corresponding to <code>NA</code> inputs are
+<code>NA_character_</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Like [url_encode()], this is **best-effort host extraction and rewriting,
-not URL parsing or canonicalization**, and is not RFC 3986 / WHATWG URL
+    <p>Like <code><a href="url_encode.html">url_encode()</a></code>, this is <strong>best-effort host extraction and rewriting,
+not URL parsing or canonicalization</strong>, and is not RFC 3986 / WHATWG URL
 conformant (no percent encoding/decoding, scheme/port/path semantics, full
-IPv6, or serialization). Those concerns live upstack in `rurl`.</p>
+IPv6, or serialization). Those concerns live upstack in <code>rurl</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="deprecated">Deprecated<a class="anchor" aria-label="anchor" href="#deprecated"></a></h2>
 
 
 <p>This function is deprecated and slated for removal in a future release. For
-URL parsing and canonicalization use a dedicated URL package (e.g. `rurl`);
-for host-only decoding pass the host alone to [puny_decode()].</p>
+URL parsing and canonicalization use a dedicated URL package (e.g. <code>rurl</code>);
+for host-only decoding pass the host alone to <code><a href="puny_decode.html">puny_decode()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="url_encode.html">url_encode</a></code> for the reverse operation,
-  <code><a href="puny_decode.html">puny_decode</a></code> for domain-only decoding,
-  <code><a href="parse_url.html">parse_url</a></code> for URL component extraction.</p></div>
+<code><a href="puny_decode.html">puny_decode</a></code> for domain-only decoding,
+<code><a href="parse_url.html">parse_url</a></code> for URL component extraction.</p></div>
     </div>
 
     <div class="section level2">

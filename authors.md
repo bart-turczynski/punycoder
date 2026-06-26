@@ -8,16 +8,16 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/bart-turczynski/punycoder/blob/main/DESCRIPTION)
+[`inst/CITATION`](https://github.com/bart-turczynski/punycoder/blob/main/inst/CITATION)
 
-Turczynski B (2026). *punycoder: Unicode and Punycode Domain Name
-Processing*. R package version 1.2.0,
-<https://bart-turczynski.github.io/punycoder/>.
+Turczynski, B. (2026). punycoder: Unicode and Punycode Domain Name
+Processing. R package version 1.2.0.
+https://CRAN.R-project.org/package=punycoder
 
     @Manual{,
-      title = {punycoder: Unicode and Punycode Domain Name Processing},
+      title = {{punycoder}: Unicode and Punycode Domain Name Processing},
       author = {Bart Turczynski},
       year = {2026},
       note = {R package version 1.2.0},
-      url = {https://bart-turczynski.github.io/punycoder/},
+      url = {https://CRAN.R-project.org/package=punycoder},
     }

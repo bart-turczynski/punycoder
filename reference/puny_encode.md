@@ -1,11 +1,14 @@
 # Encode Unicode domain labels to ASCII Punycode (low-level)
 
-Converts Unicode domain names to their ASCII Punycode (\`xn–\`)
+Converts Unicode domain names to their ASCII Punycode (`xn--`)
 representation: the raw RFC 3492 Bootstring transform wrapped in the RFC
 5890/5891 A-label framing, plus letter-digit-hyphen and leading/trailing
 hyphen checks per label. DNS host length limits are intentionally not
-applied by this raw codec; use \[validate_domain()\] or
-\[host_normalize()\] when you need DNS host validation.
+applied by this raw codec; use
+[`validate_domain()`](https://bart-turczynski.github.io/punycoder/reference/validate_domain.md)
+or
+[`host_normalize()`](https://bart-turczynski.github.io/punycoder/reference/host_normalize.md)
+when you need DNS host validation.
 
 ## Usage
 
@@ -22,7 +25,7 @@ puny_encode(x, strict = getOption("punycoder.strict", TRUE))
 - strict:
 
   Logical; whether to apply strict validation. Defaults to
-  \`getOption("punycoder.strict", TRUE)\`. In strict mode the raw codec
+  `getOption("punycoder.strict", TRUE)`. In strict mode the raw codec
   enforces structural checks but not DNS host length limits.
 
 ## Value
@@ -34,11 +37,12 @@ encoding are also returned as `NA_character_`.
 
 ## Details
 
-This is a \*\*low-level ASCII-Compatible Encoding helper, not an IDNA
-normalization API.\*\* It does \*not\* apply Unicode NFC, UTS \#46
-mapping, case folding, or Bidi/Joiner validation. To map a host name to
-its canonical comparison form under a UTS \#46 profile (the IDNA surface
-of this package), use \[host_normalize()\].
+This is a **low-level ASCII-Compatible Encoding helper, not an IDNA
+normalization API.** It does *not* apply Unicode NFC, UTS \#46 mapping,
+case folding, or Bidi/Joiner validation. To map a host name to its
+canonical comparison form under a UTS \#46 profile (the IDNA surface of
+this package), use
+[`host_normalize()`](https://bart-turczynski.github.io/punycoder/reference/host_normalize.md).
 
 ## See also
 

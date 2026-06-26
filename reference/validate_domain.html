@@ -68,26 +68,26 @@ Supports both Unicode and ASCII domain names.</p>
 
 <dt id="arg-strict">strict<a class="anchor" aria-label="anchor" href="#arg-strict"></a></dt>
 <dd><p>Logical; whether to apply strict validation. Defaults to
-`getOption("punycoder.strict", TRUE)`.</p></dd>
+<code>getOption("punycoder.strict", TRUE)</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An object of class <code>"punycoder_validation"</code> (a named list)
-  with components:</p><dl><dt>domains</dt>
+with components:</p><dl><dt>domains</dt>
 <dd><p>Character vector of the input domain names.</p></dd>
 
-    <dt>valid</dt>
+<dt>valid</dt>
 <dd><p>Logical vector indicating whether each domain is valid.</p></dd>
 
-    <dt>errors</dt>
+<dt>errors</dt>
 <dd><p>List of character vectors, each containing error messages
-      for the corresponding domain (empty for valid domains).</p></dd>
+for the corresponding domain (empty for valid domains).</p></dd>
 
-    <dt>error_codes</dt>
+<dt>error_codes</dt>
 <dd><p>List of character vectors, each containing stable
-      machine-readable error codes for the corresponding domain (empty for
-      valid domains). Missing input uses <code>"domain_na"</code>.</p></dd>
+machine-readable error codes for the corresponding domain (empty for
+valid domains). Missing input uses <code>"domain_na"</code>.</p></dd>
 
 
 </dl></div>

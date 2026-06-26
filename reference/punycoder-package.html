@@ -54,28 +54,29 @@ domain names, split across two tiers.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The package exposes two distinct surfaces, deliberately kept separate:</p>
-<ul><li><p>A **low-level Punycode codec** ([puny_encode()] / [puny_decode()]):
-    the raw RFC 3492 transform with `xn–` A-label framing (RFC 5890/5891)
-    and letter-digit-hyphen checks. It performs no Unicode normalization.</p></li>
-<li><p>An **IDNA/UTS-46 host-normalization surface** ([host_normalize()]):
-    Unicode NFC, UTS #46 mapping and validation, and conversion to a
-    canonical lowercase ASCII comparison form under a pinned profile.</p></li>
+<ul><li><p>A <strong>low-level Punycode codec</strong> (<code><a href="puny_encode.html">puny_encode()</a></code> / <code><a href="puny_decode.html">puny_decode()</a></code>):
+the raw RFC 3492 transform with <code>xn--</code> A-label framing (RFC 5890/5891)
+and letter-digit-hyphen checks. It performs no Unicode normalization.</p></li>
+<li><p>An <strong>IDNA/UTS-46 host-normalization surface</strong> (<code><a href="host_normalize.html">host_normalize()</a></code>):
+Unicode NFC, UTS #46 mapping and validation, and conversion to a
+canonical lowercase ASCII comparison form under a pinned profile.</p></li>
 </ul><p>Use the codec when you need the literal ASCII-Compatible Encoding of a
-label; use [host_normalize()] when you need a standards-profiled
+label; use <code><a href="host_normalize.html">host_normalize()</a></code> when you need a standards-profiled
 comparison form for a host name.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p>Useful links:</p><ul><li><p><a href="https://bart-turczynski.github.io/punycoder/">https://bart-turczynski.github.io/punycoder/</a></p></li>
 <li><p><a href="https://github.com/bart-turczynski/punycoder" class="external-link">https://github.com/bart-turczynski/punycoder</a></p></li>
+<li><p><a href="https://bart-turczynski.r-universe.dev/punycoder" class="external-link">https://bart-turczynski.r-universe.dev/punycoder</a></p></li>
 <li><p><a href="https://CRAN.R-project.org/package=punycoder" class="external-link">https://CRAN.R-project.org/package=punycoder</a></p></li>
 <li><p>Report bugs at <a href="https://github.com/bart-turczynski/punycoder/issues" class="external-link">https://github.com/bart-turczynski/punycoder/issues</a></p></li>
 </ul></div>
     </div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>
-    <p><strong>Maintainer</strong>: Bart Turczynski <a href="mailto:bartek+punycoder@turczynski.pl">bartek+punycoder@turczynski.pl</a> (<a href="https://orcid.org/0000-0002-8788-7980" class="external-link">ORCID</a>)</p>
-<p>Authors:</p><ul><li><p>Bart Turczynski <a href="mailto:bartek+punycoder@turczynski.pl">bartek+punycoder@turczynski.pl</a> (<a href="https://orcid.org/0000-0002-8788-7980" class="external-link">ORCID</a>)</p></li>
+    <p><strong>Maintainer</strong>: Bart Turczynski <a href="mailto:bartek@turczynski.pl">bartek@turczynski.pl</a> (<a href="https://orcid.org/0000-0002-8788-7980" class="external-link">ORCID</a>)</p>
+<p>Authors:</p><ul><li><p>Bart Turczynski <a href="mailto:bartek@turczynski.pl">bartek@turczynski.pl</a> (<a href="https://orcid.org/0000-0002-8788-7980" class="external-link">ORCID</a>)</p></li>
 </ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

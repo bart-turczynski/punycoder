@@ -19,7 +19,7 @@ validate_domain(x, strict = getOption("punycoder.strict", TRUE))
 - strict:
 
   Logical; whether to apply strict validation. Defaults to
-  \`getOption("punycoder.strict", TRUE)\`.
+  `getOption("punycoder.strict", TRUE)`.
 
 ## Value
 

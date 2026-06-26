@@ -69,24 +69,24 @@ hosts</p></dd>
 
 <dt id="arg-strict">strict<a class="anchor" aria-label="anchor" href="#arg-strict"></a></dt>
 <dd><p>Logical; whether to apply strict validation. Defaults to
-`getOption("punycoder.strict", TRUE)`.</p></dd>
+<code>getOption("punycoder.strict", TRUE)</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A character vector the same length as <code>url</code>, with each element
-  containing the URL with its host portion ASCII-encoded. Only the domain
-  component is transformed; scheme, path, query, and fragment are preserved.
-  Elements corresponding to <code>NA</code> inputs are <code>NA_character_</code>.</p>
+containing the URL with its host portion ASCII-encoded. Only the domain
+component is transformed; scheme, path, query, and fragment are preserved.
+Elements corresponding to <code>NA</code> inputs are <code>NA_character_</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>This is **best-effort host extraction and rewriting, not URL parsing or
-canonicalization.** It is deliberately *not* RFC 3986 / WHATWG URL
-conformant. Non-goals (handled upstack, e.g. by `rurl`): percent
+    <p>This is <strong>best-effort host extraction and rewriting, not URL parsing or
+canonicalization.</strong> It is deliberately <em>not</em> RFC 3986 / WHATWG URL
+conformant. Non-goals (handled upstack, e.g. by <code>rurl</code>): percent
 encoding/decoding, scheme validation, port/path/query semantics, full
 IPv6 (including zone IDs / RFC 6874), and URL serialization. Pass only the
-host to [host_normalize()] / [puny_encode()] when you control the parse;
+host to <code><a href="host_normalize.html">host_normalize()</a></code> / <code><a href="puny_encode.html">puny_encode()</a></code> when you control the parse;
 use this helper only for quick host rewriting in an already-trusted
 URL-shaped string.</p>
     </div>
@@ -95,15 +95,15 @@ URL-shaped string.</p>
 
 
 <p>This function is deprecated and slated for removal in a future release. For
-URL parsing and canonicalization use a dedicated URL package (e.g. `rurl`);
-for host-only encoding pass the host alone to [host_normalize()] or
-[puny_encode()].</p>
+URL parsing and canonicalization use a dedicated URL package (e.g. <code>rurl</code>);
+for host-only encoding pass the host alone to <code><a href="host_normalize.html">host_normalize()</a></code> or
+<code><a href="puny_encode.html">puny_encode()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="url_decode.html">url_decode</a></code> for the reverse operation,
-  <code><a href="puny_encode.html">puny_encode</a></code> for domain-only encoding,
-  <code><a href="parse_url.html">parse_url</a></code> for URL component extraction.</p></div>
+<code><a href="puny_encode.html">puny_encode</a></code> for domain-only encoding,
+<code><a href="parse_url.html">parse_url</a></code> for URL component extraction.</p></div>
     </div>
 
     <div class="section level2">

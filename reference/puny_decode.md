@@ -1,11 +1,14 @@
 # Decode ASCII Punycode to Unicode domain labels (low-level)
 
-Converts ASCII Punycode (\`xn–\`) domain names back to their Unicode
-representation. This is the inverse of \[puny_encode()\] and is the raw
-RFC 3492 transform with A-label framing checks. DNS host length limits
-are intentionally not applied by this raw codec; use
-\[validate_domain()\] or \[host_normalize()\] when you need DNS host
-validation.
+Converts ASCII Punycode (`xn--`) domain names back to their Unicode
+representation. This is the inverse of
+[`puny_encode()`](https://bart-turczynski.github.io/punycoder/reference/puny_encode.md)
+and is the raw RFC 3492 transform with A-label framing checks. DNS host
+length limits are intentionally not applied by this raw codec; use
+[`validate_domain()`](https://bart-turczynski.github.io/punycoder/reference/validate_domain.md)
+or
+[`host_normalize()`](https://bart-turczynski.github.io/punycoder/reference/host_normalize.md)
+when you need DNS host validation.
 
 ## Usage
 
@@ -22,7 +25,7 @@ puny_decode(x, strict = getOption("punycoder.strict", TRUE))
 - strict:
 
   Logical; whether to apply strict validation. Defaults to
-  \`getOption("punycoder.strict", TRUE)\`. In strict mode the raw codec
+  `getOption("punycoder.strict", TRUE)`. In strict mode the raw codec
   enforces structural checks but not DNS host length limits.
 
 ## Value
@@ -34,10 +37,12 @@ also returned as `NA_character_`.
 
 ## Details
 
-Like \[puny_encode()\], this is a \*\*low-level ASCII-Compatible
-Encoding helper, not an IDNA normalization API\*\*: it does not apply
-UTS \#46 mapping or NFC. For IDNA/UTS-46 host normalization, see
-\[host_normalize()\].
+Like
+[`puny_encode()`](https://bart-turczynski.github.io/punycoder/reference/puny_encode.md),
+this is a **low-level ASCII-Compatible Encoding helper, not an IDNA
+normalization API**: it does not apply UTS \#46 mapping or NFC. For
+IDNA/UTS-46 host normalization, see
+[`host_normalize()`](https://bart-turczynski.github.io/punycoder/reference/host_normalize.md).
 
 ## See also
 

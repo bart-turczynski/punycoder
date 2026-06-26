@@ -55,22 +55,23 @@ as `""`.
 
 ## Details
 
-This is \*\*best-effort host extraction, not a conformant URL
-parser.\*\* It is \*not\* RFC 3986 / WHATWG URL compliant: there is no
-percent encoding/decoding, no scheme validation, no robust
-port/path/query semantics, no full IPv6 (zone IDs / RFC 6874 are
-unhandled), and no serialization guarantees. The non-host components are
-returned as a convenience only; for real URL parsing and
-canonicalization use a dedicated URL package (e.g. \`rurl\`). This
-surface is slated for eventual removal in favor of \`rurl\` consuming
-punycoder's host functions.
+This is **best-effort host extraction, not a conformant URL parser.** It
+is *not* RFC 3986 / WHATWG URL compliant: there is no percent
+encoding/decoding, no scheme validation, no robust port/path/query
+semantics, no full IPv6 (zone IDs / RFC 6874 are unhandled), and no
+serialization guarantees. The non-host components are returned as a
+convenience only; for real URL parsing and canonicalization use a
+dedicated URL package (e.g. `rurl`). This surface is slated for eventual
+removal in favor of `rurl` consuming punycoder's host functions.
 
 ## Deprecated
 
 This function is deprecated and slated for removal in a future release.
 For URL parsing and canonicalization use a dedicated URL package (e.g.
-\`rurl\`); for host-only encoding pass the host alone to
-\[host_normalize()\] or \[puny_encode()\].
+`rurl`); for host-only encoding pass the host alone to
+[`host_normalize()`](https://bart-turczynski.github.io/punycoder/reference/host_normalize.md)
+or
+[`puny_encode()`](https://bart-turczynski.github.io/punycoder/reference/puny_encode.md).
 
 ## See also
 
