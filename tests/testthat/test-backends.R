@@ -101,6 +101,19 @@ test_that("backend info exposes availability and selected backend", {
   expect_length(info$has_libidn2, 1)
 })
 
+test_that("backend comparison reports unsupported modes as errors", {
+  result <- punycoder:::.compare_backends("example.com", "bogus_mode")
+
+  expect_true(startsWith(result$fallback[[1]], "__ERROR__: "))
+  expect_match(result$fallback[[1]], "Unknown backend comparison mode")
+  if (isTRUE(result$available)) {
+    expect_true(startsWith(result$libidn2[[1]], "__ERROR__: "))
+    expect_match(result$libidn2[[1]], "Unknown backend comparison mode")
+  } else {
+    expect_true(is.na(result$libidn2[[1]]))
+  }
+})
+
 # --- Cross-backend parity (requires libidn2) ------------------------------
 
 test_that("fallback and libidn2 agree on RFC 3492 vectors", {
@@ -160,7 +173,7 @@ test_that("fallback backend rejects malformed domains on its own", {
 
 test_that("fallback backend round-trips valid IDN domains on its own", {
   enc <- backend_decisions(roundtrip_domains, "encode_domain")$fb_out
-  expect_false(any(is.na(enc))) # all accepted
+  expect_false(anyNA(enc)) # all accepted
 
   dec <- backend_decisions(enc, "decode_domain")$fb_out
   expect_equal(dec, roundtrip_domains)

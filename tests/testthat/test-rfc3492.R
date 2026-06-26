@@ -39,8 +39,8 @@ test_that("raw punycode strict mode does not apply DNS label length limits", {
   expect_true(all(validate_domain(dns_valid$unicode, strict = TRUE)$valid))
 
   overlong <- vectors[vectors$description == "Korean (Hangul syllables)", ]
-  expect_true(nchar(overlong$unicode, type = "bytes") > 63)
-  expect_true(nchar(overlong$ascii, type = "bytes") > 63)
+  expect_gt(nchar(overlong$unicode, type = "bytes"), 63)
+  expect_gt(nchar(overlong$ascii, type = "bytes"), 63)
   expect_equal(
     puny_encode(overlong$unicode, strict = TRUE),
     overlong$ascii

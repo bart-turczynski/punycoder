@@ -100,6 +100,32 @@ test_that("parse_url returns proper structure", suppress_url_deprecation({
   expect_equal(result$fragment[[1]], "fragment")
 }))
 
+test_that(
+  "print method for parsed URLs renders optional components",
+  suppress_url_deprecation({
+    parsed <- parse_url(c(
+      "https://example.com/path?query=value#fragment",
+      "mailto:user@example.com",
+      "https://example.com"
+    ))
+
+    output <- capture.output(returned <- print(parsed))
+    expect_identical(returned, parsed)
+    expect_true(any(grepl(
+      "Punycoder Parsed URL Results", output, fixed = TRUE
+    )))
+    expect_true(any(grepl("URL 1", output, fixed = TRUE)))
+    expect_true(any(grepl("Scheme:   https", output, fixed = TRUE)))
+    expect_true(any(grepl("Domain:   example.com", output, fixed = TRUE)))
+    expect_true(any(grepl("Path:     /path", output, fixed = TRUE)))
+    expect_true(any(grepl("Query:    query=value", output, fixed = TRUE)))
+    expect_true(any(grepl("Fragment: fragment", output, fixed = TRUE)))
+    expect_true(any(grepl("Scheme:   mailto", output, fixed = TRUE)))
+    expect_true(any(grepl("Domain:   <NA>", output, fixed = TRUE)))
+    expect_true(any(grepl("Path:     user@example.com", output, fixed = TRUE)))
+  })
+)
+
 test_that("parse_url handles vectorized input", suppress_url_deprecation({
   urls <- c("https://example.com", "http://test.org:8080")
   result <- parse_url(urls)
@@ -188,6 +214,10 @@ test_that("url helpers cover authority edge cases", suppress_url_deprecation({
   expect_equal(url_encode("mailto:user@example.com"), "mailto:user@example.com")
   expect_equal(url_decode("mailto:user@example.com"), "mailto:user@example.com")
   expect_equal(url_encode("http://@/path"), "http://@/path")
+  expect_equal(url_encode("//café.example/path"), "//xn--caf-dma.example/path")
+  expect_equal(url_decode("//xn--caf-dma.example/path"), "//café.example/path")
+  expect_equal(url_encode("https://user@/path"), "https://user@/path")
+  expect_equal(url_decode("https://user@/path"), "https://user@/path")
   expect_equal(
     url_encode("http://[::1]:8080/path", strict = FALSE),
     "http://[::1]:8080/path"
@@ -220,6 +250,14 @@ test_that("url helpers cover authority edge cases", suppress_url_deprecation({
     "Invalid authority"
   )
   expect_true(is.na(url_encode("http://[::1]x/path", strict = FALSE)))
+  expect_error(
+    url_encode("http://[2001:db8:::1]/path", strict = TRUE),
+    "Invalid IPv6 authority"
+  )
+  expect_true(is.na(url_encode(
+    "http://[2001:db8:::1]/path",
+    strict = FALSE
+  )))
   expect_true(is.na(url_encode("", strict = FALSE)))
   expect_error(url_encode("", strict = TRUE), "Empty URL")
 }))
@@ -272,6 +310,27 @@ test_that("parse_url handles port boundary values", suppress_url_deprecation({
   pmax <- parse_url("http://example.com:99999/path")
   expect_equal(pmax$port[[1]], 99999L)
 }))
+
+test_that(
+  "parse_url handles empty URL components and empty hosts",
+  suppress_url_deprecation({
+    empty_parts <- parse_url("https://example.com?#")
+    expect_equal(empty_parts$scheme[[1]], "https")
+    expect_equal(empty_parts$domain[[1]], "example.com")
+    expect_equal(empty_parts$path[[1]], "")
+    expect_equal(empty_parts$query[[1]], "")
+    expect_equal(empty_parts$fragment[[1]], "")
+
+    userinfo_without_host <- parse_url("https://user:pass@/path")
+    expect_equal(userinfo_without_host$scheme[[1]], "https")
+    expect_true(is.na(userinfo_without_host$domain[[1]]))
+    expect_equal(userinfo_without_host$path[[1]], "/path")
+
+    non_numeric_port <- parse_url("http://example.com:abc/path")
+    expect_equal(non_numeric_port$domain[[1]], "example.com:abc")
+    expect_true(is.na(non_numeric_port$port[[1]]))
+  })
+)
 
 test_that(
   "IPv6 URLs pass through in non-strict mode",

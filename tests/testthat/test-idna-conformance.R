@@ -35,7 +35,7 @@ test_that("host_normalize matches UTS-46 IdnaTestV2 (Unicode 16.0.0)", {
 
   # Every divergence must be a trailing-dot input whose only status is A4_2
   # (empty root label) -- i.e. nothing else regressed.
-  ends_in_dot <- grepl("\\.$", df$source[dev])
+  ends_in_dot <- endsWith(df$source[dev], ".")
   only_a4_2 <- trimws(df$status[dev]) == "[A4_2]"
   expect_true(all(ends_in_dot))
   expect_true(all(only_a4_2))
@@ -45,7 +45,7 @@ test_that("host_normalize matches UTS-46 IdnaTestV2 (Unicode 16.0.0)", {
 
   # Pin the deviation count to the vendored fixture so a regression in root-dot
   # or length handling shifts it and trips here.
-  expect_identical(length(dev), 57L)
+  expect_length(dev, 57L)
 })
 
 # Relaxing a UTS #46 flag must (1) never change a result the strict profile

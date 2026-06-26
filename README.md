@@ -36,9 +36,9 @@ distinct surfaces:
 `host_normalize()` is a **UTS \#46 profile, not IDNA2008 conformance** —
 UTS \#46 is compatibility processing and deliberately accepts labels
 IDNA2008 would reject (e.g. `☕.example` → `xn--53h.example`). See
-[`dev/normalization-contract.md`](dev/normalization-contract.md) for
-the normative profile and full standards references (RFC
-3492/5890/5891/5892/5893, UTS \#46, UAX \#15/#44, STD 3, RFC 8753).
+`?host_normalize` and `normalization_profile_info()` for the normative
+profile and full standards references (RFC 3492/5890/5891/5892/5893,
+UTS \#46, UAX \#15/#44, STD 3, RFC 8753).
 
 ## Dependencies
 
@@ -152,7 +152,7 @@ ascii_urls <- url_encode(international_urls)
 > canonicalization. They have no percent encoding/decoding, scheme
 > validation, robust port/path/query semantics, full IPv6 (zone IDs /
 > RFC 6874), or serialization guarantees, and are slated for eventual
-> removal in favour of a dedicated URL package consuming punycoder’s
+> removal in favor of a dedicated URL package consuming punycoder’s
 > host functions. Use `host_normalize()` / `puny_encode()` directly when
 > you control the host parse.
 
@@ -218,10 +218,15 @@ functions.
 
 ## Related packages
 
-`punycoder` is part of a small ecosystem of R packages by the same author:
+`punycoder` is part of a small ecosystem of R packages by the same
+author:
 
-- **[pslr](https://bart-turczynski.github.io/pslr/)** — Public Suffix List engine that uses `punycoder` for IDNA canonicalization. Use it for eTLD and registrable-domain queries.
-- **[rurl](https://bart-turczynski.github.io/rurl/)** — Full URL parsing, normalization, and joining toolkit built on top of both `punycoder` and `pslr`.
+- **[pslr](https://bart-turczynski.github.io/pslr/)** — Public Suffix
+  List engine that uses `punycoder` for IDNA canonicalization. Use it
+  for eTLD and registrable-domain queries.
+- **[rurl](https://bart-turczynski.github.io/rurl/)** — Full URL
+  parsing, normalization, and joining toolkit built on top of both
+  `punycoder` and `pslr`.
 
 ## Contributing
 

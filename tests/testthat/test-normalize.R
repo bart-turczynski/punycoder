@@ -83,7 +83,7 @@ test_that("host_normalize is vectorized and preserves names", {
     out,
     c(a = "example.com", b = NA_character_, c = NA_character_)
   )
-  expect_identical(names(out), c("a", "b", "c"))
+  expect_named(out, c("a", "b", "c"))
   expect_length(host_normalize(character(0)), 0L)
 })
 
