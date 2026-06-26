@@ -63,11 +63,13 @@ decomp_f <- vapply(fields, function(f) f[[6]], character(1))
 # Expand First/Last range rows into (start, end) spans carrying gc/ccc.
 range_start <- grep(", First>$", name_vec)
 range_rows <- data.frame(
-  lo = integer(0), hi = integer(0), gc = character(0), ccc = integer(0)
+  lo = integer(0), hi = integer(0), gc = character(0), ccc = integer(0),
+  stringsAsFactors = FALSE
 )
 for (i in range_start) {
   range_rows <- rbind(range_rows, data.frame(
-    lo = cp_vec[i], hi = cp_vec[i + 1L], gc = gc_vec[i], ccc = ccc_vec[i]
+    lo = cp_vec[i], hi = cp_vec[i + 1L], gc = gc_vec[i], ccc = ccc_vec[i],
+    stringsAsFactors = FALSE
   ))
 }
 

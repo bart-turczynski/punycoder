@@ -23,6 +23,6 @@ test_that("3-byte and 4-byte code points round-trip", {
   three_byte <- "\u5317\u4EAC.com"
   four_byte <- "\U0001F600.com"
 
-  expect_equal(puny_decode(puny_encode(three_byte)), three_byte)
-  expect_equal(puny_decode(puny_encode(four_byte)), four_byte)
+  expect_identical(puny_decode(puny_encode(three_byte)), three_byte)
+  expect_identical(puny_decode(puny_encode(four_byte)), four_byte)
 })

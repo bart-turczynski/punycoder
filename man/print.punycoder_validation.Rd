@@ -17,3 +17,7 @@ Invisibly returns \code{x}.
 \description{
 Print method for punycoder validation results
 }
+\examples{
+result <- validate_domain(c("example.com", "xn--bad-label-"))
+print(result)
+}

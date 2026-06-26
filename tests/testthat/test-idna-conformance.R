@@ -41,7 +41,7 @@ test_that("host_normalize matches UTS-46 IdnaTestV2 (Unicode 16.0.0)", {
   expect_true(all(only_a4_2))
 
   # On those rows we accept and return the ASCII form with the trailing dot.
-  expect_equal(got[dev], df$to_ascii[dev])
+  expect_identical(got[dev], df$to_ascii[dev])
 
   # Pin the deviation count to the vendored fixture so a regression in root-dot
   # or length handling shifts it and trips here.
