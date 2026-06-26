@@ -13,7 +13,7 @@ test_that("invalid UTF-8 byte sequences return NA in non-strict mode", {
       )
     )
   )
-  expect_true(is.na(puny_encode(bad_seq(c(0xE2)), strict = FALSE)))
+  expect_true(is.na(puny_encode(bad_seq(0xE2), strict = FALSE)))
   expect_true(is.na(puny_encode(bad_seq(c(0xC2, 0x20)), strict = FALSE)))
   expect_true(is.na(puny_encode(bad_seq(c(0xC0, 0x80)), strict = FALSE)))
   expect_true(is.na(puny_encode(bad_seq(c(0xED, 0xA0, 0x80)), strict = FALSE)))

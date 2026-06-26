@@ -44,8 +44,7 @@
 #'
 #' @param url Character vector of URL-shaped strings with potential Unicode
 #'   hosts
-#' @param strict Logical; whether to apply strict validation. Defaults to
-#'   `getOption("punycoder.strict", TRUE)`.
+#' @inheritParams validate_domain
 #' @return A character vector the same length as \code{url}, with each element
 #'   containing the URL with its host portion ASCII-encoded. Only the domain
 #'   component is transformed; scheme, path, query, and fragment are preserved.
@@ -92,8 +91,7 @@ url_encode <- function(url, strict = getOption("punycoder.strict", TRUE)) {
 #' for host-only decoding pass the host alone to [puny_decode()].
 #'
 #' @param url Character vector of URL-shaped strings with ASCII punycode hosts
-#' @param strict Logical; whether to apply strict validation. Defaults to
-#'   `getOption("punycoder.strict", TRUE)`.
+#' @inheritParams validate_domain
 #' @return A character vector the same length as \code{url}, with each element
 #'   containing the URL with its host portion decoded to Unicode. Only the
 #'   domain component is transformed; scheme, path, query, and fragment are
