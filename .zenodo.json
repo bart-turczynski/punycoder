@@ -1,0 +1,59 @@
+{
+  "upload_type": "software",
+  "title": "punycoder: Unicode and Punycode Domain Name Processing",
+  "version": "1.2.0",
+  "language": "eng",
+  "access_right": "open",
+  "license": "MIT",
+  "description": "<p>High-performance Unicode and Punycode processing for internationalized domain names in R. The <code>puny_encode()</code> / <code>puny_decode()</code> helpers are a low-level, RFC 3492 compliant Punycode codec for domain labels (the <code>xn--</code> ASCII-Compatible Encoding of RFC 5890/5891). <code>host_normalize()</code> is the Unicode Technical Standard #46 host-normalization entry point, mapping a host name to a canonical lowercase ASCII comparison form (non-transitional profile, pinned Unicode version). Used as the Punycode and IDNA engine by the <code>pslr</code> and <code>rurl</code> packages.</p>",
+  "creators": [
+    {
+      "name": "Turczynski, Bart",
+      "orcid": "0000-0002-8788-7980"
+    }
+  ],
+  "keywords": [
+    "Punycode",
+    "Punycode encode",
+    "Punycode decode",
+    "IDNA",
+    "IDN",
+    "internationalized domain names",
+    "UTS-46",
+    "RFC 3492",
+    "Unicode",
+    "host normalization",
+    "hostname",
+    "domain names",
+    "TLD",
+    "R",
+    "rstats",
+    "CRAN"
+  ],
+  "notes": "Provides Punycode/IDNA encoding for R, built on Rcpp with an optional GNU libidn2 native backend and explicit UTS #46 processing. Descends from the hrbrmstr/punycode R package, rebuilt on libidn2. Part of a three-package ecosystem for URL handling in R: rurl (URL parsing/normalization), pslr (Public Suffix List matching), and punycoder (Punycode/IDNA).",
+  "related_identifiers": [
+    {
+      "identifier": "https://CRAN.R-project.org/package=punycoder",
+      "relation": "isIdenticalTo",
+      "resource_type": "software",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://bart-turczynski.github.io/punycoder/",
+      "relation": "isDocumentedBy",
+      "resource_type": "publication-softwaredocumentation",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://CRAN.R-project.org/package=rurl",
+      "relation": "isRequiredBy",
+      "resource_type": "software",
+      "scheme": "url"
+    }
+  ],
+  "references": [
+    "Costello, A. (2003). RFC 3492: Punycode: A Bootstring encoding of Unicode for Internationalized Domain Names in Applications (IDNA). IETF.",
+    "Klensin, J. (2010). RFC 5890 & RFC 5891: Internationalized Domain Names for Applications (IDNA2008). IETF.",
+    "Unicode Consortium. UTS #46: Unicode IDNA Compatibility Processing. https://www.unicode.org/reports/tr46/"
+  ]
+}
