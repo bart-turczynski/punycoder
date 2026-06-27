@@ -232,8 +232,127 @@
 <li>
 <strong>No URL canonicalization.</strong> The <code>url_*</code> / <code><a href="reference/parse_url.html">parse_url()</a></code> helpers do best-effort host rewriting only (see above), not RFC 3986 / WHATWG URL parsing.</li>
 <li><strong>No DNS resolvability or registrability / PSL classification.</strong></li>
+<li>
+<strong>No address parsing.</strong> There is no <code>email</code>-to-ASCII helper; splitting an address and IDNA-encoding its domain part is an addressing concern for an upstack consumer, not a Punycode primitive.</li>
+<li>
+<strong>No per-TLD repertoire / allowed-character validation.</strong> <code><a href="reference/host_normalize.html">host_normalize()</a></code> validates against the pinned UTS #46 profile, not against registry-specific IDN tables (which evolve independently of Unicode). TLD policy belongs upstack.</li>
 </ul>
 <p>These opinions belong in higher layers that consume punycoder’s host functions.</p>
+</div>
+<div class="section level2">
+<h2 id="prior-art-and-comparison">Prior art and comparison<a class="anchor" aria-label="anchor" href="#prior-art-and-comparison"></a>
+</h2>
+<p>Punycode/IDN libraries exist in most ecosystems. <code>punycoder</code> is most directly a maintained, IDNA2008-era successor to the libidn-based R tooling — its public API (<code><a href="reference/puny_encode.html">puny_encode()</a></code> / <code><a href="reference/puny_decode.html">puny_decode()</a></code> / <code><a href="reference/is_punycode.html">is_punycode()</a></code>) descends from <a href="https://github.com/hrbrmstr/punycode" class="external-link"><code>hrbrmstr/punycode</code></a>. The table below situates it against representative libraries.</p>
+<table class="table">
+<colgroup>
+<col width="20%">
+<col width="20%">
+<col width="20%">
+<col width="20%">
+<col width="20%">
+</colgroup>
+<thead><tr>
+<th></th>
+<th>
+<strong>punycoder</strong> (R)</th>
+<th>
+<a href="https://github.com/hrbrmstr/punycode" class="external-link">hrbrmstr/punycode</a> (R)</th>
+<th>
+<a href="https://pub.dev/packages/punycoder" class="external-link">punycoder</a> (Dart)</th>
+<th>
+<a href="https://github.com/simonmittag/punycoder" class="external-link">simonmittag/punycoder</a> (Go)</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>Form</td>
+<td>library</td>
+<td>library</td>
+<td>library</td>
+<td>CLI tool</td>
+</tr>
+<tr>
+<td>RFC 3492 codec</td>
+<td>yes</td>
+<td>yes</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>Engine</td>
+<td>
+<code>libidn2</code> + in-tree fallback</td>
+<td>GNU <code>libidn</code>
+</td>
+<td>pure Dart</td>
+<td>Go <code>x/net/idna</code>
+</td>
+</tr>
+<tr>
+<td>IDNA standard</td>
+<td>2008 / UTS #46 (non-transitional)</td>
+<td>2003 (nameprep)</td>
+<td>RFC 3492 + IDNA helpers</td>
+<td>UTS #46 (via <code>x/net</code>)</td>
+</tr>
+<tr>
+<td>Unicode NFC</td>
+<td>explicit (UAX #15)</td>
+<td>implicit in nameprep</td>
+<td>not documented</td>
+<td>via <code>x/net</code>
+</td>
+</tr>
+<tr>
+<td>Pinned Unicode version</td>
+<td>yes — 16.0.0, regenerable</td>
+<td>no (frozen at build)</td>
+<td>no</td>
+<td>tracks Go release</td>
+</tr>
+<tr>
+<td>CheckBidi / CheckJoiners</td>
+<td>always on</td>
+<td>not surfaced</td>
+<td>not documented</td>
+<td>partial</td>
+</tr>
+<tr>
+<td>UTS #46 conformance corpus (<code>IdnaTestV2</code>)</td>
+<td>yes</td>
+<td>no</td>
+<td>no</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Strict / <code>NA</code> per-element policy</td>
+<td>yes</td>
+<td>undocumented</td>
+<td>
+<code>validate</code> flag</td>
+<td>n/a (CLI)</td>
+</tr>
+<tr>
+<td>Vectorized</td>
+<td>yes</td>
+<td>yes</td>
+<td>n/a</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td>Maintenance</td>
+<td>active</td>
+<td>last commit 2015</td>
+<td>maintained</td>
+<td>maintained</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>The most consequential row is <strong>IDNA standard</strong>. IDNA2003 (GNU <code>libidn</code>, nameprep) and IDNA2008 / UTS #46 disagree on real domains: the <em>deviation characters</em> <code>ß</code>, <code>ς</code>, and the joiners ZWJ/ZWNJ. Under IDNA2003 <code>faß.de</code> is mapped to <code>fass.de</code> — a <strong>different host</strong> — whereas <code>punycoder</code>’s pinned UTS #46 non-transitional profile preserves it as <code>xn--fa-hia.de</code>. A libidn-era pipeline therefore silently rewrites some hosts rather than erroring, which is the class of bug <code>punycoder</code> exists to remove.</p>
+</blockquote>
+<blockquote>
+<p>Comparisons reflect each project’s public documentation as of this writing and describe documented behavior, not an independent audit.</p>
+</blockquote>
 </div>
 <div class="section level2">
 <h2 id="acknowledgments">Acknowledgments<a class="anchor" aria-label="anchor" href="#acknowledgments"></a>
@@ -243,6 +362,7 @@
 <li>Optional native punycode backend support is provided through <code>libidn2</code>.</li>
 <li>
 <code>punycoder</code> is inspired by <code>urltools</code> and is designed to provide a robust fix for punycode encode/decode issues that may arise in <code>urltools</code> workflows.</li>
+<li>The <code>puny_*</code> / <code><a href="reference/is_punycode.html">is_punycode()</a></code> API descends from <a href="https://github.com/hrbrmstr/punycode" class="external-link"><code>hrbrmstr/punycode</code></a>; <code>punycoder</code> rebuilds that surface on <code>libidn2</code> with explicit UTS #46 processing and a pinned Unicode version. Thanks also to the cross-ecosystem prior art that informed the comparison above — <a href="https://pub.dev/packages/punycoder" class="external-link">pub.dev <code>punycoder</code></a> (Dart) and <a href="https://github.com/simonmittag/punycoder" class="external-link"><code>simonmittag/punycoder</code></a> (Go).</li>
 </ul>
 </div>
 <div class="section level2">
