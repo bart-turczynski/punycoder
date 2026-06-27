@@ -8,7 +8,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/bart-turczynski/punycoder/blob/main/inst/CITATION)
+[`inst/CITATION`](https://github.com/bart-turczynski/punycoder/blob/v1.2.0/inst/CITATION)
 
 Turczynski, B. (2026). punycoder: Unicode and Punycode Domain Name
 Processing. R package version 1.2.0.
