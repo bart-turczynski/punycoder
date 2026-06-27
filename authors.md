@@ -8,11 +8,11 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/bart-turczynski/punycoder/blob/v1.2.0/inst/CITATION)
+[`inst/CITATION`](https://github.com/bart-turczynski/punycoder/blob/main/inst/CITATION)
 
 Turczynski, B. (2026). punycoder: Unicode and Punycode Domain Name
 Processing. R package version 1.2.0.
-https://CRAN.R-project.org/package=punycoder
+https://doi.org/10.5281/zenodo.20973629
 
     @Manual{,
       title = {{punycoder}: Unicode and Punycode Domain Name Processing},
@@ -20,4 +20,5 @@ https://CRAN.R-project.org/package=punycoder
       year = {2026},
       note = {R package version 1.2.0},
       url = {https://CRAN.R-project.org/package=punycoder},
+      doi = {10.5281/zenodo.20973629},
     }

@@ -287,6 +287,19 @@ author:
   parsing, normalization, and joining toolkit built on top of both
   `punycoder` and `pslr`.
 
+## Citation
+
+If you use `punycoder` in your work, please cite it. Run
+`citation("punycoder")` for the current citation, or see
+[`CITATION.cff`](https://bart-turczynski.github.io/punycoder/CITATION.cff).
+
+Each release is archived on Zenodo. Cite the concept DOI
+[10.5281/zenodo.20973629](https://doi.org/10.5281/zenodo.20973629) to
+refer to the software in general (it always resolves to the latest
+version), or the version-specific DOI shown on the [Zenodo
+record](https://doi.org/10.5281/zenodo.20973629) for a particular
+release.
+
 ## Contributing
 
 We welcome contributions. See
