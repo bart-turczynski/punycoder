@@ -14,9 +14,9 @@ bibentry(
   year    = year,
   note    = note,
   url     = "https://CRAN.R-project.org/package=punycoder",
-  doi     = NULL,
+  doi     = "10.5281/zenodo.20973629",
   textVersion = sprintf(
     paste0("Turczynski, B. (%s). punycoder: Unicode and Punycode Domain ",
-           "Name Processing. %s. https://CRAN.R-project.org/package=punycoder"),
+           "Name Processing. %s. https://doi.org/10.5281/zenodo.20973629"),
     year, note)
 )

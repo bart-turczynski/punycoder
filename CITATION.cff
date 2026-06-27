@@ -16,7 +16,15 @@ url: "https://bart-turczynski.github.io/punycoder/"
 repository: "https://CRAN.R-project.org/package=punycoder"
 license: MIT
 version: 1.2.0
-date-released: "2026-06-26"
+date-released: "2026-06-27"
+doi: 10.5281/zenodo.20973629
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.20973629
+    description: "Concept DOI (all versions; resolves to the latest release)"
+  - type: doi
+    value: 10.5281/zenodo.20973630
+    description: "Version DOI for punycoder 1.2.0"
 keywords:
   - punycode
   - IDNA

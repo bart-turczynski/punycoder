@@ -23,6 +23,7 @@ knitr::opts_chunk$set(
 [![CRAN downloads](https://cranlogs.r-pkg.org/badges/punycoder)](https://CRAN.R-project.org/package=punycoder)
 [![Codecov coverage](https://codecov.io/gh/bart-turczynski/punycoder/branch/main/graph/badge.svg)](https://app.codecov.io/gh/bart-turczynski/punycoder)
 [![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20973629.svg)](https://doi.org/10.5281/zenodo.20973629)
 <!-- badges: end -->
 
 High-performance Unicode and Punycode encoding/decoding for internationalized domain names (IDNs) in R.
@@ -230,6 +231,17 @@ See [ACKNOWLEDGMENTS.md](ACKNOWLEDGMENTS.md) for the full list of thanks.
 
 - **[pslr](https://bart-turczynski.github.io/pslr/)** — Public Suffix List engine that uses `punycoder` for IDNA canonicalization. Use it for eTLD and registrable-domain queries.
 - **[rurl](https://bart-turczynski.github.io/rurl/)** — Full URL parsing, normalization, and joining toolkit built on top of both `punycoder` and `pslr`.
+
+## Citation
+
+If you use `punycoder` in your work, please cite it. Run `citation("punycoder")`
+for the current citation, or see [`CITATION.cff`](CITATION.cff).
+
+Each release is archived on Zenodo. Cite the concept DOI
+[10.5281/zenodo.20973629](https://doi.org/10.5281/zenodo.20973629) to refer to
+the software in general (it always resolves to the latest version), or the
+version-specific DOI shown on the [Zenodo
+record](https://doi.org/10.5281/zenodo.20973629) for a particular release.
 
 ## Contributing
 
