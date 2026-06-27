@@ -270,22 +270,10 @@ below situates it against representative libraries.
 
 ## Acknowledgments
 
-- Core C++/R integration is powered by `Rcpp`.
-- Optional native punycode backend support is provided through
-  `libidn2`.
-- `punycoder` is inspired by `urltools` and is designed to provide a
-  robust fix for punycode encode/decode issues that may arise in
-  `urltools` workflows.
-- The `puny_*` /
-  [`is_punycode()`](https://bart-turczynski.github.io/punycoder/reference/is_punycode.md)
-  API descends from
-  [`hrbrmstr/punycode`](https://github.com/hrbrmstr/punycode);
-  `punycoder` rebuilds that surface on `libidn2` with explicit UTS #46
-  processing and a pinned Unicode version. Thanks also to the
-  cross-ecosystem prior art that informed the comparison above —
-  [pub.dev `punycoder`](https://pub.dev/packages/punycoder) (Dart) and
-  [`simonmittag/punycoder`](https://github.com/simonmittag/punycoder)
-  (Go).
+These packages build on data, libraries, and prior work from many
+others. See
+[ACKNOWLEDGMENTS.md](https://bart-turczynski.github.io/punycoder/ACKNOWLEDGMENTS.md)
+for the full list of thanks.
 
 ## Related packages
 
