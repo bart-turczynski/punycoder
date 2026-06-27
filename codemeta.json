@@ -1,7 +1,7 @@
 {
   "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
   "@type": "SoftwareSourceCode",
-  "identifier": "punycoder",
+  "identifier": ["punycoder", "https://doi.org/10.5281/zenodo.20973629"],
   "description": "High-performance Unicode and Punycode processing for internationalized domain names. The 'puny_encode()' / 'puny_decode()' helpers are a low-level, RFC 3492 compliant Punycode codec for domain labels (the 'xn--' ASCII-Compatible Encoding of RFC 5890/5891); they perform the raw transform plus letter-digit-hyphen checks and do not apply Unicode IDNA normalization. 'host_normalize()' is the Unicode Technical Standard #46 host-normalization entry point, mapping a host name to a canonical lowercase ASCII comparison form (non-transitional profile, pinned Unicode version). The 'url_encode()' / 'url_decode()' / 'parse_url()' helpers do best-effort host extraction and rewriting in URL-shaped strings and are deliberately not RFC 3986 / WHATWG URL parsers or canonicalizers; they are deprecated in favor of dedicated URL packages. Aimed at host normalization and data analysis workflows. Used as the Punycode and IDNA engine by the 'pslr' and 'rurl' packages.",
   "name": "punycoder: Unicode and Punycode Domain Name Processing",
   "relatedLink": ["https://bart-turczynski.github.io/punycoder/", "https://bart-turczynski.r-universe.dev/punycoder", "https://CRAN.R-project.org/package=punycoder"],
@@ -105,6 +105,7 @@
   "citation": [
     {
       "@type": "SoftwareSourceCode",
+      "identifier": "https://doi.org/10.5281/zenodo.20973629",
       "datePublished": "2026",
       "author": [
         {
