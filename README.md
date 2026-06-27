@@ -173,8 +173,47 @@ part of its acceptance criteria:
 - **No URL canonicalization.** The `url_*` / `parse_url()` helpers do best-effort
   host rewriting only (see above), not RFC 3986 / WHATWG URL parsing.
 - **No DNS resolvability or registrability / PSL classification.**
+- **No address parsing.** There is no `email`-to-ASCII helper; splitting an
+  address and IDNA-encoding its domain part is an addressing concern for an
+  upstack consumer, not a Punycode primitive.
+- **No per-TLD repertoire / allowed-character validation.** `host_normalize()`
+  validates against the pinned UTS \#46 profile, not against registry-specific
+  IDN tables (which evolve independently of Unicode). TLD policy belongs upstack.
 
 These opinions belong in higher layers that consume punycoder’s host functions.
+
+## Prior art and comparison
+
+Punycode/IDN libraries exist in most ecosystems. `punycoder` is most directly a
+maintained, IDNA2008-era successor to the libidn-based R tooling — its public
+API (`puny_encode()` / `puny_decode()` / `is_punycode()`) descends from
+[`hrbrmstr/punycode`](https://github.com/hrbrmstr/punycode). The table below
+situates it against representative libraries.
+
+|  | **punycoder** (R) | [hrbrmstr/punycode](https://github.com/hrbrmstr/punycode) (R) | [punycoder](https://pub.dev/packages/punycoder) (Dart) | [simonmittag/punycoder](https://github.com/simonmittag/punycoder) (Go) |
+|----|----|----|----|----|
+| Form | library | library | library | CLI tool |
+| RFC 3492 codec | yes | yes | yes | yes |
+| Engine | `libidn2` + in-tree fallback | GNU `libidn` | pure Dart | Go `x/net/idna` |
+| IDNA standard | 2008 / UTS #46 (non-transitional) | 2003 (nameprep) | RFC 3492 + IDNA helpers | UTS #46 (via `x/net`) |
+| Unicode NFC | explicit (UAX #15) | implicit in nameprep | not documented | via `x/net` |
+| Pinned Unicode version | yes — 16.0.0, regenerable | no (frozen at build) | no | tracks Go release |
+| CheckBidi / CheckJoiners | always on | not surfaced | not documented | partial |
+| UTS #46 conformance corpus (`IdnaTestV2`) | yes | no | no | — |
+| Strict / `NA` per-element policy | yes | undocumented | `validate` flag | n/a (CLI) |
+| Vectorized | yes | yes | n/a | n/a |
+| Maintenance | active | last commit 2015 | maintained | maintained |
+
+> The most consequential row is **IDNA standard**. IDNA2003 (GNU `libidn`,
+> nameprep) and IDNA2008 / UTS #46 disagree on real domains: the *deviation
+> characters* `ß`, `ς`, and the joiners ZWJ/ZWNJ. Under IDNA2003 `faß.de` is
+> mapped to `fass.de` — a **different host** — whereas `punycoder`’s pinned
+> UTS #46 non-transitional profile preserves it as `xn--fa-hia.de`. A
+> libidn-era pipeline therefore silently rewrites some hosts rather than
+> erroring, which is the class of bug `punycoder` exists to remove.
+
+> Comparisons reflect each project’s public documentation as of this writing and
+> describe documented behavior, not an independent audit.
 
 ## Acknowledgments
 
@@ -183,6 +222,13 @@ These opinions belong in higher layers that consume punycoder’s host functions
 - `punycoder` is inspired by `urltools` and is designed to provide a robust
   fix for punycode encode/decode issues that may arise in `urltools`
   workflows.
+- The `puny_*` / `is_punycode()` API descends from
+  [`hrbrmstr/punycode`](https://github.com/hrbrmstr/punycode); `punycoder`
+  rebuilds that surface on `libidn2` with explicit UTS #46 processing and a
+  pinned Unicode version. Thanks also to the cross-ecosystem prior art that
+  informed the comparison above —
+  [pub.dev `punycoder`](https://pub.dev/packages/punycoder) (Dart) and
+  [`simonmittag/punycoder`](https://github.com/simonmittag/punycoder) (Go).
 
 ## Related packages
 
