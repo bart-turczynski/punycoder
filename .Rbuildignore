@@ -45,3 +45,4 @@
 ^_pkgdown\.yml$
 ^CITATION\.cff$
 ^codemeta\.json$
+^ACKNOWLEDGMENTS\.md$
