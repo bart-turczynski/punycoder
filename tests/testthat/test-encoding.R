@@ -94,7 +94,7 @@ test_that("puny domain helpers reject full URLs", {
   expect_true(is.na(puny_decode(ascii_url, strict = FALSE)))
 })
 
-test_that("multi-label IDN round-trips cleanly (urltools decode-corruption guard)", {
+test_that("multi-label IDN round-trips cleanly", {
   # urltools 1.7.3.1 mis-decodes the second label of this name, bleeding the
   # first label's output across; punycoder must decode each label independently
   # and round-trip exactly. See dev comparison against urltools/punycode.
@@ -106,7 +106,7 @@ test_that("multi-label IDN round-trips cleanly (urltools decode-corruption guard
   expect_identical(puny_decode(puny_encode(unicode)), unicode)
 })
 
-test_that("encoding an already-encoded A-label is idempotent (no double-encoding)", {
+test_that("encoding an already-encoded A-label is idempotent", {
   # urltools 1.7.3.1 re-encodes xn-- input into "xn--xn--..." garbage; the raw
   # A-label codec must treat a valid xn-- label as a fixed point.
   ascii <- "xn--hxakfddc2amo8b.xn--qxam"
