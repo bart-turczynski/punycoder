@@ -60,6 +60,11 @@
 <code><a href="../reference/url_encode.html">url_encode()</a></code>, <code><a href="../reference/url_decode.html">url_decode()</a></code>, and <code><a href="../reference/parse_url.html">parse_url()</a></code> are deprecated and now emit a <code><a href="https://rdrr.io/r/base/Deprecated.html" class="external-link">.Deprecated()</a></code> warning on use. They remain exported and fully functional for this release and are scheduled for removal in the next one. These were always best-effort host extraction/rewriting, not RFC 3986 / WHATWG URL parsing; use the <code>rurl</code> package for URL parsing and canonicalization, or pass the host alone to <code><a href="../reference/host_normalize.html">host_normalize()</a></code> / <code><a href="../reference/puny_encode.html">puny_encode()</a></code> / <code><a href="../reference/puny_decode.html">puny_decode()</a></code> for host-only needs.</li>
 </ul></div>
 <div class="section level3">
+<h3 id="minor-improvements-1-2-0">Minor improvements<a class="anchor" aria-label="anchor" href="#minor-improvements-1-2-0"></a></h3>
+<ul><li>
+<code><a href="../reference/puny_encode.html">puny_encode()</a></code> / <code><a href="../reference/puny_decode.html">puny_decode()</a></code> now reject URL-shaped input with a dedicated, actionable error (<code>looks_like_url</code>) pointing at <code>rurl::get_host()</code>, instead of the generic “ASCII domain labels may contain only letters, numbers and hyphens” message. Behavior is unchanged (URLs were always rejected; only the message is clearer).</li>
+</ul></div>
+<div class="section level3">
 <h3 id="internal-1-2-0">Internal<a class="anchor" aria-label="anchor" href="#internal-1-2-0"></a></h3>
 <ul><li>
 <code><a href="../reference/host_normalize.html">host_normalize()</a></code> is now verified against the official Unicode UTS <a href="https://github.com/bart-turczynski/punycoder/issues/46" class="external-link">#46</a> conformance corpus (<code>IdnaTestV2.txt</code>, Unicode 16.0.0). The suite confirms full non-transitional ToASCII conformance, with one documented profile divergence: the trailing FQDN root dot is permitted (strict <code>VerifyDnsLength</code> would reject the empty root label).</li>

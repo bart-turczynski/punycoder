@@ -45,6 +45,17 @@
   [`puny_decode()`](https://bart-turczynski.github.io/punycoder/reference/puny_decode.md)
   for host-only needs.
 
+### Minor improvements
+
+- [`puny_encode()`](https://bart-turczynski.github.io/punycoder/reference/puny_encode.md)
+  /
+  [`puny_decode()`](https://bart-turczynski.github.io/punycoder/reference/puny_decode.md)
+  now reject URL-shaped input with a dedicated, actionable error
+  (`looks_like_url`) pointing at `rurl::get_host()`, instead of the
+  generic “ASCII domain labels may contain only letters, numbers and
+  hyphens” message. Behavior is unchanged (URLs were always rejected;
+  only the message is clearer).
+
 ### Internal
 
 - [`host_normalize()`](https://bart-turczynski.github.io/punycoder/reference/host_normalize.md)
