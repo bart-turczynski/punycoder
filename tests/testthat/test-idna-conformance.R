@@ -108,3 +108,18 @@ test_that("relaxing a UTS-46 flag stays bounded against IdnaTestV2", {
     )
   }
 })
+
+# Pins the documented UTS-46-vs-IDNA2008 stance: host_normalize is UTS #46
+# compatibility processing, not IDNA2008 conformance, so it ACCEPTS symbol
+# code points that IDNA2008 / libidn-backed registry checks (e.g. punycode's
+# puny_tld_check) reject. EURO SIGN (U+20AC) is "valid" under UTS #46 and must
+# normalize, not return NA. Keep this file ASCII-clean: euros via \u escapes.
+test_that("host_normalize accepts UTS-46-valid symbols IDNA2008 rejects", {
+  # "gr<euro><euro>n.no"
+  euro_host <- "gr\u20ac\u20acn.no"
+  expect_identical(host_normalize(euro_host), "xn--grn-l50aa.no")
+
+  # The same name as a raw A-label round-trips and is idempotent under
+  # host_normalize (already-encoded input is a fixed point).
+  expect_identical(host_normalize("xn--grn-l50aa.no"), "xn--grn-l50aa.no")
+})

@@ -53,6 +53,9 @@ std::string format_error(ErrorCode code, const std::string& detail) {
         return "Domain label cannot start or end with hyphen";
     case ErrorCode::ascii_domain_characters:
         return "ASCII domain labels may contain only letters, numbers and hyphens";
+    case ErrorCode::looks_like_url:
+        return "input looks like a URL, not a domain label; "
+               "extract the host first (e.g. rurl::get_host())";
     case ErrorCode::encoded_label_too_long:
         return "Encoded punycode label exceeds 63 characters";
     case ErrorCode::label_length_limit:
@@ -122,6 +125,8 @@ const char* error_code_name(ErrorCode code) noexcept {
         return "domain_label_hyphen";
     case ErrorCode::ascii_domain_characters:
         return "ascii_domain_characters";
+    case ErrorCode::looks_like_url:
+        return "looks_like_url";
     case ErrorCode::encoded_label_too_long:
         return "encoded_label_too_long";
     case ErrorCode::label_length_limit:

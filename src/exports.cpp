@@ -83,7 +83,7 @@ Rcpp::CharacterVector puny_encode_cpp(Rcpp::CharacterVector domains, bool strict
         "Error encoding domain",
         [&](const std::string& domain) {
             if (punycoder::looks_like_url_input(domain)) {
-                punycoder::throw_error(punycoder::ErrorCode::ascii_domain_characters);
+                punycoder::throw_error(punycoder::ErrorCode::looks_like_url);
             }
             return service.encode_domain(domain);
         }
@@ -99,7 +99,7 @@ Rcpp::CharacterVector puny_decode_cpp(Rcpp::CharacterVector domains, bool strict
         "Error decoding domain",
         [&](const std::string& domain) {
             if (punycoder::looks_like_url_input(domain)) {
-                punycoder::throw_error(punycoder::ErrorCode::ascii_domain_characters);
+                punycoder::throw_error(punycoder::ErrorCode::looks_like_url);
             }
             return service.decode_domain(domain);
         }
