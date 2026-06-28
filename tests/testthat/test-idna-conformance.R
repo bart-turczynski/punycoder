@@ -115,7 +115,7 @@ test_that("relaxing a UTS-46 flag stays bounded against IdnaTestV2", {
 # puny_tld_check) reject. EURO SIGN (U+20AC) is "valid" under UTS #46 and must
 # normalize, not return NA. Keep this file ASCII-clean: euros via \u escapes.
 test_that("host_normalize accepts UTS-46-valid symbols IDNA2008 rejects", {
-  # "gr<euro><euro>n.no"
+  # euro_host spells green.no with two EURO SIGN (U+20AC) code points
   euro_host <- "gr\u20ac\u20acn.no"
   expect_identical(host_normalize(euro_host), "xn--grn-l50aa.no")
 
