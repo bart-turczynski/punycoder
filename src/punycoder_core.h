@@ -29,6 +29,7 @@ enum class ErrorCode {
     domain_label_too_long,
     domain_label_hyphen,
     ascii_domain_characters,
+    looks_like_url,
     encoded_label_too_long,
     label_length_limit,
     invalid_ipv6_authority,

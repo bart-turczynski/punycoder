@@ -74,22 +74,45 @@ test_that("puny domain helpers reject full URLs", {
   unicode_url <- "https://παράδειγμα.ελ"
   ascii_url <- "https://xn--hxajbheg2az3al.xn--qxam"
 
+  # The URL guard emits a dedicated, actionable message pointing at the
+  # upstack host extractor rather than the generic label-character error.
   expect_error(
     puny_encode(unicode_url, strict = TRUE),
-    "letters, numbers and hyphens"
+    "looks like a URL.*rurl::get_host"
   )
   expect_error(
     puny_decode(unicode_url, strict = TRUE),
-    "letters, numbers and hyphens"
+    "looks like a URL.*rurl::get_host"
   )
   expect_error(
     puny_decode(ascii_url, strict = TRUE),
-    "letters, numbers and hyphens"
+    "looks like a URL.*rurl::get_host"
   )
 
   expect_true(is.na(puny_encode(unicode_url, strict = FALSE)))
   expect_true(is.na(puny_decode(unicode_url, strict = FALSE)))
   expect_true(is.na(puny_decode(ascii_url, strict = FALSE)))
+})
+
+test_that("multi-label IDN round-trips cleanly (urltools decode-corruption guard)", {
+  # urltools 1.7.3.1 mis-decodes the second label of this name, bleeding the
+  # first label's output across; punycoder must decode each label independently
+  # and round-trip exactly. See dev comparison against urltools/punycode.
+  unicode <- "ελράδειγμα.ελ"
+  ascii <- "xn--hxakfddc2amo8b.xn--qxam"
+
+  expect_identical(puny_encode(unicode), ascii)
+  expect_identical(puny_decode(ascii), unicode)
+  expect_identical(puny_decode(puny_encode(unicode)), unicode)
+})
+
+test_that("encoding an already-encoded A-label is idempotent (no double-encoding)", {
+  # urltools 1.7.3.1 re-encodes xn-- input into "xn--xn--..." garbage; the raw
+  # A-label codec must treat a valid xn-- label as a fixed point.
+  ascii <- "xn--hxakfddc2amo8b.xn--qxam"
+
+  expect_identical(puny_encode(ascii), ascii)
+  expect_identical(puny_encode(ascii, strict = FALSE), ascii)
 })
 
 test_that("vectorized operations work", {
