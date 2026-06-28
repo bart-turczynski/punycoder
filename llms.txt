@@ -270,27 +270,39 @@ below situates it against representative libraries.
 
 ### Observed behavior on the comparable R packages
 
-Running the same inputs through the two most directly comparable R
-packages surfaces concrete behavioral differences (observed against
-`punycode` 0.2.5 and `urltools` 1.7.3.1). The raw RFC 3492 codec output
-itself agrees byte-for-byte across all three once direction is aligned —
-the divergences are in multi-label handling, idempotency, validity
-philosophy, and input scope:
+Running the same inputs through the comparable R packages surfaces
+concrete behavioral differences (observed against `punycode` 0.2.5,
+`urltools` 1.7.3.1, and the author’s own upstack toolkit
+[`rurl`](https://bart-turczynski.github.io/rurl/) 1.4.0). The raw RFC
+3492 codec output agrees byte-for-byte across the codecs once direction
+is aligned — the divergences are in multi-label handling, idempotency,
+validity philosophy, and input scope. `rurl` is a URL parser/normalizer
+rather than a Punycode codec; it is included to show where the
+URL-shaped inputs `punycoder` deliberately rejects are actually handled
+(it delegates IDNA host conversion to `punycoder`), so `—` below means
+“out of scope for that layer,” not a defect:
 
-| Behavior | **punycoder** | hrbrmstr/punycode | urltools |
-|----|----|----|----|
-| [`puny_encode()`](https://bart-turczynski.github.io/punycoder/reference/puny_encode.md) direction | Unicode → ASCII | **ASCII → Unicode** (names inverted) | Unicode → ASCII |
-| Decode multi-label `xn--hxakfddc2amo8b.xn--qxam` | `ελράδειγμα.ελ` ✓ | `ελράδειγμα.ελ` ✓ | `ελράδειγμα.ελράδειγμα` ✗ (second label corrupted) |
-| Re-encode an already-`xn--` label | unchanged — idempotent ✓ | unchanged ✓ | `xn--xn--…-.xn--xn--…-` ✗ (double-encoded) |
-| Round-trip `decode(encode(x)) == x` | yes | yes | no (from the decode bug above) |
-| `gr€€n.no` — EURO SIGN, valid under UTS #46 | accepted → `xn--grn-l50aa.no` | rejected by `puny_tld_check` (IDNA2008) | — |
-| Full-URL input (`http://…`) | rejected with an actionable error pointing at a URL parser (`rurl`) | n/a (domain-only) | passed through unchanged |
-| Required system library | none (`libidn2` optional) | GNU `libidn` (v1) required to build | none |
+| Behavior | **punycoder** | hrbrmstr/punycode | urltools | rurl |
+|----|----|----|----|----|
+| Primary role | Punycode/IDNA host codec | Punycode codec (IDNA2003) | URL + punycode utilities | URL parser / normalizer |
+| [`puny_encode()`](https://bart-turczynski.github.io/punycoder/reference/puny_encode.md) direction | Unicode → ASCII | **ASCII → Unicode** (names inverted) | Unicode → ASCII | — (no codec; IDNA via `punycoder`) |
+| Decode multi-label `xn--hxakfddc2amo8b.xn--qxam` | `ελράδειγμα.ελ` ✓ | `ελράδειγμα.ελ` ✓ | `ελράδειγμα.ελράδειγμα` ✗ (second label corrupted) | — (no `xn--` → Unicode decoder) |
+| Re-encode an already-`xn--` label | unchanged — idempotent ✓ | unchanged ✓ | `xn--xn--…-.xn--xn--…-` ✗ (double-encoded) | — |
+| Round-trip `decode(encode(x)) == x` | yes | yes | no (from the decode bug above) | — |
+| `gr€€n.no` — EURO SIGN, valid under UTS #46 | accepted → `xn--grn-l50aa.no` | rejected by `puny_tld_check` (IDNA2008) | — | parses; host preserved |
+| Full-URL input (`http://…`) | rejected with an actionable error pointing at a URL parser (`rurl`) | n/a (domain-only) | passed through unchanged | **parsed** — scheme/host/domain/TLD extracted; `get_clean_url()` lowercases the host and resolves dot-segments |
+| Required system library | none (`libidn2` optional) | GNU `libidn` (v1) required to build | none | none |
 
 > `punycode` names its functions opposite to the usual convention:
 > `punycode::puny_encode()` maps `xn--` → Unicode and
 > `punycode::puny_decode()` maps Unicode → `xn--`. The rows above align
 > by transform direction, not by function name.
+>
+> `punycoder` + `rurl` (+
+> [`pslr`](https://bart-turczynski.github.io/pslr/) for the
+> public-suffix/TLD truth) are designed to compose: `rurl` parses the
+> URL and hands the host to `punycoder` for IDNA canonicalization, each
+> package owning a single concern.
 
 ## Acknowledgments
 

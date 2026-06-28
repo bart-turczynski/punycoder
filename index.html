@@ -356,21 +356,30 @@
 <div class="section level3">
 <h3 id="observed-behavior-on-the-comparable-r-packages">Observed behavior on the comparable R packages<a class="anchor" aria-label="anchor" href="#observed-behavior-on-the-comparable-r-packages"></a>
 </h3>
-<p>Running the same inputs through the two most directly comparable R packages surfaces concrete behavioral differences (observed against <code>punycode</code> 0.2.5 and <code>urltools</code> 1.7.3.1). The raw RFC 3492 codec output itself agrees byte-for-byte across all three once direction is aligned — the divergences are in multi-label handling, idempotency, validity philosophy, and input scope:</p>
+<p>Running the same inputs through the comparable R packages surfaces concrete behavioral differences (observed against <code>punycode</code> 0.2.5, <code>urltools</code> 1.7.3.1, and the author’s own upstack toolkit <a href="https://bart-turczynski.github.io/rurl/" class="external-link"><code>rurl</code></a> 1.4.0). The raw RFC 3492 codec output agrees byte-for-byte across the codecs once direction is aligned — the divergences are in multi-label handling, idempotency, validity philosophy, and input scope. <code>rurl</code> is a URL parser/normalizer rather than a Punycode codec; it is included to show where the URL-shaped inputs <code>punycoder</code> deliberately rejects are actually handled (it delegates IDNA host conversion to <code>punycoder</code>), so <code>—</code> below means “out of scope for that layer,” not a defect:</p>
 <table class="table">
 <colgroup>
-<col width="25%">
-<col width="25%">
-<col width="25%">
-<col width="25%">
+<col width="20%">
+<col width="20%">
+<col width="20%">
+<col width="20%">
+<col width="20%">
 </colgroup>
 <thead><tr>
 <th>Behavior</th>
 <th><strong>punycoder</strong></th>
 <th>hrbrmstr/punycode</th>
 <th>urltools</th>
+<th>rurl</th>
 </tr></thead>
 <tbody>
+<tr>
+<td>Primary role</td>
+<td>Punycode/IDNA host codec</td>
+<td>Punycode codec (IDNA2003)</td>
+<td>URL + punycode utilities</td>
+<td>URL parser / normalizer</td>
+</tr>
 <tr>
 <td>
 <code><a href="reference/puny_encode.html">puny_encode()</a></code> direction</td>
@@ -378,6 +387,7 @@
 <td>
 <strong>ASCII → Unicode</strong> (names inverted)</td>
 <td>Unicode → ASCII</td>
+<td>— (no codec; IDNA via <code>punycoder</code>)</td>
 </tr>
 <tr>
 <td>Decode multi-label <code>xn--hxakfddc2amo8b.xn--qxam</code>
@@ -388,6 +398,7 @@
 <code>ελράδειγμα.ελ</code> ✓</td>
 <td>
 <code>ελράδειγμα.ελράδειγμα</code> ✗ (second label corrupted)</td>
+<td>— (no <code>xn--</code> → Unicode decoder)</td>
 </tr>
 <tr>
 <td>Re-encode an already-<code>xn--</code> label</td>
@@ -395,6 +406,7 @@
 <td>unchanged ✓</td>
 <td>
 <code>xn--xn--…-.xn--xn--…-</code> ✗ (double-encoded)</td>
+<td>—</td>
 </tr>
 <tr>
 <td>Round-trip <code>decode(encode(x)) == x</code>
@@ -402,6 +414,7 @@
 <td>yes</td>
 <td>yes</td>
 <td>no (from the decode bug above)</td>
+<td>—</td>
 </tr>
 <tr>
 <td>
@@ -410,23 +423,28 @@
 </td>
 <td>rejected by <code>puny_tld_check</code> (IDNA2008)</td>
 <td>—</td>
+<td>parses; host preserved</td>
 </tr>
 <tr>
 <td>Full-URL input (<code>http://…</code>)</td>
 <td>rejected with an actionable error pointing at a URL parser (<code>rurl</code>)</td>
 <td>n/a (domain-only)</td>
 <td>passed through unchanged</td>
+<td>
+<strong>parsed</strong> — scheme/host/domain/TLD extracted; <code>get_clean_url()</code> lowercases the host and resolves dot-segments</td>
 </tr>
 <tr>
 <td>Required system library</td>
 <td>none (<code>libidn2</code> optional)</td>
 <td>GNU <code>libidn</code> (v1) required to build</td>
 <td>none</td>
+<td>none</td>
 </tr>
 </tbody>
 </table>
 <blockquote>
 <p><code>punycode</code> names its functions opposite to the usual convention: <code>punycode::puny_encode()</code> maps <code>xn--</code> → Unicode and <code>punycode::puny_decode()</code> maps Unicode → <code>xn--</code>. The rows above align by transform direction, not by function name.</p>
+<p><code>punycoder</code> + <code>rurl</code> (+ <a href="https://bart-turczynski.github.io/pslr/" class="external-link"><code>pslr</code></a> for the public-suffix/TLD truth) are designed to compose: <code>rurl</code> parses the URL and hands the host to <code>punycoder</code> for IDNA canonicalization, each package owning a single concern.</p>
 </blockquote>
 </div>
 </div>
