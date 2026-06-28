@@ -353,6 +353,82 @@
 <blockquote>
 <p>Comparisons reflect each project’s public documentation as of this writing and describe documented behavior, not an independent audit.</p>
 </blockquote>
+<div class="section level3">
+<h3 id="observed-behavior-on-the-comparable-r-packages">Observed behavior on the comparable R packages<a class="anchor" aria-label="anchor" href="#observed-behavior-on-the-comparable-r-packages"></a>
+</h3>
+<p>Running the same inputs through the two most directly comparable R packages surfaces concrete behavioral differences (observed against <code>punycode</code> 0.2.5 and <code>urltools</code> 1.7.3.1). The raw RFC 3492 codec output itself agrees byte-for-byte across all three once direction is aligned — the divergences are in multi-label handling, idempotency, validity philosophy, and input scope:</p>
+<table class="table">
+<colgroup>
+<col width="25%">
+<col width="25%">
+<col width="25%">
+<col width="25%">
+</colgroup>
+<thead><tr>
+<th>Behavior</th>
+<th><strong>punycoder</strong></th>
+<th>hrbrmstr/punycode</th>
+<th>urltools</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>
+<code><a href="reference/puny_encode.html">puny_encode()</a></code> direction</td>
+<td>Unicode → ASCII</td>
+<td>
+<strong>ASCII → Unicode</strong> (names inverted)</td>
+<td>Unicode → ASCII</td>
+</tr>
+<tr>
+<td>Decode multi-label <code>xn--hxakfddc2amo8b.xn--qxam</code>
+</td>
+<td>
+<code>ελράδειγμα.ελ</code> ✓</td>
+<td>
+<code>ελράδειγμα.ελ</code> ✓</td>
+<td>
+<code>ελράδειγμα.ελράδειγμα</code> ✗ (second label corrupted)</td>
+</tr>
+<tr>
+<td>Re-encode an already-<code>xn--</code> label</td>
+<td>unchanged — idempotent ✓</td>
+<td>unchanged ✓</td>
+<td>
+<code>xn--xn--…-.xn--xn--…-</code> ✗ (double-encoded)</td>
+</tr>
+<tr>
+<td>Round-trip <code>decode(encode(x)) == x</code>
+</td>
+<td>yes</td>
+<td>yes</td>
+<td>no (from the decode bug above)</td>
+</tr>
+<tr>
+<td>
+<code>gr€€n.no</code> — EURO SIGN, valid under UTS #46</td>
+<td>accepted → <code>xn--grn-l50aa.no</code>
+</td>
+<td>rejected by <code>puny_tld_check</code> (IDNA2008)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Full-URL input (<code>http://…</code>)</td>
+<td>rejected with an actionable error pointing at a URL parser (<code>rurl</code>)</td>
+<td>n/a (domain-only)</td>
+<td>passed through unchanged</td>
+</tr>
+<tr>
+<td>Required system library</td>
+<td>none (<code>libidn2</code> optional)</td>
+<td>GNU <code>libidn</code> (v1) required to build</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><code>punycode</code> names its functions opposite to the usual convention: <code>punycode::puny_encode()</code> maps <code>xn--</code> → Unicode and <code>punycode::puny_decode()</code> maps Unicode → <code>xn--</code>. The rows above align by transform direction, not by function name.</p>
+</blockquote>
+</div>
 </div>
 <div class="section level2">
 <h2 id="acknowledgments">Acknowledgments<a class="anchor" aria-label="anchor" href="#acknowledgments"></a>

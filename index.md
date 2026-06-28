@@ -268,6 +268,30 @@ below situates it against representative libraries.
 > Comparisons reflect each project’s public documentation as of this
 > writing and describe documented behavior, not an independent audit.
 
+### Observed behavior on the comparable R packages
+
+Running the same inputs through the two most directly comparable R
+packages surfaces concrete behavioral differences (observed against
+`punycode` 0.2.5 and `urltools` 1.7.3.1). The raw RFC 3492 codec output
+itself agrees byte-for-byte across all three once direction is aligned —
+the divergences are in multi-label handling, idempotency, validity
+philosophy, and input scope:
+
+| Behavior | **punycoder** | hrbrmstr/punycode | urltools |
+|----|----|----|----|
+| [`puny_encode()`](https://bart-turczynski.github.io/punycoder/reference/puny_encode.md) direction | Unicode → ASCII | **ASCII → Unicode** (names inverted) | Unicode → ASCII |
+| Decode multi-label `xn--hxakfddc2amo8b.xn--qxam` | `ελράδειγμα.ελ` ✓ | `ελράδειγμα.ελ` ✓ | `ελράδειγμα.ελράδειγμα` ✗ (second label corrupted) |
+| Re-encode an already-`xn--` label | unchanged — idempotent ✓ | unchanged ✓ | `xn--xn--…-.xn--xn--…-` ✗ (double-encoded) |
+| Round-trip `decode(encode(x)) == x` | yes | yes | no (from the decode bug above) |
+| `gr€€n.no` — EURO SIGN, valid under UTS #46 | accepted → `xn--grn-l50aa.no` | rejected by `puny_tld_check` (IDNA2008) | — |
+| Full-URL input (`http://…`) | rejected with an actionable error pointing at a URL parser (`rurl`) | n/a (domain-only) | passed through unchanged |
+| Required system library | none (`libidn2` optional) | GNU `libidn` (v1) required to build | none |
+
+> `punycode` names its functions opposite to the usual convention:
+> `punycode::puny_encode()` maps `xn--` → Unicode and
+> `punycode::puny_decode()` maps Unicode → `xn--`. The rows above align
+> by transform direction, not by function name.
+
 ## Acknowledgments
 
 These packages build on data, libraries, and prior work from many
