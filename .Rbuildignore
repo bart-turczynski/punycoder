@@ -47,3 +47,5 @@
 ^codemeta\.json$
 ^\.zenodo\.json$
 ^ACKNOWLEDGMENTS\.md$
+^\.bestpractices\.json$
+^SECURITY\.md$
