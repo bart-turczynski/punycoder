@@ -1,5 +1,16 @@
 # Contributing
 
+## Orientation
+
+Before making changes, skim
+[ARCHITECTURE.md](https://bart-turczynski.github.io/punycoder/ARCHITECTURE.md)
+(how the package is layered and where each responsibility lives) and
+[DECISIONS.md](https://bart-turczynski.github.io/punycoder/DECISIONS.md)
+(the ADR log explaining the load-bearing design choices — scope,
+normalization profile, backend model, error policy, deprecations).
+Normalization behavior is specified normatively in
+[dev/normalization-contract.md](https://bart-turczynski.github.io/punycoder/dev/normalization-contract.md).
+
 ## Workflow
 
 - Open an issue or discussion before large behavioral changes.

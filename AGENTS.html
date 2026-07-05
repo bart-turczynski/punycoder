@@ -48,6 +48,7 @@
 <div class="section level2">
 <h2 id="project">Project<a class="anchor" aria-label="anchor" href="#project"></a></h2>
 <p><code>punycoder</code> is an R package providing RFC 3492-compliant Punycode/IDN encode/decode functions plus a UTS #46 canonical-host normalizer, implemented in C++ via Rcpp. The Punycode codec optionally links against <code>libidn2</code> when present at build time; otherwise it uses an in-tree fallback algorithm. Normalization (NFC + UTS #46) is always in-tree, built on vendored Unicode tables pinned to one Unicode version (currently 16.0.0). It is the Punycode/IDNA engine for the <code>pslr</code> and <code>rurl</code> packages.</p>
+<p>This file is the terse, always-loaded working contract. For the system map (layers, module responsibilities, request lifecycles, build/data pipelines) see <a href="ARCHITECTURE.html">ARCHITECTURE.md</a>; for the <em>why</em> behind the load-bearing choices see the ADR log in <a href="DECISIONS.html">DECISIONS.md</a>; for the normative normalization spec see <a href="dev/normalization-contract.html">dev/normalization-contract.md</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="common-commands">Common commands<a class="anchor" aria-label="anchor" href="#common-commands"></a></h2>

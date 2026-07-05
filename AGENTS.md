@@ -14,6 +14,15 @@ built on vendored Unicode tables pinned to one Unicode version
 (currently 16.0.0). It is the Punycode/IDNA engine for the `pslr` and
 `rurl` packages.
 
+This file is the terse, always-loaded working contract. For the system
+map (layers, module responsibilities, request lifecycles, build/data
+pipelines) see
+[ARCHITECTURE.md](https://bart-turczynski.github.io/punycoder/ARCHITECTURE.md);
+for the *why* behind the load-bearing choices see the ADR log in
+[DECISIONS.md](https://bart-turczynski.github.io/punycoder/DECISIONS.md);
+for the normative normalization spec see
+[dev/normalization-contract.md](https://bart-turczynski.github.io/punycoder/dev/normalization-contract.md).
+
 ## Common commands
 
 All commands run from the package root.

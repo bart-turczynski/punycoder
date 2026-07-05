@@ -340,7 +340,11 @@ release.
 
 We welcome contributions. See
 [CONTRIBUTING.md](https://github.com/bart-turczynski/punycoder/blob/main/CONTRIBUTING.md)
-for the current development workflow.
+for the current development workflow,
+[ARCHITECTURE.md](https://github.com/bart-turczynski/punycoder/blob/main/ARCHITECTURE.md)
+for how the package is structured, and
+[DECISIONS.md](https://github.com/bart-turczynski/punycoder/blob/main/DECISIONS.md)
+for the design-decision log.
 
 ## Code of Conduct
 
