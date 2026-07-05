@@ -1,5 +1,13 @@
 # Contributing
 
+## Orientation
+
+Before making changes, skim [ARCHITECTURE.md](ARCHITECTURE.md) (how the package
+is layered and where each responsibility lives) and [DECISIONS.md](DECISIONS.md)
+(the ADR log explaining the load-bearing design choices — scope, normalization
+profile, backend model, error policy, deprecations). Normalization behavior is
+specified normatively in [dev/normalization-contract.md](dev/normalization-contract.md).
+
 ## Workflow
 
 - Open an issue or discussion before large behavioral changes.

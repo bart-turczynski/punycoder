@@ -6,6 +6,8 @@ This file provides guidance to coding agents (Claude Code, Codex, etc.) when wor
 
 `punycoder` is an R package providing RFC 3492-compliant Punycode/IDN encode/decode functions plus a UTS #46 canonical-host normalizer, implemented in C++ via Rcpp. The Punycode codec optionally links against `libidn2` when present at build time; otherwise it uses an in-tree fallback algorithm. Normalization (NFC + UTS #46) is always in-tree, built on vendored Unicode tables pinned to one Unicode version (currently 16.0.0). It is the Punycode/IDNA engine for the `pslr` and `rurl` packages.
 
+This file is the terse, always-loaded working contract. For the system map (layers, module responsibilities, request lifecycles, build/data pipelines) see [ARCHITECTURE.md](ARCHITECTURE.md); for the *why* behind the load-bearing choices see the ADR log in [DECISIONS.md](DECISIONS.md); for the normative normalization spec see [dev/normalization-contract.md](dev/normalization-contract.md).
+
 ## Common commands
 
 All commands run from the package root.

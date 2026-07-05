@@ -36,6 +36,8 @@
 ^\.fp$
 ^\.fp/.*
 ^AGENTS\.md$
+^ARCHITECTURE\.md$
+^DECISIONS\.md$
 ^CONTRIBUTING\.md$
 ^THIRD_PARTY_NOTICES\.md$
 ^cran-comments\.md$
