@@ -101,6 +101,18 @@ test_that("backend info exposes availability and selected backend", {
   expect_length(info$has_libidn2, 1)
 })
 
+test_that("backend comparison propagates NA inputs as NA", {
+  result <- punycoder:::.compare_backends(
+    c("example.com", NA_character_), "encode_domain"
+  )
+
+  expect_false(is.na(result$fallback[[1]]))
+  expect_true(is.na(result$fallback[[2]]))
+  if (isTRUE(result$available)) {
+    expect_true(is.na(result$libidn2[[2]]))
+  }
+})
+
 test_that("backend comparison reports unsupported modes as errors", {
   result <- punycoder:::.compare_backends("example.com", "bogus_mode")
 

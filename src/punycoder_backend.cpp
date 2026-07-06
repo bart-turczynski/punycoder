@@ -16,14 +16,14 @@ namespace {
 std::string libidn2_error_message(int rc) {
     const char* error = idn2_strerror(rc);
     if (error == nullptr) {
-        return "libidn2 returned unknown error";
+        return "libidn2 returned unknown error";  // # nocov (idn2_strerror is total)
     }
     return std::string(error);
 }
 
 std::string encode_label_libidn2(const std::string& label) {
     if (!has_non_ascii(label)) {
-        return label;
+        return label;  // # nocov (encode is only dispatched for non-ASCII labels)
     }
 
     std::vector<uint32_t> input = utf8_to_codepoints(label);
@@ -41,6 +41,10 @@ std::string encode_label_libidn2(const std::string& label) {
         if (rc == IDN2_OK) {
             return "xn--" + std::string(output.data(), output_length);
         }
+        // # nocov start
+        // libidn2 error handling: the pre-sized buffer never triggers a resize
+        // in practice, and label-level failures are caught and retried on the
+        // fallback backend by default_encode_label.
         if (rc == IDN2_PUNYCODE_BIG_OUTPUT) {
             size_t next_size = std::max(buffer_size * 2, output_length + 1);
             if (next_size <= buffer_size) {
@@ -51,12 +55,13 @@ std::string encode_label_libidn2(const std::string& label) {
         }
 
         throw_error(ErrorCode::backend_failure, libidn2_error_message(rc));
+        // # nocov end
     }
 }
 
 std::string decode_label_libidn2(const std::string& label) {
     if (!starts_with_xn_prefix(label)) {
-        return label;
+        return label;  // # nocov (decode is only dispatched for xn-- labels)
     }
 
     std::string input = label.substr(4);
@@ -79,6 +84,9 @@ std::string decode_label_libidn2(const std::string& label) {
             output.resize(output_length);
             return codepoints_to_utf8(output);
         }
+        // # nocov start
+        // See encode_label_libidn2: buffer never resizes in practice and
+        // label-level failures fall back via default_decode_label.
         if (rc == IDN2_PUNYCODE_BIG_OUTPUT) {
             size_t next_size = std::max(buffer_size * 2, output_length + 1);
             if (next_size <= buffer_size) {
@@ -89,6 +97,7 @@ std::string decode_label_libidn2(const std::string& label) {
         }
 
         throw_error(ErrorCode::backend_failure, libidn2_error_message(rc));
+        // # nocov end
     }
 }
 

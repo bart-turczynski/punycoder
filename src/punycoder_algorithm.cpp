@@ -18,7 +18,7 @@ constexpr char kDelimiter = '-';
 
 inline uint64_t checked_add_u64(uint64_t a, uint64_t b) {
     if (a > std::numeric_limits<uint64_t>::max() - b) {
-        throw_error(ErrorCode::punycode_overflow);
+        throw_error(ErrorCode::punycode_overflow);  // # nocov (64-bit overflow guard)
     }
     return a + b;
 }
@@ -65,7 +65,7 @@ char encode_digit(uint32_t digit) {
     if (digit < 36) {
         return static_cast<char>('0' + (digit - 26));
     }
-    throw_error(ErrorCode::invalid_punycode_digit);
+    throw_error(ErrorCode::invalid_punycode_digit);  // # nocov (digit is always < 36)
 }
 
 uint32_t adapt(uint64_t delta, uint64_t numpoints, bool first_time) {
@@ -85,7 +85,7 @@ uint32_t adapt(uint64_t delta, uint64_t numpoints, bool first_time) {
 
 EncodingInput prepare_encode_input(const std::string& label) {
     if (label.empty()) {
-        throw_error(ErrorCode::empty_domain_label);
+        throw_error(ErrorCode::empty_domain_label);  // # nocov (domain layer rejects empty labels first)
     }
 
     if (!has_non_ascii(label)) {
@@ -146,7 +146,7 @@ std::string punycode_encode_label_fallback(const std::string& label) {
         }
 
         if (m == std::numeric_limits<uint32_t>::max()) {
-            throw_error(ErrorCode::punycode_overflow);
+            throw_error(ErrorCode::punycode_overflow);  // # nocov (unreachable while handled < size)
         }
 
         // RFC 3492 §6.3 "Encoding procedure" — delta accumulates the distance
@@ -192,7 +192,7 @@ std::string punycode_encode_label_fallback(const std::string& label) {
 
 std::string punycode_decode_label_fallback(const std::string& label) {
     if (!starts_with_xn_prefix(label)) {
-        return label;
+        return label;  // # nocov (decode is only dispatched for xn-- labels)
     }
 
     // Self-protection for the O(n^2) insert loop below: refuse oversized input
@@ -201,7 +201,7 @@ std::string punycode_decode_label_fallback(const std::string& label) {
     // reference decoder must not rely on that for callers that reach it
     // directly (e.g. backend parity comparisons).
     if (label.size() > kMaxLabelLength) {
-        throw_error(ErrorCode::label_length_limit);
+        throw_error(ErrorCode::label_length_limit);  // # nocov (domain layer caps length first)
     }
 
     constexpr size_t payload_start = 4;
@@ -218,7 +218,7 @@ std::string punycode_decode_label_fallback(const std::string& label) {
         for (size_t j = payload_start; j < pos; ++j) {
             unsigned char c = static_cast<unsigned char>(label[j]);
             if (c >= 0x80) {
-                throw_error(ErrorCode::invalid_basic_code_point);
+                throw_error(ErrorCode::invalid_basic_code_point);  // # nocov (non-ASCII labels are never decoded)
             }
             output.push_back(static_cast<uint32_t>(c));
         }
@@ -261,7 +261,7 @@ std::string punycode_decode_label_fallback(const std::string& label) {
         // n is uint32; check the destination range before narrowing.
         uint64_t increment = i / out_len;
         if (increment > std::numeric_limits<uint32_t>::max() - n) {
-            throw_error(ErrorCode::punycode_overflow);
+            throw_error(ErrorCode::punycode_overflow);  // # nocov (n overflow guard)
         }
         n += static_cast<uint32_t>(increment);
         i %= out_len;

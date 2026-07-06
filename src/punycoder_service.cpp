@@ -58,9 +58,6 @@ PunycodeService::PunycodeService(bool strict, bool verify_dns_length)
       strict_(strict),
       verify_dns_length_(verify_dns_length) {}
 
-PunycodeService::PunycodeService(bool strict, const LabelBackend& backend)
-    : PunycodeService(strict, backend, true) {}
-
 PunycodeService::PunycodeService(
     bool strict,
     const LabelBackend& backend,
@@ -84,21 +81,6 @@ std::string PunycodeService::encode_url(const std::string& url) const {
 
 std::string PunycodeService::decode_url(const std::string& url) const {
     return transform_url(url, UrlTransform::decode);
-}
-
-bool PunycodeService::is_valid_domain(const std::string& domain) const {
-    try {
-        validate_and_parse_domain(
-            domain,
-            backend_,
-            strict_,
-            verify_dns_length_,
-            DomainTransform::none
-        );
-        return true;
-    } catch (const std::exception&) {
-        return false;
-    }
 }
 
 std::string PunycodeService::transform_domain(

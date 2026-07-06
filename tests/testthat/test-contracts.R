@@ -51,6 +51,37 @@ test_that("strict wrappers preserve user-facing error prefixes", {
   )
 })
 
+test_that("puny_* reject URL-shaped input across every guard branch", {
+  # looks_like_url_input() screens each URL marker so a full URL is never
+  # mistaken for a bare domain label. Every branch must reject; a plain label
+  # must pass straight through.
+  url_shaped <- c(
+    "https://foo.com", # scheme with a hierarchical marker
+    "//foo.com",       # protocol-relative form
+    "a/b",             # path separator
+    "a?b",             # query delimiter
+    "a#b",             # fragment delimiter
+    "a@b",             # userinfo delimiter
+    "tel:123"          # scheme-like prefix
+  )
+  for (u in url_shaped) {
+    expect_error(puny_encode(u, strict = TRUE), "looks like a URL")
+    expect_error(puny_decode(u, strict = TRUE), "looks like a URL")
+  }
+
+  # A bare label is not URL-shaped and encodes normally (the guard's FALSE arm).
+  expect_identical(puny_encode("example", strict = TRUE), "example")
+  expect_identical(puny_encode("münchen", strict = TRUE), "xn--mnchen-3ya")
+})
+
+test_that("non-strict decode of a non-ACE Unicode label passes through", {
+  # A non-ASCII label with no xn-- prefix has nothing to decode. In non-strict
+  # mode the decoder still validates its UTF-8 (rejecting ill-formed bytes) and
+  # otherwise returns it unchanged.
+  expect_identical(puny_decode("café", strict = FALSE), "café")
+  expect_true(is.na(puny_decode(raw_utf8(0xFF), strict = FALSE)))
+})
+
 test_that("oversized labels are bounded in both strict and non-strict mode", {
   # A crafted xn-- label far beyond the 63-octet DNS limit must not drive the
   # O(n^2) reference decoder into a quadratic-time / unbounded-allocation DoS.

@@ -71,6 +71,13 @@ test_that("CheckHyphens rejects leading, trailing, 3rd-4th hyphens", {
   expect_identical(host_normalize("ab--cd.com"), NA_character_)
 })
 
+test_that("host_normalize rejects ill-formed UTF-8 input", {
+  # Step 1 of host_normalize_one rejects non-UTF-8 input up front, surfacing the
+  # contract's NA-on-invalid signal rather than throwing.
+  expect_identical(host_normalize(raw_utf8(0xFF)), NA_character_)
+  expect_identical(host_normalize(raw_utf8(0xC0, 0x80)), NA_character_)
+})
+
 test_that("terminal-dot handling matches the contract", {
   expect_identical(host_normalize("."), NA_character_)
   expect_identical(host_normalize("example.com.."), NA_character_)

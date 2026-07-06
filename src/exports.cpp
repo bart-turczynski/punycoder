@@ -240,11 +240,13 @@ Rcpp::List validate_domain_cpp(Rcpp::CharacterVector domains, bool strict = true
             error_codes[i] = Rcpp::CharacterVector::create(
                 punycoder::error_code_name(e.code())
             );
-        } catch (const std::exception& e) {
+        } catch (const std::exception& e) {  // # nocov start
+            // Defensive: validate_and_parse_domain only throws PunycoderError;
+            // this arm catches non-domain exceptions (e.g. std::bad_alloc).
             valid[i] = false;
             errors[i] = Rcpp::CharacterVector::create(e.what());
             error_codes[i] = Rcpp::CharacterVector::create("unknown_error");
-        }
+        }  // # nocov end
     }
 
     return Rcpp::List::create(
@@ -299,7 +301,7 @@ Rcpp::List compare_backends_cpp(
         if (has_libidn2) {
             libidn2[i] = safe_backend_mode(libidn2_service, mode, value);
         } else {
-            libidn2[i] = NA_STRING;
+            libidn2[i] = NA_STRING;  // # nocov (only on builds without libidn2, e.g. Windows)
         }
     }
 
