@@ -308,7 +308,7 @@ URL-shaped inputs `punycoder` deliberately rejects are actually handled
 
 These packages build on data, libraries, and prior work from many
 others. See
-[ACKNOWLEDGMENTS.md](https://bart-turczynski.github.io/punycoder/ACKNOWLEDGMENTS.md)
+[ACKNOWLEDGMENTS.md](https://github.com/bart-turczynski/punycoder/blob/main/ACKNOWLEDGMENTS.md)
 for the full list of thanks.
 
 ## Related packages
@@ -327,7 +327,7 @@ author:
 
 If you use `punycoder` in your work, please cite it. Run
 `citation("punycoder")` for the current citation, or see
-[`CITATION.cff`](https://bart-turczynski.github.io/punycoder/CITATION.cff).
+[`CITATION.cff`](https://github.com/bart-turczynski/punycoder/blob/main/CITATION.cff).
 
 Each release is archived on Zenodo. Cite the concept DOI
 [10.5281/zenodo.20973629](https://doi.org/10.5281/zenodo.20973629) to
