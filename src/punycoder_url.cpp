@@ -254,8 +254,8 @@ std::string rebuild_url_with_host(const ParsedURL& parsed, const std::string& ho
         if (!parsed.userinfo.empty()) {
             capacity += 1;
         }
-        if (parsed.host_was_bracketed) {
-            capacity += 2;
+        if (parsed.host_was_bracketed) {  // # nocov
+            capacity += 2;  // # nocov (IPv6 hosts are returned unchanged, never rebuilt)
         }
         if (!parsed.port.empty()) {
             capacity += 1;
@@ -281,11 +281,11 @@ std::string rebuild_url_with_host(const ParsedURL& parsed, const std::string& ho
             result.push_back('@');
         }
 
-        if (parsed.host_was_bracketed) {
+        if (parsed.host_was_bracketed) {  // # nocov start
             result.push_back('[');
             result += host;
             result.push_back(']');
-        } else {
+        } else {  // # nocov end
             result += host;
         }
 

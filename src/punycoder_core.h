@@ -154,7 +154,6 @@ class PunycodeService {
 public:
     explicit PunycodeService(bool strict);
     PunycodeService(bool strict, bool verify_dns_length);
-    PunycodeService(bool strict, const LabelBackend& backend);
     PunycodeService(
         bool strict,
         const LabelBackend& backend,
@@ -165,7 +164,6 @@ public:
     std::string decode_domain(const std::string& punycode_domain) const;
     std::string encode_url(const std::string& url) const;
     std::string decode_url(const std::string& url) const;
-    bool is_valid_domain(const std::string& domain) const;
 
 private:
     enum class UrlTransform { encode, decode };

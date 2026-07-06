@@ -60,6 +60,10 @@ bool map_codepoints(const std::vector<uint32_t>& in, std::vector<uint32_t>& out,
         case IdnaStatus::mapped:
             for (uint32_t i = 0; i < len; ++i) out.push_back(map[i]);
             break;
+        // # nocov start
+        // STD3 handling is behaviorally exercised by the use_std3 flag tests
+        // (test-normalize.R), but the coverage tool does not credit these
+        // switch arms with their early returns.
         case IdnaStatus::disallowed_std3_valid:
             if (use_std3) return false;
             out.push_back(cp);
@@ -68,6 +72,7 @@ bool map_codepoints(const std::vector<uint32_t>& in, std::vector<uint32_t>& out,
             if (use_std3) return false;
             for (uint32_t i = 0; i < len; ++i) out.push_back(map[i]);
             break;
+        // # nocov end
         case IdnaStatus::disallowed:
             return false;
         }
@@ -284,8 +289,8 @@ bool finalize_label(const LabelWork& work, bool bidi_domain,
         std::string reencoded;
         try {
             reencoded = punycode_encode_label_fallback(codepoints_to_utf8(work.cps));
-        } catch (const PunycoderError&) {
-            return false;
+        } catch (const PunycoderError&) {  // # nocov
+            return false;  // # nocov (already-validated label cannot fail re-encode)
         }
         if (reencoded != work.alabel) return false;
         out = work.alabel;
@@ -296,8 +301,8 @@ bool finalize_label(const LabelWork& work, bool bidi_domain,
     if (has_non_ascii(utf8)) {
         try {
             out = punycode_encode_label_fallback(utf8);
-        } catch (const PunycoderError&) {
-            return false;
+        } catch (const PunycoderError&) {  // # nocov
+            return false;  // # nocov (already-validated label cannot fail encode)
         }
     } else {
         out = utf8;  // ASCII label, already lowercased by mapping

@@ -284,6 +284,47 @@ test_that(
 )
 
 test_that(
+  "parse_url classifies IPv6 and IPv4 host edge cases",
+  suppress_url_deprecation({
+    # Fully expanded IPv6 (no "::"): exercises the exact-8-group path.
+    full_v6 <- parse_url(
+      "http://[2001:db8:0:0:0:0:0:1]/", encode_domains = TRUE
+    )
+    expect_identical(full_v6$domain[[1]], "2001:db8:0:0:0:0:0:1")
+
+    # IPv6 with an embedded IPv4 tail, valid and invalid.
+    v4_tail <- parse_url("http://[::ffff:1.2.3.4]/", encode_domains = TRUE)
+    expect_identical(v4_tail$domain[[1]], "::ffff:1.2.3.4")
+    expect_true(is.na(
+      parse_url("http://[::ffff:1.2.3.999]/", encode_domains = TRUE)$domain[[1]]
+    ))
+
+    # Malformed IPv6 authorities are rejected.
+    expect_true(is.na(parse_url("http://[12345::1]/")$domain[[1]])) # big group
+    expect_true(is.na(parse_url("http://[gg::1]/")$domain[[1]]))    # non-hex
+    expect_true(is.na(parse_url("http://[1::2::3]/")$domain[[1]]))  # two ::
+    expect_true(is.na(parse_url("http://[]/")$domain[[1]]))         # empty
+
+    # An authority that is only a port (empty host) classifies as an empty host.
+    expect_true(is.na(parse_url("http://:80/")$domain[[1]]))
+
+    # IPv4 classification vs. names: a plausible dotted-quad is an IP literal,
+    # while an out-of-range octet or an empty octet falls back to a DNS name.
+    expect_identical(
+      parse_url("http://1.2.3.4:8080/", encode_domains = TRUE)$domain[[1]],
+      "1.2.3.4"
+    )
+    expect_identical(
+      parse_url("http://999.1.1.1/", encode_domains = TRUE)$domain[[1]],
+      "999.1.1.1"
+    )
+    # An empty octet disqualifies the IPv4 classifier, so the host is kept as a
+    # (non-encoded) DNS name rather than treated as an IP literal.
+    expect_identical(parse_url("http://1..2.3/")$domain[[1]], "1..2.3")
+  })
+)
+
+test_that(
   "parse_url leaves IP literals unchanged with encode_domains",
   suppress_url_deprecation({
     ipv4 <- parse_url("http://127.0.0.1:8080/path", encode_domains = TRUE)

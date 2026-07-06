@@ -205,6 +205,45 @@ test_that("strict domain validation catches length and character constraints", {
   expect_error(puny_encode(".", strict = TRUE), "cannot be empty")
 })
 
+test_that("validate_domain surfaces every reachable codec-level error code", {
+  # validate_domain() runs the full validation pipeline and reports the stable
+  # ErrorCode name per element, so these inputs exercise the UTF-8,
+  # punycode-decode, and length guards below the domain layer -- and with them
+  # the ErrorCode -> code-name mapping. strict = FALSE is used where a strict
+  # ASCII / DNS-length guard would otherwise mask the deeper codec error.
+  code <- function(x, strict = TRUE) {
+    validate_domain(x, strict = strict)$error_codes[[1]]
+  }
+
+  # Ill-formed UTF-8 in a would-be U-label.
+  expect_identical(code(raw_utf8(0xFF)), "invalid_utf8_sequence")
+  expect_identical(code(raw_utf8(0xC3)), "truncated_utf8_sequence")
+  expect_identical(code(raw_utf8(0xC3, 0x61)), "invalid_utf8_continuation")
+  expect_identical(code(raw_utf8(0xC0, 0x80)), "overlong_utf8_sequence")
+  expect_identical(
+    code(paste0("xn--", strrep("z", 40))), "invalid_utf8_code_point"
+  )
+
+  # A-label whose uppercase payload does not re-encode to itself (RFC 5891 5.4).
+  expect_identical(code("xn--CAF-DMA"), "invalid_punycode_label")
+
+  # Punycode decode failures; strict = FALSE reaches the reference decoder.
+  expect_identical(code("xn--a*b", strict = FALSE), "invalid_punycode_digit")
+  expect_identical(
+    code(paste0("xn--", strrep("9", 20)), strict = FALSE), "punycode_overflow"
+  )
+  expect_identical(
+    code(paste0("xn--", strrep("z", 30)), strict = FALSE),
+    "decoded_code_point_out_of_range"
+  )
+
+  # Internal label-length DoS cap fires before the DNS checks (strict = FALSE
+  # skips the domain-length guard that would otherwise mask it).
+  expect_identical(
+    code(strrep("a", 2000), strict = FALSE), "label_length_limit"
+  )
+})
+
 test_that("domain at 253-char boundary", {
   # 63 + 1 + 63 + 1 + 63 + 1 + 59 = 251; add 2 more to hit 253
   domain_253 <- paste0(
