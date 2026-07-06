@@ -76,6 +76,30 @@
         "url": "https://cran.r-project.org"
       },
       "sameAs": "https://CRAN.R-project.org/package=rmarkdown"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "oysteR",
+      "name": "oysteR",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=oysteR"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "rosv",
+      "name": "rosv",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=rosv"
     }
   ],
   "softwareRequirements": {
@@ -101,7 +125,7 @@
     "SystemRequirements": "GNU libidn2 (optional, for native punycode backend)"
   },
   "keywords": ["punycode", "punycodeencode", "punycodedecode", "IDNA", "IDN", "internationalizeddomainnames", "UTS-46", "RFC3492", "Unicode", "hostnormalization", "hostname", "domainnames", "TLD", "r", "r-lang", "r-library", "r-package", "r-programming", "rstats", "domain-names", "domains", "tld", "unicode", "unicode-converter", "punycode-decode", "punycode-encode", "idn", "idna", "uts46", "rfc3492", "internationalized-domain-names"],
-  "fileSize": "1499.431KB",
+  "fileSize": "1519.775KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
@@ -124,6 +148,6 @@
   ],
   "releaseNotes": "https://github.com/bart-turczynski/punycoder/blob/main/NEWS.md",
   "readme": "https://github.com/bart-turczynski/punycoder/blob/main/README.md",
-  "contIntegration": ["https://github.com/bart-turczynski/punycoder/actions/workflows/verify.yml", "https://app.codecov.io/gh/bart-turczynski/punycoder"],
+  "contIntegration": ["https://github.com/bart-turczynski/punycoder/actions/workflows/verify.yml", "https://app.codecov.io/gh/bart-turczynski/punycoder", "https://github.com/bart-turczynski/punycoder/actions/workflows/security-audit.yml", "https://github.com/bart-turczynski/punycoder/actions/workflows/osv-audit.yml"],
   "developmentStatus": "https://lifecycle.r-lib.org/articles/stages.html#stable"
 }
