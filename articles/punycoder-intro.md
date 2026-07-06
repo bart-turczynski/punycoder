@@ -245,3 +245,16 @@ packages:
 - **[rurl](https://bart-turczynski.github.io/rurl/)** — Full URL
   parsing, normalization, cleaning, and joining toolkit. Builds on both
   `punycoder` and `pslr` to handle the complete URL processing pipeline.
+
+### Acknowledgments
+
+`punycoder` descends from the earlier R
+[hrbrmstr/punycode](https://github.com/hrbrmstr/punycode) package and
+implements published standards directly: RFC 3492 (Punycode), the
+IDNA2008 RFCs, Unicode UTS \#46, and UAX \#15 normalization, validated
+against the Unicode Consortium’s IdnaTestV2 conformance data. It is
+built on `Rcpp` with an optional GNU libidn2 backend.
+
+The full list of credits — prior art, dependencies, the standards this
+code implements, and the data sources it serves — is in
+[`ACKNOWLEDGMENTS.md`](https://github.com/bart-turczynski/punycoder/blob/main/ACKNOWLEDGMENTS.md).
