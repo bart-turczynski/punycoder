@@ -257,7 +257,7 @@ scope for that layer,” not a defect:
 ## Acknowledgments
 
 These packages build on data, libraries, and prior work from many others.
-See [ACKNOWLEDGMENTS.md](ACKNOWLEDGMENTS.md) for the full list of thanks.
+See [ACKNOWLEDGMENTS.md](https://github.com/bart-turczynski/punycoder/blob/main/ACKNOWLEDGMENTS.md) for the full list of thanks.
 
 ## Related packages
 
@@ -269,7 +269,7 @@ See [ACKNOWLEDGMENTS.md](ACKNOWLEDGMENTS.md) for the full list of thanks.
 ## Citation
 
 If you use `punycoder` in your work, please cite it. Run `citation("punycoder")`
-for the current citation, or see [`CITATION.cff`](CITATION.cff).
+for the current citation, or see [`CITATION.cff`](https://github.com/bart-turczynski/punycoder/blob/main/CITATION.cff).
 
 Each release is archived on Zenodo. Cite the concept DOI
 [10.5281/zenodo.20973629](https://doi.org/10.5281/zenodo.20973629) to refer to
