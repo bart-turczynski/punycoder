@@ -31,7 +31,7 @@ URL: https://bart-turczynski.github.io/punycoder/,
 BugReports: https://github.com/bart-turczynski/punycoder/issues
 Encoding: UTF-8
 Language: en-US
-Suggests: testthat (>= 3.0.0), knitr, rmarkdown
+Suggests: testthat (>= 3.0.0), knitr, rmarkdown, oysteR, rosv
 VignetteBuilder: knitr
 Roxygen: list(markdown = TRUE)
 Config/roxygen2/version: 8.0.0
