@@ -39,6 +39,8 @@
 ^ARCHITECTURE\.md$
 ^DECISIONS\.md$
 ^CONTRIBUTING\.md$
+^CODE_OF_CONDUCT\.md$
+^\.pre-commit-config\.yaml$
 ^THIRD_PARTY_NOTICES\.md$
 ^cran-comments\.md$
 ^CRAN-SUBMISSION$
