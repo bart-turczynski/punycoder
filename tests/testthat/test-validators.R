@@ -205,43 +205,52 @@ test_that("strict domain validation catches length and character constraints", {
   expect_error(puny_encode(".", strict = TRUE), "cannot be empty")
 })
 
-test_that("validate_domain surfaces every reachable codec-level error code", {
+test_that("validate_domain surfaces backend-invariant codec error codes", {
   # validate_domain() runs the full validation pipeline and reports the stable
-  # ErrorCode name per element, so these inputs exercise the UTF-8,
-  # punycode-decode, and length guards below the domain layer -- and with them
-  # the ErrorCode -> code-name mapping. strict = FALSE is used where a strict
-  # ASCII / DNS-length guard would otherwise mask the deeper codec error.
+  # ErrorCode name per element. These inputs fail in code paths that both label
+  # backends share (UTF-8 decoding in the encoder, and the domain-layer length
+  # cap), so the exact code is identical whether or not libidn2 is present.
   code <- function(x, strict = TRUE) {
     validate_domain(x, strict = strict)$error_codes[[1]]
   }
 
-  # Ill-formed UTF-8 in a would-be U-label.
+  # Ill-formed UTF-8 in a would-be U-label: both backends validate UTF-8 via the
+  # same utf8_to_codepoints() before handing off to the codec.
   expect_identical(code(raw_utf8(0xFF)), "invalid_utf8_sequence")
   expect_identical(code(raw_utf8(0xC3)), "truncated_utf8_sequence")
   expect_identical(code(raw_utf8(0xC3, 0x61)), "invalid_utf8_continuation")
   expect_identical(code(raw_utf8(0xC0, 0x80)), "overlong_utf8_sequence")
-  expect_identical(
-    code(paste0("xn--", strrep("z", 40))), "invalid_utf8_code_point"
-  )
 
-  # A-label whose uppercase payload does not re-encode to itself (RFC 5891 5.4).
-  expect_identical(code("xn--CAF-DMA"), "invalid_punycode_label")
-
-  # Punycode decode failures; strict = FALSE reaches the reference decoder.
-  expect_identical(code("xn--a*b", strict = FALSE), "invalid_punycode_digit")
-  expect_identical(
-    code(paste0("xn--", strrep("9", 20)), strict = FALSE), "punycode_overflow"
-  )
-  expect_identical(
-    code(paste0("xn--", strrep("z", 30)), strict = FALSE),
-    "decoded_code_point_out_of_range"
-  )
-
-  # Internal label-length DoS cap fires before the DNS checks (strict = FALSE
-  # skips the domain-length guard that would otherwise mask it).
+  # Internal label-length DoS cap is a domain-layer guard, backend-independent
+  # (strict = FALSE skips the DNS-length guard that would otherwise mask it).
   expect_identical(
     code(strrep("a", 2000), strict = FALSE), "label_length_limit"
   )
+})
+
+test_that("validate_domain reports a decode error for malformed A-labels", {
+  # Malformed xn-- labels are rejected by both backends, but the *specific*
+  # ErrorCode is deliberately not part of the cross-backend contract: libidn2
+  # and the in-tree fallback word rejections differently (see test-backends.R).
+  # Assert the decision (rejected, with a code from the punycode-decode family)
+  # rather than a single value that would differ on libidn2-less platforms.
+  decode_error_codes <- c(
+    "invalid_punycode_label", "invalid_punycode_digit", "punycode_overflow",
+    "decoded_code_point_out_of_range", "invalid_utf8_code_point",
+    "truncated_punycode_input"
+  )
+  check_rejected <- function(x, strict = TRUE) {
+    res <- validate_domain(x, strict = strict)
+    expect_false(res$valid[[1]])
+    expect_length(res$error_codes[[1]], 1L)
+    expect_true(res$error_codes[[1]] %in% decode_error_codes)
+  }
+
+  check_rejected("xn--CAF-DMA")                          # non-canonical A-label
+  check_rejected(paste0("xn--", strrep("z", 40)))        # out-of-range decode
+  check_rejected("xn--a*b", strict = FALSE)              # invalid digit
+  check_rejected(paste0("xn--", strrep("9", 20)), strict = FALSE) # overflow
+  check_rejected(paste0("xn--", strrep("z", 30)), strict = FALSE) # out of range
 })
 
 test_that("domain at 253-char boundary", {
