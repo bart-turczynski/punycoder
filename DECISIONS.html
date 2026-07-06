@@ -117,7 +117,7 @@
 <h2 id="adr-009--single-header-declarations-clean-rebuild-required-after-header-edits">ADR-009 — Single-header declarations; clean rebuild required after header edits<a class="anchor" aria-label="anchor" href="#adr-009--single-header-declarations-clean-rebuild-required-after-header-edits"></a></h2>
 <p><strong>Status:</strong> Accepted</p>
 <p><strong>Context.</strong> The core declares everything in one header, <code>punycoder_core.h</code>, with implementations split by concern. R’s package build does not track header dependencies.</p>
-<p><strong>Decision.</strong> Keep all core declarations in <code>punycoder_core.h</code> and split implementations by responsibility into the matching <code>src/*.cpp</code>. After editing the header — <strong>especially the <code>ErrorCode</code> enum</strong> — do a clean rebuild (<code>rm src/*.o</code> or <code>devtools::clean_dll()</code>); an incremental build silently links stale <code>.o</code> files against the new header (ABI skew).</p>
+<p><strong>Decision.</strong> Keep all core declarations in <code>punycoder_core.h</code> and split implementations by responsibility into the matching <code>src/*.cpp</code>. After editing the header — <strong>especially the <code>ErrorCode</code> enum</strong> — do a clean rebuild (<code>rm src/*.o</code> or <code><a href="https://pkgbuild.r-lib.org/reference/clean_dll.html" class="external-link">devtools::clean_dll()</a></code>); an incremental build silently links stale <code>.o</code> files against the new header (ABI skew).</p>
 <p><strong>Consequences.</strong> Header edits are a rebuild hazard, not a routine change. Keep new logic in the file that owns its concern rather than spreading it.</p>
 <hr></div>
 <div class="section level2">

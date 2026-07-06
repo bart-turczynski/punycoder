@@ -223,8 +223,10 @@ build does not track header dependencies.
 **Decision.** Keep all core declarations in `punycoder_core.h` and split
 implementations by responsibility into the matching `src/*.cpp`. After
 editing the header — **especially the `ErrorCode` enum** — do a clean
-rebuild (`rm src/*.o` or `devtools::clean_dll()`); an incremental build
-silently links stale `.o` files against the new header (ABI skew).
+rebuild (`rm src/*.o` or
+[`devtools::clean_dll()`](https://pkgbuild.r-lib.org/reference/clean_dll.html));
+an incremental build silently links stale `.o` files against the new
+header (ABI skew).
 
 **Consequences.** Header edits are a rebuild hazard, not a routine
 change. Keep new logic in the file that owns its concern rather than
