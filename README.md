@@ -15,6 +15,8 @@
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fbart-turczynski%2Fpunycoder.svg?type=shield&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2Fbart-turczynski%2Fpunycoder?ref=badge_shield&issueType=license)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fbart-turczynski%2Fpunycoder.svg?type=shield&issueType=security)](https://app.fossa.com/projects/git%2Bgithub.com%2Fbart-turczynski%2Fpunycoder?ref=badge_shield&issueType=security)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/13429/badge)](https://www.bestpractices.dev/projects/13429)
+[![Security audit](https://github.com/bart-turczynski/punycoder/actions/workflows/security-audit.yml/badge.svg)](https://github.com/bart-turczynski/punycoder/actions/workflows/security-audit.yml)
+[![OSV audit](https://github.com/bart-turczynski/punycoder/actions/workflows/osv-audit.yml/badge.svg)](https://github.com/bart-turczynski/punycoder/actions/workflows/osv-audit.yml)
 <!-- badges: end -->
 
 High-performance Unicode and Punycode encoding/decoding for internationalized domain names (IDNs) in R.
