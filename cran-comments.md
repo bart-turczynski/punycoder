@@ -2,7 +2,7 @@
 
 0 errors | 0 warnings | 1 note
 
-The incoming-feasibility NOTE flags two things:
+The incoming-feasibility NOTE flags three things:
 
 * A short interval since the last update (1.1.0). The quick turnaround is to land
   a coordinated breaking change before the ecosystem grows: 1.1.0 introduced
@@ -14,6 +14,9 @@ The incoming-feasibility NOTE flags two things:
   `bartek@turczynski.pl`. This is the same maintainer (Bart Turczynski); the
   address was normalized to drop the per-package plus-tag alias. No change of
   person or organization.
+* Possibly misspelled words in DESCRIPTION (IDNA, WHATWG, canonicalizers,
+  parsers). These are valid technical terms from the IDN/URL domain, not
+  misspellings.
 
 ## Changes in this version
 
