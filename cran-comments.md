@@ -20,8 +20,9 @@ The incoming-feasibility NOTE flags three things:
 
 ## Changes in this version
 
-This is a feature release (1.1.0 -> 1.2.0) for the UTS #46 host-normalization
-API introduced in 1.1.0.
+This is a feature release (1.1.0 -> 1.2.1) for the UTS #46 host-normalization
+API introduced in 1.1.0. (The 1.2.0 development tag was never submitted to CRAN;
+1.2.1 adds only maintenance/tooling on top of the same public API.)
 
 * Breaking: `host_normalize()` no longer accepts the `strict` argument. It was
   inert in 1.1.0 (the full profile always applied) and is replaced by three
@@ -50,5 +51,5 @@ The only CRAN reverse dependency is 'pslr'. The breaking removal of the
 `host_normalize()` `strict` argument was coordinated with 'pslr': its CRAN
 version no longer passes that argument (it calls `host_normalize()` with
 defaults, which is behavior-preserving and compatible with both 1.1.0 and
-1.2.0). 'pslr' was updated on CRAN ahead of this submission, so its
-reverse-dependency check passes against punycoder 1.2.0.
+1.2.x). 'pslr' (>= 1.1.1) was updated on CRAN ahead of this submission, so its
+reverse-dependency check passes against punycoder 1.2.1.
