@@ -19,25 +19,26 @@ test_that(
 )
 
 test_that("attach and unload hooks are callable without side effects", {
-  startup_called <- FALSE
-  unload_called <- FALSE
+  state <- new.env()
+  state$startup_called <- FALSE
+  state$unload_called <- FALSE
 
   attach_fn <- punycoder:::.onAttach
   attach_env <- new.env(parent = environment(attach_fn))
   attach_env$interactive <- function() TRUE
   attach_env$packageStartupMessage <- function(...) {
-    startup_called <<- TRUE
+    state$startup_called <- TRUE
   }
   environment(attach_fn) <- attach_env
   attach_fn("", "punycoder")
-  expect_true(startup_called)
+  expect_true(state$startup_called)
 
   unload_fn <- punycoder:::.onUnload
   unload_env <- new.env(parent = environment(unload_fn))
   unload_env$library.dynam.unload <- function(...) {
-    unload_called <<- TRUE
+    state$unload_called <- TRUE
   }
   environment(unload_fn) <- unload_env
   unload_fn("")
-  expect_true(unload_called)
+  expect_true(state$unload_called)
 })
