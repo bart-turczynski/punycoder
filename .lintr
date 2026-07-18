@@ -1,8 +1,9 @@
 linters: linters_with_defaults(
-    # Cucumber step files and testthat helpers use a DSL (when/then/context,
-    # expect_*) that the static usage linter misreads as undefined globals.
-    # Disable it here so the scaffold lints clean out of the box; re-enable it
-    # once the package has real code if you want the extra coverage.
+    # object_usage_linter is off: this package's public surface is Rcpp-exported
+    # (the *_cpp shims in R/RcppExports.R are generated glue), and the testthat
+    # suite leans on the expect_* DSL plus `:::` reach-ins to internal helpers,
+    # all of which the static usage linter misreads as undefined globals. The
+    # rest of the default linter set stays on.
     object_usage_linter = NULL
   )
 encoding: "UTF-8"
