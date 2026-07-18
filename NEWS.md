@@ -1,3 +1,11 @@
+# punycoder 1.2.1
+
+Maintenance release over the 1.2.0 development tag; the public API is unchanged.
+
+## Internal
+
+* Added OSV and OSS Index dependency vulnerability audits, a `goodpractice`-aligned `.lintr`, pre-commit and community-health configuration, and Dependabot for GitHub Actions; no package code or user-facing change (#57, #58, #61, #63).
+
 # punycoder 1.2.0
 
 ## Breaking changes
