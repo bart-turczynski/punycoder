@@ -1,6 +1,10 @@
 # Changelog
 
+## punycoder (development version)
+
 ## punycoder 1.2.1
+
+CRAN release: 2026-07-19
 
 Maintenance release over the 1.2.0 development tag; the public API is
 unchanged.
