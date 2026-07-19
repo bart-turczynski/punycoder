@@ -1,3 +1,5 @@
+# punycoder (development version)
+
 # punycoder 1.2.1
 
 Maintenance release over the 1.2.0 development tag; the public API is unchanged.

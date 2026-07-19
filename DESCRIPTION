@@ -1,7 +1,7 @@
 Package: punycoder
 Type: Package
 Title: Unicode and Punycode Domain Name Processing
-Version: 1.2.1
+Version: 1.2.1.9000
 Authors@R: person("Bart", "Turczynski", email = "bartek@turczynski.pl",
                   role = c("aut", "cre"),
                   comment = c(ORCID = "0000-0002-8788-7980"))
