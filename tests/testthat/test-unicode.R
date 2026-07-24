@@ -31,6 +31,7 @@ test_that("native entry points transcode Latin-1 input to UTF-8", {
 
     decoded <- puny_decode(latin1, strict = strict)
     expect_identical(decoded, utf8)
+    expect_identical(Encoding(decoded), "UTF-8")
 
     validation <- validate_domain(latin1, strict = strict)
     expect_true(validation$valid)
@@ -57,6 +58,13 @@ test_that("mixed-encoding vectors are normalized before native dispatch", {
     expect_true(all(validation$valid))
     expect_identical(validation$domains, utf8)
   }
+})
+
+test_that("native Unicode output is explicitly marked as UTF-8", {
+  decoded <- puny_decode("xn--caf-dma.com")
+
+  expect_identical(decoded, "caf\u00E9.com")
+  expect_identical(Encoding(decoded), "UTF-8")
 })
 
 test_that("UTF-8-marked malformed bytes still reach native validation", {

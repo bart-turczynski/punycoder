@@ -25,7 +25,8 @@ Rcpp::CharacterVector transform_strings(
                 continue;
             }
 
-            output[i] = fn(Rcpp::as<std::string>(input[i]));
+            const std::string value = fn(Rcpp::as<std::string>(input[i]));
+            output[i] = Rcpp::String(value, CE_UTF8);
         } catch (const std::exception& e) {
             if (strict) {
                 Rcpp::stop("%s: %s", error_prefix, e.what());
@@ -190,9 +191,15 @@ Rcpp::List compare_backends_cpp(
         }
 
         std::string value = Rcpp::as<std::string>(input[i]);
-        fallback[i] = safe_backend_mode(fallback_service, mode, value);
+        fallback[i] = Rcpp::String(
+            safe_backend_mode(fallback_service, mode, value),
+            CE_UTF8
+        );
         if (has_libidn2) {
-            libidn2[i] = safe_backend_mode(libidn2_service, mode, value);
+            libidn2[i] = Rcpp::String(
+                safe_backend_mode(libidn2_service, mode, value),
+                CE_UTF8
+            );
         } else {
             libidn2[i] = NA_STRING;  // # nocov (only on builds without libidn2, e.g. Windows)
         }

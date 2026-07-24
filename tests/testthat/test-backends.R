@@ -115,11 +115,19 @@ test_that("backend comparison propagates NA inputs as NA", {
 
 test_that("backend comparison transcodes Latin-1 input to UTF-8", {
   latin1 <- latin1_bytes(0x63, 0x61, 0x66, 0xE9, 0x2E, 0x63, 0x6F, 0x6D)
-  result <- punycoder:::.compare_backends(latin1, "encode_domain")
+  encoded <- punycoder:::.compare_backends(latin1, "encode_domain")
 
-  expect_identical(result$fallback, "xn--caf-dma.com")
-  if (isTRUE(result$available)) {
-    expect_identical(result$libidn2, "xn--caf-dma.com")
+  expect_identical(encoded$fallback, "xn--caf-dma.com")
+  if (isTRUE(encoded$available)) {
+    expect_identical(encoded$libidn2, "xn--caf-dma.com")
+  }
+
+  decoded <- punycoder:::.compare_backends(
+    "xn--caf-dma.com", "decode_domain"
+  )
+  expect_identical(Encoding(decoded$fallback), "UTF-8")
+  if (isTRUE(decoded$available)) {
+    expect_identical(Encoding(decoded$libidn2), "UTF-8")
   }
 })
 
