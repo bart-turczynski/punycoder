@@ -9,18 +9,6 @@ puny_decode_cpp <- function(domains, strict = TRUE) {
     .Call(`_punycoder_puny_decode_cpp`, domains, strict)
 }
 
-url_encode_cpp <- function(urls, strict = TRUE) {
-    .Call(`_punycoder_url_encode_cpp`, urls, strict)
-}
-
-url_decode_cpp <- function(urls, strict = TRUE) {
-    .Call(`_punycoder_url_decode_cpp`, urls, strict)
-}
-
-parse_url_cpp <- function(urls, encode_domains = FALSE) {
-    .Call(`_punycoder_parse_url_cpp`, urls, encode_domains)
-}
-
 validate_domain_cpp <- function(domains, strict = TRUE) {
     .Call(`_punycoder_validate_domain_cpp`, domains, strict)
 }

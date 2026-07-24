@@ -12,16 +12,3 @@ raw_utf8 <- function(...) {
   Encoding(s) <- "UTF-8"
   s
 }
-
-# url_encode/url_decode/parse_url are deprecated (PUNY-vpegoytz) and emit a
-# .Deprecated() warning on every call. The dedicated tests in test-urls.R assert
-# that warning; the behavioural tests wrap their bodies in this muffler so the
-# deprecation noise doesn't drown out (or get mistaken for) the warnings they
-# actually exercise. Only the deprecatedWarning class is muffled, so NA-input
-# warnings still surface for the tests that expect them.
-suppress_url_deprecation <- function(code) {
-  withCallingHandlers(
-    code,
-    deprecatedWarning = function(w) invokeRestart("muffleWarning")
-  )
-}

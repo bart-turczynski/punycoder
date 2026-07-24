@@ -50,9 +50,6 @@ std::string materialize_domain(
 
 }  // namespace
 
-PunycodeService::PunycodeService(bool strict)
-    : PunycodeService(strict, true) {}
-
 PunycodeService::PunycodeService(bool strict, bool verify_dns_length)
     : backend_(select_label_backend()),
       strict_(strict),
@@ -75,14 +72,6 @@ std::string PunycodeService::decode_domain(const std::string& punycode_domain) c
     return transform_domain(punycode_domain, DomainTransform::decode);
 }
 
-std::string PunycodeService::encode_url(const std::string& url) const {
-    return transform_url(url, UrlTransform::encode);
-}
-
-std::string PunycodeService::decode_url(const std::string& url) const {
-    return transform_url(url, UrlTransform::decode);
-}
-
 std::string PunycodeService::transform_domain(
     const std::string& domain,
     DomainTransform transform
@@ -95,32 +84,6 @@ std::string PunycodeService::transform_domain(
         transform
     );
     return materialize_domain(parsed, transform);
-}
-
-std::string PunycodeService::transform_url(
-    const std::string& url,
-    UrlTransform transform
-) const {
-    ParsedURL parsed = parse_url_string(url);
-    if (!parsed.valid) {
-        throw std::invalid_argument(parsed.error_message);
-    }
-
-    if (!parsed.has_authority || parsed.host.empty()) {
-        return url;
-    }
-
-    if (parsed.host_kind == HostKind::ipv4 || parsed.host_kind == HostKind::ipv6) {
-        return url;
-    }
-
-    std::string host;
-    if (transform == UrlTransform::encode) {
-        host = encode_domain(parsed.host);
-    } else {
-        host = decode_domain(parsed.host);
-    }
-    return rebuild_url_with_host(parsed, host);
 }
 
 }  // namespace punycoder

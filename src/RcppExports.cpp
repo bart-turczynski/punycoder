@@ -34,42 +34,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// url_encode_cpp
-Rcpp::CharacterVector url_encode_cpp(Rcpp::CharacterVector urls, bool strict);
-RcppExport SEXP _punycoder_url_encode_cpp(SEXP urlsSEXP, SEXP strictSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type urls(urlsSEXP);
-    Rcpp::traits::input_parameter< bool >::type strict(strictSEXP);
-    rcpp_result_gen = Rcpp::wrap(url_encode_cpp(urls, strict));
-    return rcpp_result_gen;
-END_RCPP
-}
-// url_decode_cpp
-Rcpp::CharacterVector url_decode_cpp(Rcpp::CharacterVector urls, bool strict);
-RcppExport SEXP _punycoder_url_decode_cpp(SEXP urlsSEXP, SEXP strictSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type urls(urlsSEXP);
-    Rcpp::traits::input_parameter< bool >::type strict(strictSEXP);
-    rcpp_result_gen = Rcpp::wrap(url_decode_cpp(urls, strict));
-    return rcpp_result_gen;
-END_RCPP
-}
-// parse_url_cpp
-Rcpp::List parse_url_cpp(Rcpp::CharacterVector urls, bool encode_domains);
-RcppExport SEXP _punycoder_parse_url_cpp(SEXP urlsSEXP, SEXP encode_domainsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type urls(urlsSEXP);
-    Rcpp::traits::input_parameter< bool >::type encode_domains(encode_domainsSEXP);
-    rcpp_result_gen = Rcpp::wrap(parse_url_cpp(urls, encode_domains));
-    return rcpp_result_gen;
-END_RCPP
-}
 // validate_domain_cpp
 Rcpp::List validate_domain_cpp(Rcpp::CharacterVector domains, bool strict);
 RcppExport SEXP _punycoder_validate_domain_cpp(SEXP domainsSEXP, SEXP strictSEXP) {

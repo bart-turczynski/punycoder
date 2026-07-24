@@ -32,9 +32,6 @@ enum class ErrorCode {
     looks_like_url,
     encoded_label_too_long,
     label_length_limit,
-    invalid_ipv6_authority,
-    invalid_authority,
-    empty_url,
     backend_failure
 };
 
@@ -42,13 +39,6 @@ enum class DomainTransform {
     none,
     encode,
     decode
-};
-
-enum class HostKind {
-    empty,
-    dns,
-    ipv4,
-    ipv6
 };
 
 enum class BackendPreference {
@@ -77,23 +67,6 @@ struct LabelInfo {
     bool has_xn_prefix = false;
     bool needs_encoding = false;
     bool needs_decoding = false;
-};
-
-struct ParsedURL {
-    std::string scheme;
-    std::string userinfo;
-    std::string host;
-    std::string port;
-    std::string path;
-    std::string query;
-    std::string fragment;
-    bool has_authority = false;
-    bool has_query = false;
-    bool has_fragment = false;
-    bool host_was_bracketed = false;
-    HostKind host_kind = HostKind::empty;
-    bool valid = false;
-    std::string error_message;
 };
 
 struct ParsedDomain {
@@ -147,12 +120,8 @@ ParsedDomain validate_and_parse_domain(
 );
 bool looks_like_url_input(const std::string& input);
 
-ParsedURL parse_url_string(const std::string& url);
-std::string rebuild_url_with_host(const ParsedURL& parsed, const std::string& host);
-
 class PunycodeService {
 public:
-    explicit PunycodeService(bool strict);
     PunycodeService(bool strict, bool verify_dns_length);
     PunycodeService(
         bool strict,
@@ -162,17 +131,12 @@ public:
 
     std::string encode_domain(const std::string& unicode_domain) const;
     std::string decode_domain(const std::string& punycode_domain) const;
-    std::string encode_url(const std::string& url) const;
-    std::string decode_url(const std::string& url) const;
 
 private:
-    enum class UrlTransform { encode, decode };
-
     std::string transform_domain(
         const std::string& domain,
         DomainTransform transform
     ) const;
-    std::string transform_url(const std::string& url, UrlTransform transform) const;
 
     LabelBackend backend_;
     bool strict_;

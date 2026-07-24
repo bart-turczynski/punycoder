@@ -44,17 +44,6 @@
   cpp_fn(x, strict)
 }
 
-#' Wrap parsed URL results with package classes and attributes
-#' @keywords internal
-#' @noRd
-.new_parsed_url <- function(result, encode_domains) {
-  structure(
-    result,
-    class = c("punycoder_parsed_url", "list"),
-    encode_domains = encode_domains
-  )
-}
-
 #' Wrap domain validation results with package classes and attributes
 #' @keywords internal
 #' @noRd

@@ -1,5 +1,18 @@
 # punycoder (development version)
 
+## Breaking changes
+
+* The deprecated URL surface --- `url_encode()`, `url_decode()`, and
+  `parse_url()` --- has been **removed**, one release after the `.Deprecated()`
+  warning cycle introduced in 1.2.0. These were always best-effort host
+  extraction/rewriting, never an RFC 3986 / WHATWG URL parser or canonicalizer.
+  Use the `rurl` package for URL parsing and canonicalization, or pass the host
+  alone to `host_normalize()` / `puny_encode()` / `puny_decode()` for host-only
+  needs. `puny_encode()` / `puny_decode()` continue to reject URL-shaped input
+  with an actionable error pointing at `rurl::get_host()`. The internal URL
+  parser (`punycoder_url.cpp`) and the `punycoder_parsed_url` print method are
+  gone with the surface (PUNY-rumdaymk).
+
 ## Bug fixes
 
 * `puny_decode()` now rejects malformed A-label input consistently across

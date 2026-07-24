@@ -31,7 +31,6 @@ It exposes three concerns:
 | Punycode codec | `puny_encode()`, `puny_decode()` | Raw RFC 3492 transform with `xn--` framing + LDH checks. **No** Unicode normalization. |
 | Host normalization | `host_normalize()`, `normalization_profile_info()` | UTS #46 non-transitional canonical host form (mapping + NFC + validation + Punycode). |
 | Validators | `is_punycode()`, `is_idn()`, `validate_domain()` | Predicate/validation helpers. |
-| URL surface *(deprecated)* | `url_encode()`, `url_decode()`, `parse_url()` | Best-effort host rewriting. Slated for removal — see ADR-006. |
 
 ## Layering
 
@@ -43,8 +42,8 @@ files touch R semantics.
 ┌──────────────────────────────────────────────────────────────────┐
 │ R wrapper layer  (R/*.R)                                           │
 │   Input validation, NA policy, strict/non-strict option,          │
-│   S3 print/summary, deprecation warnings.                          │
-│   punycoder.R · normalize.R · validators.R · url-utils.R ·        │
+│   S3 print/summary.                                                │
+│   punycoder.R · normalize.R · validators.R ·                      │
 │   results.R · helpers.R · zzz.R                                    │
 └───────────────┬────────────────────────────────────────────────────┘
                 │ .call_with_validation()  →  *_cpp shims
@@ -61,7 +60,7 @@ files touch R semantics.
                 │ std::string / std::vector only, below this line
 ┌───────────────▼────────────────────────────────────────────────────┐
 │ Core  (namespace punycoder, src/*.cpp + punycoder_core.h)           │
-│   service → domain/url/normalize → backend → algorithm/nfc/utf8 →   │
+│   service → domain/normalize → backend → algorithm/nfc/utf8 →       │
 │   vendored Unicode tables.                                          │
 └──────────────────────────────────────────────────────────────────┘
 ```
@@ -81,8 +80,7 @@ See ADR-009.
 | `punycoder.R` | `puny_*` surface + validators exports. |
 | `normalize.R` | `host_normalize()` + `normalization_profile_info()`. |
 | `validators.R` | `is_punycode()`, `is_idn()`, `validate_domain()`. |
-| `url-utils.R` | Deprecated URL surface; `.deprecate_url_surface()` emits the `.Deprecated()` warning. |
-| `results.R` | S3 `print`/summary for `punycoder_parsed_url` and `punycoder_validation`. |
+| `results.R` | S3 `print`/summary for `punycoder_validation`. |
 | `helpers.R` | Input assertions + `.call_with_validation()` dispatch. |
 | `zzz.R` | `.onLoad` option defaults (`punycoder.strict`). |
 | `RcppExports.R` | **Generated** shims — do not edit. |
@@ -93,9 +91,8 @@ See ADR-009.
 |---|---|
 | `punycoder_core.h` | All core declarations (single header). |
 | `exports.cpp` | Rcpp boundary: NA/strict policy, error prefixes, introspection. |
-| `punycoder_service.cpp` | `PunycodeService` facade wiring backend → domain/URL, applies `strict`. |
+| `punycoder_service.cpp` | `PunycodeService` facade wiring backend → domain layer, applies `strict`. |
 | `punycoder_domain.cpp` | `validate_and_parse_domain`, label rules (length, hyphens, `xn--`). |
-| `punycoder_url.cpp` | `parse_url_string`, host classification (DNS/IPv4/IPv6), URL rebuild. |
 | `punycoder_normalize.cpp` / `.h` | `host_normalize_one`: the UTS #46 pipeline. |
 | `punycoder_nfc.cpp` / `.h` | Unicode NFC (UAX #15) used by the normalizer. |
 | `punycoder_backend.cpp` | `select_label_backend` + the `libidn2` adapter (all `#ifdef PUNYCODER_USE_LIBIDN2` live here). |
@@ -155,7 +152,7 @@ fallback backend**.
 
 Parity between backends is asserted by `tests/testthat/test-backends.R` via
 `punycoder:::.compare_backends()` over the RFC 3492 vectors and representative
-URLs; those tests `skip_if` libidn2 is unavailable.
+multi-script domains; those tests `skip_if` libidn2 is unavailable.
 
 ## Build system
 
@@ -201,19 +198,18 @@ Grouped by concern; add tests to the matching file for any user-visible change:
 | `test-normalize` | `host_normalize` behavior + profile flags. |
 | `test-idna-conformance` | UTS #46 conformance vectors (`IdnaTestV2.txt`). |
 | `test-validators` | Predicate/validation helpers. |
-| `test-urls` | Deprecated URL surface. |
 | `test-contracts` | NA / error policy (strict vs non-strict). |
 | `test-unicode`, `test-internals`, `test-lifecycle`, `test-performance` | Supporting coverage. |
 
 ## Where to add what
 
-- **New host/IDNA behavior** → `host_normalize` / `puny_*`, never the deprecated
-  URL surface (ADR-006). URL parsing belongs upstack in `rurl`.
+- **New host/IDNA behavior** → `host_normalize` / `puny_*`. URL parsing belongs
+  upstack in `rurl`; punycoder no longer carries a URL surface (ADR-006).
 - **New error condition** → add an `ErrorCode` + `throw_error` mapping in
   `punycoder_errors.cpp`; R-facing prefixes are contract (ADR-007). Clean rebuild
   after editing the enum (ADR-009).
 - **Backend-specific code** → `punycoder_backend.cpp` only; never sprinkle
-  `#ifdef PUNYCODER_USE_LIBIDN2` through domain/URL code (ADR-008).
+  `#ifdef PUNYCODER_USE_LIBIDN2` through domain code (ADR-008).
 - **Unicode version bump** → `data-raw/generate_unicode_tables.R`, regenerate,
   bump the pinned version in `normalization_profile_info()`, follow
   `dev/normalization-contract.md` §8.

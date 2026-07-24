@@ -66,17 +66,6 @@ std::string format_error(ErrorCode code, const std::string& detail) {
         return "Encoded punycode label exceeds 63 characters";
     case ErrorCode::label_length_limit:
         return "Domain label exceeds maximum supported length";
-    // # nocov start
-    // These three codes are defined for completeness but never thrown: the URL
-    // parser reports authority problems via ParsedURL::error_message strings,
-    // not throw_error(), so their arms here are unreachable.
-    case ErrorCode::invalid_ipv6_authority:
-        return "Invalid IPv6 authority";
-    case ErrorCode::invalid_authority:
-        return "Invalid authority";
-    case ErrorCode::empty_url:
-        return "Empty URL";
-    // # nocov end
     case ErrorCode::backend_failure:
         if (!detail.empty()) {
             return detail;
@@ -147,15 +136,8 @@ const char* error_code_name(ErrorCode code) noexcept {
     case ErrorCode::label_length_limit:
         return "label_length_limit";
     // # nocov start
-    // Never-thrown codes (see format_error) plus backend_failure, which the
-    // default backend catches and retries as fallback rather than surfacing
-    // through validate_domain.
-    case ErrorCode::invalid_ipv6_authority:
-        return "invalid_ipv6_authority";
-    case ErrorCode::invalid_authority:
-        return "invalid_authority";
-    case ErrorCode::empty_url:
-        return "empty_url";
+    // backend_failure is caught by the default backend and retried as fallback
+    // rather than surfaced through validate_domain's error_code_name path.
     case ErrorCode::backend_failure:
         return "backend_failure";
     }

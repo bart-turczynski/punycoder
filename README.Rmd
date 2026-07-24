@@ -116,35 +116,11 @@ validate_domain("test.com")
 ## Key Features
 
 - **Reliable Encoding/Decoding**: RFC 3492 compliant punycode conversion
-- **Best-effort host rewriting**: Swap the host of a URL-shaped string in place (not a full URL parser; see below)
 - **High Performance**: Vectorized operations for processing large datasets
 - **Comprehensive Validation**: Robust error handling with informative messages
 - **Flexible Backend**: Automatically uses `libidn2` when available, with a built-in fallback backend
 
 ## Use Cases
-
-### Web Scraping
-Process international websites with Unicode domain names:
-
-```{r eval=FALSE}
-international_urls <- c(
-  "https://café.paris.fr/menu",
-  "https://москва.рф/news",
-  "https://北京.中国/info"
-)
-
-# Convert for HTTP requests (best-effort host rewriting only)
-ascii_urls <- url_encode(international_urls)
-```
-
-> `url_encode()`, `url_decode()`, and `parse_url()` do **best-effort host
-> extraction and rewriting**, not RFC 3986 / WHATWG URL parsing or
-> canonicalization. They have no percent encoding/decoding, scheme validation,
-> robust port/path/query semantics, full IPv6 (zone IDs / RFC 6874), or
-> serialization guarantees, and are slated for eventual removal in favor of a
-> dedicated URL package consuming punycoder's host functions. Use
-> `host_normalize()` / `puny_encode()` directly when you control the host
-> parse.
 
 ### Data Analysis
 Clean and standardize URL datasets:
@@ -163,7 +139,6 @@ validate_domain(c("valid.com", "invalid..domain"))
 
 - Low-level Punycode codec: `puny_encode()`, `puny_decode()`
 - IDNA/UTS-46 host normalization: `host_normalize()`, `normalization_profile_info()`
-- Best-effort URL host rewriting/extraction (not URL parsing/canonicalization): `url_encode()`, `url_decode()`, `parse_url()`
 - Domain validation utilities: `is_punycode()`, `is_idn()`, `validate_domain()`
 - Vectorized operations and strict/non-strict handling for malformed input
 - Build-time backend selection (`libidn2` when present, built-in fallback otherwise)
@@ -181,8 +156,9 @@ part of its acceptance criteria:
   is visually safe or non-deceptive. Confusable and restriction-level checks
   (UTS #39 / UTR #36, which UTS #46 itself recommends only as application/UI-layer
   steps) belong upstack.
-- **No URL canonicalization.** The `url_*` / `parse_url()` helpers do best-effort
-  host rewriting only (see above), not RFC 3986 / WHATWG URL parsing.
+- **No URL parsing or canonicalization.** RFC 3986 / WHATWG URL parsing and
+  canonicalization belong upstack; see the `rurl` package, which consumes
+  punycoder's host functions.
 - **No DNS resolvability or registrability / PSL classification.**
 - **No address parsing.** There is no `email`-to-ASCII helper; splitting an
   address and IDNA-encoding its domain part is an addressing concern for an
