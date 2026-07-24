@@ -24,19 +24,62 @@
 # `/bin/sh -c 'rm -f src/*.o; R CMD INSTALL .'` build -- never against these
 # numbers.
 
+# `system.time()` reports elapsed time in whole milliseconds, so any workload
+# that finishes faster than that reads as exactly 0. The short input of the
+# scaling test below is one: 4000 short ASCII hosts encode in well under a
+# millisecond on a release build, and read 0 on roughly half of all runs.
+#
+# That matters because the estimator takes the *minimum* of several timings, so
+# one 0 reading is enough to drag the result to 0. An earlier version of this
+# helper floored the result at `.Machine$double.eps` to keep callers from
+# dividing by zero, which quietly reported "too fast to measure" as "infinitely
+# fast" -- roughly 1e-14 of any real timing. Ratios built on that could not be
+# satisfied by any input, so the scaling test failed with a threshold of 2e-20
+# rather than the honest ~1 it was written to check.
+#
+# So batch the call until the batch clears the timer's resolution, then divide
+# the batch count back out. Ten milliseconds keeps the quantization error under
+# 10%, far inside the 4x tolerance the scaling assertion allows.
+timer_resolution_floor <- 0.01
+max_batch <- 256L
+
 benchmark_seconds <- function(fn, input, iterations = 5L) {
   # Warm up so lazy loading and first-touch allocation stay out of the timing.
   fn(input[seq_len(min(length(input), 128L))])
 
-  timings <- vapply(
-    seq_len(iterations),
-    function(i) system.time(fn(input))[["elapsed"]],
-    numeric(1)
-  )
+  batch <- 1L
+  repeat {
+    timings <- vapply(
+      seq_len(iterations),
+      function(i) system.time(for (b in seq_len(batch)) fn(input))[["elapsed"]],
+      numeric(1)
+    )
 
-  # Minimum, not median: noise only ever adds time, so the fastest run is the
-  # closest estimate of the true cost.
-  max(min(timings), .Machine$double.eps)
+    # Minimum, not median: noise only ever adds time, so the fastest run is the
+    # closest estimate of the true cost.
+    fastest <- min(timings)
+
+    if (fastest >= timer_resolution_floor) {
+      return(fastest / batch)
+    }
+    if (batch >= max_batch) {
+      break
+    }
+    batch <- batch * 2L
+  }
+
+  # Unreachable for any input these tests use -- 256 batches of a 4000-element
+  # vector is many seconds of work. If it ever does happen the workload is
+  # genuinely below the timer's resolution, and the only honest answer is that
+  # this machine cannot measure it. Skipping says so; a floored epsilon would
+  # invent a number instead.
+  testthat::skip(
+    sprintf(
+      "timer resolution too coarse to measure this workload (%d batches, %g s)",
+      batch,
+      fastest
+    )
+  )
 }
 
 benchmark_rate <- function(fn, input, iterations = 5L) {
