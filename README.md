@@ -109,6 +109,88 @@ validate_domain("test.com")
 #> Valid:  TRUE
 ```
 
+### Command-line use
+
+`punycoder` is a library, not a CLI, but a one-line `Rscript` wrapper covers the
+usual shell need: turning an IDN into the ASCII form that `dig`, `nslookup`, or
+`curl` will actually accept. No extra install, no `bin/` script. The snippets
+below are POSIX `sh`/`bash` — keep the `-e` argument in single quotes so the
+shell leaves the R code alone.
+
+Unicode host → ASCII, via the UTS \#46 canonical form:
+
+``` sh
+Rscript -e 'cat(punycoder::host_normalize(commandArgs(TRUE)), sep = "\n")' münchen.de
+#> xn--mnchen-3ya.de
+```
+
+Use `puny_encode()` instead when you want the raw RFC 3492 transform with no
+UTS \#46 mapping, and `puny_decode()` to go back the other way:
+
+``` sh
+Rscript -e 'cat(punycoder::puny_encode(commandArgs(TRUE)), sep = "\n")' münchen.de
+#> xn--mnchen-3ya.de
+
+Rscript -e 'cat(punycoder::puny_decode(commandArgs(TRUE)), sep = "\n")' xn--mnchen-3ya.de
+#> münchen.de
+```
+
+Feeding a resolver is then just command substitution (drop `sep` so nothing but
+the host is printed):
+
+``` sh
+dig +short "$(Rscript -e 'cat(punycoder::host_normalize(commandArgs(TRUE)))' münchen.de)"
+#> 194.246.166.100
+
+nslookup "$(Rscript -e 'cat(punycoder::host_normalize(commandArgs(TRUE)))' münchen.de)"
+```
+
+All three functions are vectorized, so several hosts can go through one R
+startup and out to `xargs`:
+
+``` sh
+Rscript -e 'cat(punycoder::host_normalize(commandArgs(TRUE)), sep = "\n")' münchen.de москва.рф |
+  xargs -n 1 dig +short
+```
+
+#### Failed conversions
+
+`host_normalize()` never aborts: an input it cannot normalize comes back as
+`NA`, which prints as a literal `NA` line rather than silently disappearing from
+the pipeline.
+
+``` sh
+Rscript -e 'cat(punycoder::host_normalize(commandArgs(TRUE)), sep = "\n")' münchen.de 'bad..domain'
+#> xn--mnchen-3ya.de
+#> NA
+```
+
+`puny_encode()` and `puny_decode()` behave differently: they are strict by
+default, so a bad input stops the script with a non-zero exit status.
+
+``` sh
+Rscript -e 'cat(punycoder::puny_encode(commandArgs(TRUE)), sep = "\n")' 'bad..domain'
+#> Error: Error encoding domain: Domain contains empty label
+#> Execution halted
+```
+
+Pass `strict = FALSE` to get the per-element `NA` behavior instead, so one bad
+host does not take down a batch:
+
+``` sh
+Rscript -e 'cat(punycoder::puny_encode(commandArgs(TRUE), strict = FALSE), sep = "\n")' münchen.de 'bad..domain'
+#> xn--mnchen-3ya.de
+#> NA
+```
+
+Since `NA` is printed, not swallowed, drop it before piping to a resolver —
+otherwise `dig` dutifully looks up a host named `NA`:
+
+``` sh
+Rscript -e 'h <- punycoder::host_normalize(commandArgs(TRUE)); cat(h[!is.na(h)], sep = "\n")' münchen.de 'bad..domain' |
+  xargs -n 1 dig +short
+```
+
 ## Key Features
 
 - **Reliable Encoding/Decoding**: RFC 3492 compliant punycode conversion
