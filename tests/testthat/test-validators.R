@@ -123,6 +123,123 @@ test_that("print method for validation results works", {
   expect_true(any(grepl("Valid:  FALSE", output, fixed = TRUE)))
 })
 
+test_that("print method shows a count header and error codes", {
+  result <- validate_domain(c("example.com", "-bad.com"))
+  output <- capture.output(print(result))
+
+  expect_true(any(grepl(
+    "2 domains: 1 valid, 1 invalid (strict = TRUE)", output, fixed = TRUE
+  )))
+  expect_true(any(grepl("[domain_label_hyphen]", output, fixed = TRUE)))
+})
+
+test_that("print method truncates above 10 elements", {
+  domains <- sprintf("example%d.com", seq_len(12))
+  output <- capture.output(print(validate_domain(domains)))
+
+  expect_true(any(grepl(
+    "... and 2 more. Use summary() for counts by error code.",
+    output,
+    fixed = TRUE
+  )))
+  expect_true(any(grepl("Domain: example10.com", output, fixed = TRUE)))
+  expect_false(any(grepl("Domain: example11.com", output, fixed = TRUE)))
+})
+
+test_that("print method does not truncate at exactly 10 elements", {
+  domains <- sprintf("example%d.com", seq_len(10))
+  output <- capture.output(print(validate_domain(domains)))
+
+  expect_false(any(grepl("more. Use summary()", output, fixed = TRUE)))
+  expect_true(any(grepl(
+    "10 domains: 10 valid, 0 invalid", output, fixed = TRUE
+  )))
+  expect_true(any(grepl("Domain: example10.com", output, fixed = TRUE)))
+})
+
+test_that("print method formats large counts with thousands separators", {
+  n <- 1500L
+  big <- structure(
+    list(
+      domains = sprintf("d%d.example", seq_len(n)),
+      valid = rep(TRUE, n),
+      errors = rep(list(character()), n),
+      error_codes = rep(list(character()), n)
+    ),
+    class = c("punycoder_validation", "list"),
+    strict = TRUE
+  )
+  output <- capture.output(print(big))
+
+  expect_true(any(grepl(
+    "1,500 domains: 1,500 valid, 0 invalid", output, fixed = TRUE
+  )))
+  expect_true(any(grepl("... and 1,490 more.", output, fixed = TRUE)))
+})
+
+test_that("summary() aggregates error codes in descending order", {
+  result <- validate_domain(c(
+    "example.com", "-bad.com", "-worse.com", "bad_label.com"
+  ))
+  aggregate <- summary(result)
+
+  expect_s3_class(aggregate, "punycoder_validation_summary")
+  expect_s3_class(aggregate, "data.frame")
+  expect_named(aggregate, c("error_code", "n"))
+  expect_type(aggregate$error_code, "character")
+  expect_type(aggregate$n, "integer")
+  expect_identical(
+    aggregate$error_code,
+    c("domain_label_hyphen", "ascii_domain_characters")
+  )
+  expect_identical(aggregate$n, c(2L, 1L))
+})
+
+test_that("summary() carries counts as attributes", {
+  aggregate <- summary(validate_domain(c("example.com", "-bad.com")))
+
+  expect_identical(attr(aggregate, "n"), 2L)
+  expect_identical(attr(aggregate, "n_valid"), 1L)
+  expect_identical(attr(aggregate, "n_invalid"), 1L)
+  expect_true(attr(aggregate, "strict"))
+  expect_false(attr(
+    summary(validate_domain("example.com", strict = FALSE)), "strict"
+  ))
+})
+
+test_that("summary() reports zero rows when every domain is valid", {
+  aggregate <- summary(validate_domain(c("example.com", "test.org")))
+
+  expect_identical(nrow(aggregate), 0L)
+  expect_named(aggregate, c("error_code", "n"))
+  expect_identical(attr(aggregate, "n_invalid"), 0L)
+
+  output <- capture.output(returned <- print(aggregate))
+  expect_identical(returned, aggregate)
+  expect_true(any(grepl("No errors.", output, fixed = TRUE)))
+  expect_false(any(grepl("error_code", output, fixed = TRUE)))
+})
+
+test_that("summary() prints an aggregate and stays programmable", {
+  aggregate <- summary(validate_domain(c(
+    "example.com", "-bad.com", "-worse.com"
+  )))
+  output <- capture.output(returned <- print(aggregate))
+
+  expect_identical(returned, aggregate)
+  expect_true(any(grepl(
+    "Punycoder validation summary (strict = TRUE)", output, fixed = TRUE
+  )))
+  expect_true(any(grepl(
+    "3 domains: 1 valid, 2 invalid", output, fixed = TRUE
+  )))
+  expect_true(any(grepl("error_code", output, fixed = TRUE)))
+
+  # The aggregate is data, not just console output.
+  expect_identical(aggregate$error_code[1], "domain_label_hyphen")
+  expect_identical(attr(aggregate, "n_invalid"), 2L)
+})
+
 test_that("validation summaries include valid and invalid messages", {
   result <- validate_domain(c("example.com", "invalid..domain"))
   summary <- punycoder:::get_validation_summary(result)
