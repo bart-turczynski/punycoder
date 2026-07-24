@@ -1,5 +1,16 @@
 # punycoder (development version)
 
+## Bug fixes
+
+* `puny_decode()` now rejects malformed A-label input consistently across
+  backends. The in-tree fallback decoder previously accepted non
+  letter-digit-hyphen (LDH) characters in a label's literal section (e.g.
+  `xn--(o)-...`) and echoed an empty Bootstring payload (`xn---`) back unchanged,
+  where libidn2 rejected both. It now applies the documented LDH check to decode
+  input and reports these as an error under `strict = TRUE` / `NA` under
+  `strict = FALSE`, so the two backends agree on every input (PUNY-ypjwnagl,
+  PUNY-rxvwqsou).
+
 # punycoder 1.2.1
 
 Maintenance release over the 1.2.0 development tag; the public API is unchanged.

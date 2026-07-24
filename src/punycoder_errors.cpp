@@ -39,12 +39,10 @@ std::string format_error(ErrorCode code, const std::string& detail) {
         return "Invalid punycode label";
     case ErrorCode::punycode_overflow:
         return "Punycode overflow";
-    // # nocov start
-    // Fallback-decoder guard; the domain layer routes non-ASCII labels to
-    // encoding, so this is never reached via the public API.
+    // Reached when the fallback decoder rejects a non-LDH literal code point
+    // in an A-label (PUNY-ypjwnagl), e.g. non-strict puny_decode("xn--(o)-...").
     case ErrorCode::invalid_basic_code_point:
         return "Invalid basic code point in punycode";
-    // # nocov end
     case ErrorCode::truncated_punycode_input:
         return "Truncated punycode input";
     case ErrorCode::decoded_code_point_out_of_range:

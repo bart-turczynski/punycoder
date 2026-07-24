@@ -217,8 +217,16 @@ std::string punycode_decode_label_fallback(const std::string& label) {
     if (pos != std::string::npos && pos >= payload_start) {
         for (size_t j = payload_start; j < pos; ++j) {
             unsigned char c = static_cast<unsigned char>(label[j]);
-            if (c >= 0x80) {
-                throw_error(ErrorCode::invalid_basic_code_point);  // # nocov (non-ASCII labels are never decoded)
+            // A valid A-label is letter-digit-hyphen, so its literal (basic)
+            // code points must be LDH. libidn2 enforces this; the in-tree
+            // fallback matches it (PUNY-ypjwnagl) rather than passing
+            // punctuation such as '(' ')' ',' '%' through. The Bootstring
+            // payload after the delimiter is already constrained to a-z0-9 by
+            // decode_digit(), and non-ASCII (>= 0x80) is likewise non-LDH.
+            bool ldh = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+                       (c >= '0' && c <= '9') || c == '-';
+            if (!ldh) {
+                throw_error(ErrorCode::invalid_basic_code_point);
             }
             output.push_back(static_cast<uint32_t>(c));
         }
@@ -272,6 +280,14 @@ std::string punycode_decode_label_fallback(const std::string& label) {
 
         output.insert(output.begin() + static_cast<std::ptrdiff_t>(i), n);
         ++i;
+    }
+
+    // An A-label that yields no code points -- e.g. "xn---", an ACE prefix
+    // followed by an empty Bootstring payload -- is not a decodable label.
+    // libidn2 rejects it; the fallback must too (PUNY-rxvwqsou) rather than
+    // echoing the input back and hiding the failure from the caller.
+    if (output.empty()) {
+        throw_error(ErrorCode::invalid_punycode_label);
     }
 
     return codepoints_to_utf8(output);
