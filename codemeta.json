@@ -2,7 +2,7 @@
   "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
   "@type": "SoftwareSourceCode",
   "identifier": "punycoder",
-  "description": "High-performance Unicode and Punycode processing for internationalized domain names. The 'puny_encode()' / 'puny_decode()' helpers are a low-level, RFC 3492 compliant Punycode codec for domain labels (the 'xn--' ASCII-Compatible Encoding of RFC 5890/5891); they perform the raw transform plus letter-digit-hyphen checks and do not apply Unicode IDNA normalization. 'host_normalize()' is the Unicode Technical Standard #46 host-normalization entry point, mapping a host name to a canonical lowercase ASCII comparison form (non-transitional profile, pinned Unicode version). The 'url_encode()' / 'url_decode()' / 'parse_url()' helpers do best-effort host extraction and rewriting in URL-shaped strings and are deliberately not RFC 3986 / WHATWG URL parsers or canonicalizers; they are deprecated in favor of dedicated URL packages. Aimed at host normalization and data analysis workflows. Used as the Punycode and IDNA engine by the 'pslr' and 'rurl' packages.",
+  "description": "High-performance Unicode and Punycode processing for internationalized domain names. The 'puny_encode()' / 'puny_decode()' helpers are a low-level, RFC 3492 compliant Punycode codec for domain labels (the 'xn--' ASCII-Compatible Encoding of RFC 5890/5891); they perform the raw transform plus letter-digit-hyphen checks and do not apply Unicode IDNA normalization. 'host_normalize()' is the Unicode Technical Standard #46 host-normalization entry point, mapping a host name to a canonical lowercase ASCII comparison form (non-transitional profile, pinned Unicode version). Aimed at host normalization and data analysis workflows. Used as the Punycode and IDNA engine by the 'pslr' and 'rurl' packages.",
   "name": "punycoder: Unicode and Punycode Domain Name Processing",
   "relatedLink": ["https://bart-turczynski.github.io/punycoder/", "https://bart-turczynski.r-universe.dev/punycoder", "https://CRAN.R-project.org/package=punycoder"],
   "codeRepository": "https://github.com/bart-turczynski/punycoder",
@@ -125,7 +125,7 @@
     "SystemRequirements": "GNU libidn2 (optional, for native punycode backend)"
   },
   "keywords": ["punycode", "punycodeencode", "punycodedecode", "IDNA", "IDN", "internationalizeddomainnames", "UTS-46", "RFC3492", "Unicode", "hostnormalization", "hostname", "domainnames", "TLD", "r", "r-lang", "r-library", "r-package", "r-programming", "rstats", "domain-names", "domains", "tld", "unicode", "unicode-converter", "punycode-decode", "punycode-encode", "idn", "idna", "uts46", "rfc3492", "internationalized-domain-names"],
-  "fileSize": "1520.235KB",
+  "fileSize": "1471.356KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
