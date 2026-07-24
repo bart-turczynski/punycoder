@@ -20,6 +20,21 @@
   }
 }
 
+#' Validate the UTS #46 normalization flag triple
+#'
+#' The same three flags gate `host_normalize()` and
+#' `normalization_profile_info()`. Validation order is part of the contract:
+#' a call passing several bad flags reports `check_hyphens` first.
+#' @param check_hyphens,use_std3,verify_dns_length Values to check
+#' @keywords internal
+#' @noRd
+.assert_normalize_flags <- function(check_hyphens, use_std3,
+                                    verify_dns_length) {
+  .assert_flag(check_hyphens, "check_hyphens")
+  .assert_flag(use_std3, "use_std3")
+  .assert_flag(verify_dns_length, "verify_dns_length")
+}
+
 #' Warn if input contains NA values
 #' @param x Value to check
 #' @keywords internal
