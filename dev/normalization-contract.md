@@ -300,9 +300,3 @@ Consciously **not** used (rejected alternative): **RFC 3490 / 3491 / 3454**
 (IDNA2003 / Nameprep / Stringprep). The UTS #46 non-transitional profile
 supersedes them. **RFC 5894** (IDNA2008 rationale, informational) is background
 reading, not a normative dependency.
-
-The best-effort URL helpers (`url_*` / `parse_url()`, `punycoder_url.cpp`) are
-**not** conformant to **RFC 3986** (URI), **RFC 3987** (IRI), the **WHATWG URL
-Standard**, **RFC 5952** (IPv6 text form), **RFC 4291** (IPv6 addressing), or
-**RFC 6874** (IPv6 zone IDs); those citations belong with that surface and move
-with it if it migrates to a dedicated URL package.

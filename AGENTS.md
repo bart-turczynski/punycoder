@@ -26,11 +26,11 @@ The `libidn2` backend is optional. On macOS: `brew install libidn2 pkg-config`. 
 
 ### R surface → C++ core
 
-`R/*.R` is a thin wrapper layer. Exported functions are `puny_encode`, `puny_decode`, `host_normalize`, `normalization_profile_info`, `validate_domain`, `is_punycode`, `is_idn`, plus the deprecated URL surface `url_encode`, `url_decode`, `parse_url`. Each validates its inputs in R (`R/helpers.R::.call_with_validation`), then dispatches to a `*_cpp` shim in `R/RcppExports.R`. The shims call into `src/exports.cpp`, which is the only file that talks to Rcpp types — everything below it uses `std::string` / `std::vector` and lives in `namespace punycoder`.
+`R/*.R` is a thin wrapper layer. Exported functions are `puny_encode`, `puny_decode`, `host_normalize`, `normalization_profile_info`, `validate_domain`, `is_punycode`, `is_idn`. Each validates its inputs in R (`R/helpers.R::.call_with_validation`), then dispatches to a `*_cpp` shim in `R/RcppExports.R`. The shims call into `src/exports.cpp`, which is the only file that talks to Rcpp types — everything below it uses `std::string` / `std::vector` and lives in `namespace punycoder`.
 
-The wrapper layer is split by concern: `R/punycoder.R` (puny_*/validators surface), `R/normalize.R` (`host_normalize` + `normalization_profile_info`), `R/validators.R`, `R/url-utils.R` (the deprecated URL surface — its `.deprecate_url_surface()` emits the `.Deprecated()` warning), `R/results.R` (S3 `print`/summary methods for `punycoder_parsed_url` and `punycoder_validation`), `R/helpers.R` (input assertions + validation dispatch), `R/zzz.R` (`.onLoad` option defaults).
+The wrapper layer is split by concern: `R/punycoder.R` (puny_*/validators surface), `R/normalize.R` (`host_normalize` + `normalization_profile_info`), `R/validators.R`, `R/results.R` (S3 `print`/summary methods for `punycoder_validation`), `R/helpers.R` (input assertions + validation dispatch), `R/zzz.R` (`.onLoad` option defaults).
 
-The URL surface (`url_encode`/`url_decode`/`parse_url`) is **deprecated and slated for removal next release** — it was always best-effort host extraction, never an RFC 3986 / WHATWG parser. Don't extend it; new host work goes through `host_normalize` or `puny_*`. URL parsing/canonicalization belongs upstack in `rurl`.
+There is **no URL surface**: the former `url_encode`/`url_decode`/`parse_url` helpers were best-effort host extraction (never an RFC 3986 / WHATWG parser), deprecated in 1.2.0 and removed the following release. New host work goes through `host_normalize` or `puny_*`; URL parsing/canonicalization belongs upstack in `rurl`. `puny_encode`/`puny_decode` reject URL-shaped input with an actionable error pointing at `rurl::get_host()`.
 
 ### Native subsystem split (`src/`)
 
@@ -40,17 +40,16 @@ All declarations live in `src/punycoder_core.h`. Implementations are split by re
 - `punycoder_normalize.cpp` / `.h` — `host_normalize_one`: the UTS #46 (non-transitional, STD3) canonical-host pipeline — mapping, label validation, A-label check, Punycode encode, DNS length verification. Returns `{valid, value}` (never throws on invalid *data*; invalid → `valid=false`, surfaced to R as `NA`). Exposes three relaxable flags (`check_hyphens`, `use_std3`, `verify_dns_length`); `CheckBidi`/`CheckJoiners` are always on and deliberately not knobs.
 - `punycoder_nfc.cpp` / `.h` — Unicode NFC (canonical decomposition + composition) per UAX #15, used by the normalizer.
 - `unicode_tables_16_0_0.cpp` / `.h` — vendored Unicode 16.0.0 data (combining class, decompositions, composition, UTS #46 mapping/status, combining-mark set, Bidi_Class, Joining_Type). **Generated, never hand-edited** — see the Unicode tables section below.
-- `punycoder_backend.cpp` — Backend selection (`select_label_backend`) and the `libidn2` adapter guarded by `#ifdef PUNYCODER_USE_LIBIDN2`. **All `#ifdef PUNYCODER_USE_LIBIDN2` should stay in this file**; don't sprinkle them through domain/URL code (per CONTRIBUTING.md).
+- `punycoder_backend.cpp` — Backend selection (`select_label_backend`) and the `libidn2` adapter guarded by `#ifdef PUNYCODER_USE_LIBIDN2`. **All `#ifdef PUNYCODER_USE_LIBIDN2` should stay in this file**; don't sprinkle them through domain code (per CONTRIBUTING.md).
 - `punycoder_utf8.cpp` — UTF-8 ↔ codepoint conversion and ASCII helpers.
 - `punycoder_domain.cpp` — `validate_and_parse_domain`, label-level rules (length, hyphens, xn-- detection).
-- `punycoder_url.cpp` — `parse_url_string`, host classification (DNS / IPv4 / IPv6), URL rebuild with a substituted host.
-- `punycoder_service.cpp` — `PunycodeService` facade that wires the chosen backend to the domain/URL layers and applies the `strict` flag.
+- `punycoder_service.cpp` — `PunycodeService` facade that wires the chosen backend to the domain layer and applies the `strict` flag.
 - `punycoder_errors.cpp` — `PunycoderError` and the canonical `throw_error(ErrorCode, …)` map. **R-facing error message prefixes are part of the contract** (per CONTRIBUTING.md) — `exports.cpp` adds prefixes like `"Error encoding domain: …"`. Don't change those strings without bumping tests.
 - `exports.cpp` — Rcpp boundary: NA handling, strict-vs-non-strict error policy (strict → `Rcpp::stop`; non-strict → return `NA_character_`), and the `compare_backends_cpp` / `backend_info_cpp` introspection used by tests.
 
 ### Backend selection
 
-`select_label_backend(BackendPreference)` returns a `LabelBackend` (a pair of encode/decode function pointers plus a name). `automatic` resolves to `"libidn2+fallback"` when libidn2 is compiled in (with libidn2 tried first, fallback on exception), `"libidn2"` to force native, `"fallback"` to force the in-tree algorithm. Tests in `tests/testthat/test-backends.R` use `punycoder:::.compare_backends()` (which calls `compare_backends_cpp`) to assert the two backends agree on RFC 3492 vectors (`inst/testdata/rfc3492_vectors.csv`) and on representative URLs; tests `skip_if` when libidn2 isn't available.
+`select_label_backend(BackendPreference)` returns a `LabelBackend` (a pair of encode/decode function pointers plus a name). `automatic` resolves to `"libidn2+fallback"` when libidn2 is compiled in (with libidn2 tried first, fallback on exception), `"libidn2"` to force native, `"fallback"` to force the in-tree algorithm. Tests in `tests/testthat/test-backends.R` use `punycoder:::.compare_backends()` (which calls `compare_backends_cpp`) to assert the two backends agree on RFC 3492 vectors (`inst/testdata/rfc3492_vectors.csv`) and on representative multi-script domains; tests `skip_if` when libidn2 isn't available.
 
 Note the libidn2 path is Unix-only: `configure` defines `-DPUNYCODER_USE_LIBIDN2` only on Linux/macOS. `src/Makevars.win` never sets it, so **Windows builds always use the fallback backend** regardless of installed libraries.
 
@@ -66,7 +65,7 @@ Normalization depends on vendored Unicode tables (`src/unicode_tables_16_0_0.{h,
 
 ### Tests
 
-`tests/testthat/` is grouped by concern: `test-encoding`, `test-urls`, `test-validators`, `test-unicode`, `test-rfc3492` (golden vectors), `test-backends` (libidn2 vs fallback parity), `test-contracts` (NA/error policy), `test-normalize` (`host_normalize` behavior + profile flags), `test-idna-conformance` (UTS #46 conformance vectors), `test-internals`, `test-lifecycle`, `test-performance`. Add tests under the matching file for any user-visible change (per CONTRIBUTING.md).
+`tests/testthat/` is grouped by concern: `test-encoding`, `test-validators`, `test-unicode`, `test-rfc3492` (golden vectors), `test-backends` (libidn2 vs fallback parity), `test-contracts` (NA/error policy), `test-normalize` (`host_normalize` behavior + profile flags), `test-idna-conformance` (UTS #46 conformance vectors), `test-internals`, `test-lifecycle`, `test-performance`. Add tests under the matching file for any user-visible change (per CONTRIBUTING.md).
 
 ## Repo conventions
 

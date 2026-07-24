@@ -1,7 +1,5 @@
 #include <Rcpp.h>
 
-#include <cstdlib>
-#include <limits>
 #include <stdexcept>
 #include <string>
 
@@ -50,12 +48,6 @@ std::string apply_backend_mode(
     if (mode == "decode_domain") {
         return service.decode_domain(value);
     }
-    if (mode == "encode_url") {
-        return service.encode_url(value);
-    }
-    if (mode == "decode_url") {
-        return service.decode_url(value);
-    }
 
     throw std::invalid_argument("Unknown backend comparison mode");
 }
@@ -103,105 +95,6 @@ Rcpp::CharacterVector puny_decode_cpp(Rcpp::CharacterVector domains, bool strict
             }
             return service.decode_domain(domain);
         }
-    );
-}
-
-// [[Rcpp::export]]
-Rcpp::CharacterVector url_encode_cpp(Rcpp::CharacterVector urls, bool strict = true) {
-    punycoder::PunycodeService service(strict);
-    return transform_strings(
-        urls,
-        strict,
-        "Error encoding URL",
-        [&](const std::string& url) {
-            return service.encode_url(url);
-        }
-    );
-}
-
-// [[Rcpp::export]]
-Rcpp::CharacterVector url_decode_cpp(Rcpp::CharacterVector urls, bool strict = true) {
-    punycoder::PunycodeService service(strict);
-    return transform_strings(
-        urls,
-        strict,
-        "Error decoding URL",
-        [&](const std::string& url) {
-            return service.decode_url(url);
-        }
-    );
-}
-
-// [[Rcpp::export]]
-Rcpp::List parse_url_cpp(Rcpp::CharacterVector urls, bool encode_domains = false) {
-    R_xlen_t n = urls.size();
-    Rcpp::CharacterVector scheme(n, NA_STRING);
-    Rcpp::CharacterVector domain(n, NA_STRING);
-    Rcpp::IntegerVector port(n, NA_INTEGER);
-    Rcpp::CharacterVector path(n, NA_STRING);
-    Rcpp::CharacterVector query(n, NA_STRING);
-    Rcpp::CharacterVector fragment(n, NA_STRING);
-    punycoder::PunycodeService service(false);
-
-    for (R_xlen_t i = 0; i < n; ++i) {
-        if (Rcpp::CharacterVector::is_na(urls[i])) {
-            continue;
-        }
-
-        std::string url = Rcpp::as<std::string>(urls[i]);
-        punycoder::ParsedURL parsed = punycoder::parse_url_string(url);
-        if (!parsed.valid) {
-            continue;
-        }
-
-        if (!parsed.scheme.empty()) {
-            scheme[i] = parsed.scheme;
-        }
-
-        if (!parsed.path.empty()) {
-            path[i] = parsed.path;
-        } else {
-            path[i] = "";
-        }
-
-        if (parsed.has_query) {
-            query[i] = parsed.query;
-        }
-        if (parsed.has_fragment) {
-            fragment[i] = parsed.fragment;
-        }
-
-        if (!parsed.host.empty()) {
-            if (encode_domains && parsed.host_kind == punycoder::HostKind::dns) {
-                try {
-                    domain[i] = service.encode_domain(parsed.host);
-                } catch (const std::exception&) {
-                    domain[i] = NA_STRING;
-                }
-            } else {
-                domain[i] = parsed.host;
-            }
-        }
-
-        if (!parsed.port.empty()) {
-            char* end_ptr = nullptr;
-            long parsed_port = std::strtol(parsed.port.c_str(), &end_ptr, 10);
-            if (end_ptr != nullptr &&
-                *end_ptr == '\0' &&
-                parsed_port >= 0 &&
-                parsed_port <= std::numeric_limits<int>::max()) {
-                port[i] = static_cast<int>(parsed_port);
-            }
-        }
-    }
-
-    return Rcpp::List::create(
-        Rcpp::Named("scheme") = scheme,
-        Rcpp::Named("domain") = domain,
-        Rcpp::Named("port") = port,
-        Rcpp::Named("path") = path,
-        Rcpp::Named("query") = query,
-        Rcpp::Named("fragment") = fragment
     );
 }
 
@@ -276,7 +169,7 @@ Rcpp::List compare_backends_cpp(
     Rcpp::CharacterVector fallback(input.size());
     Rcpp::CharacterVector libidn2(input.size());
     bool has_libidn2 = punycoder::libidn2_backend_available();
-    bool verify_dns_length = mode == "encode_url" || mode == "decode_url";
+    bool verify_dns_length = false;
 
     punycoder::PunycodeService fallback_service(
         strict,

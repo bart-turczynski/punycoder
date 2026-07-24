@@ -154,24 +154,6 @@ test_that("fallback and libidn2 agree to reject malformed domains", {
   expect_true(all(d$fb_reject))
 })
 
-test_that("fallback and libidn2 agree on representative URL cases", {
-  unicode_urls <- c(
-    "https://café.example.com/path?query=value",
-    "https://user:pass@παράδειγμα.ελ:8443/path#frag",
-    "http://127.0.0.1/path",
-    "http://[2001:db8::1]/path"
-  )
-  expect_backend_parity(unicode_urls, "encode_url", strict = TRUE)
-
-  ascii_urls <- c(
-    "https://xn--caf-dma.example.com/path",
-    "https://user:pass@xn--hxajbheg2az3al.xn--qxam:8443/path#frag",
-    "http://127.0.0.1/path",
-    "http://[2001:db8::1]/path"
-  )
-  expect_backend_parity(ascii_urls, "decode_url", strict = TRUE)
-})
-
 # --- Fallback correctness without libidn2 ---------------------------------
 #
 # When libidn2 is present the public API routes label work through it, so the

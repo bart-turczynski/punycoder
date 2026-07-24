@@ -47,15 +47,6 @@ reference:
       - is_idn
       - is_punycode
 
-  - title: "Deprecated URL Helpers"
-    desc: >
-      Best-effort URL host extraction and rewriting. Deprecated in favour
-      of dedicated URL packages.
-    contents:
-      - url_encode
-      - url_decode
-      - parse_url
-
   - title: "Internals"
     desc: S3 print methods and package overview.
     contents:

@@ -51,6 +51,5 @@ puny_encode(domains)
 }
 \seealso{
 \code{\link{puny_decode}} for the reverse operation,
-\code{\link{host_normalize}} for IDNA/UTS-46 host normalization,
-\code{\link{url_encode}} for full URL encoding.
+\code{\link{host_normalize}} for IDNA/UTS-46 host normalization.
 }

@@ -22,8 +22,7 @@
 #'   to \code{NA} inputs are \code{NA_character_}. In non-strict mode, domains
 #'   that fail encoding are also returned as \code{NA_character_}.
 #' @seealso \code{\link{puny_decode}} for the reverse operation,
-#'   \code{\link{host_normalize}} for IDNA/UTS-46 host normalization,
-#'   \code{\link{url_encode}} for full URL encoding.
+#'   \code{\link{host_normalize}} for IDNA/UTS-46 host normalization.
 #' @examples
 #' \donttest{
 #' # Basic encoding
@@ -64,8 +63,7 @@ puny_encode <- function(x, strict = getOption("punycoder.strict", TRUE)) {
 #'   \code{NA} inputs are \code{NA_character_}. In non-strict mode, domains
 #'   that fail decoding are also returned as \code{NA_character_}.
 #' @seealso \code{\link{puny_encode}} for the reverse operation,
-#'   \code{\link{host_normalize}} for IDNA/UTS-46 host normalization,
-#'   \code{\link{url_decode}} for full URL decoding.
+#'   \code{\link{host_normalize}} for IDNA/UTS-46 host normalization.
 #' @examples
 #' \donttest{
 #' # Basic decoding
