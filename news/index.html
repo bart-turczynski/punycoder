@@ -46,6 +46,10 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="punycoder-development-version">punycoder (development version)<a class="anchor" aria-label="anchor" href="#punycoder-development-version"></a></h2>
 <div class="section level3">
+<h3 id="breaking-changes-development-version">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-development-version"></a></h3>
+<ul><li>The deprecated URL surface — <code>url_encode()</code>, <code>url_decode()</code>, and <code>parse_url()</code> — has been <strong>removed</strong>, one release after the <code><a href="https://rdrr.io/r/base/Deprecated.html" class="external-link">.Deprecated()</a></code> warning cycle introduced in 1.2.0. These were always best-effort host extraction/rewriting, never an RFC 3986 / WHATWG URL parser or canonicalizer. Use the <code>rurl</code> package for URL parsing and canonicalization, or pass the host alone to <code><a href="../reference/host_normalize.html">host_normalize()</a></code> / <code><a href="../reference/puny_encode.html">puny_encode()</a></code> / <code><a href="../reference/puny_decode.html">puny_decode()</a></code> for host-only needs. <code><a href="../reference/puny_encode.html">puny_encode()</a></code> / <code><a href="../reference/puny_decode.html">puny_decode()</a></code> continue to reject URL-shaped input with an actionable error pointing at <code>rurl::get_host()</code>. The internal URL parser (<code>punycoder_url.cpp</code>) and the <code>punycoder_parsed_url</code> print method are gone with the surface (PUNY-rumdaymk).</li>
+</ul></div>
+<div class="section level3">
 <h3 id="bug-fixes-development-version">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
 <ul><li>
 <code><a href="../reference/puny_decode.html">puny_decode()</a></code> now rejects malformed A-label input consistently across backends. The in-tree fallback decoder previously accepted non letter-digit-hyphen (LDH) characters in a label’s literal section (e.g. <code>xn--(o)-...</code>) and echoed an empty Bootstring payload (<code>xn---</code>) back unchanged, where libidn2 rejected both. It now applies the documented LDH check to decode input and reports these as an error under <code>strict = TRUE</code> / <code>NA</code> under <code>strict = FALSE</code>, so the two backends agree on every input (PUNY-ypjwnagl, PUNY-rxvwqsou).</li>
@@ -74,7 +78,7 @@
 <div class="section level3">
 <h3 id="deprecated-1-2-0">Deprecated<a class="anchor" aria-label="anchor" href="#deprecated-1-2-0"></a></h3>
 <ul><li>
-<code><a href="../reference/url_encode.html">url_encode()</a></code>, <code><a href="../reference/url_decode.html">url_decode()</a></code>, and <code><a href="../reference/parse_url.html">parse_url()</a></code> are deprecated and now emit a <code><a href="https://rdrr.io/r/base/Deprecated.html" class="external-link">.Deprecated()</a></code> warning on use. They remain exported and fully functional for this release and are scheduled for removal in the next one. These were always best-effort host extraction/rewriting, not RFC 3986 / WHATWG URL parsing; use the <code>rurl</code> package for URL parsing and canonicalization, or pass the host alone to <code><a href="../reference/host_normalize.html">host_normalize()</a></code> / <code><a href="../reference/puny_encode.html">puny_encode()</a></code> / <code><a href="../reference/puny_decode.html">puny_decode()</a></code> for host-only needs.</li>
+<code>url_encode()</code>, <code>url_decode()</code>, and <code>parse_url()</code> are deprecated and now emit a <code><a href="https://rdrr.io/r/base/Deprecated.html" class="external-link">.Deprecated()</a></code> warning on use. They remain exported and fully functional for this release and are scheduled for removal in the next one. These were always best-effort host extraction/rewriting, not RFC 3986 / WHATWG URL parsing; use the <code>rurl</code> package for URL parsing and canonicalization, or pass the host alone to <code><a href="../reference/host_normalize.html">host_normalize()</a></code> / <code><a href="../reference/puny_encode.html">puny_encode()</a></code> / <code><a href="../reference/puny_decode.html">puny_decode()</a></code> for host-only needs.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="minor-improvements-1-2-0">Minor improvements<a class="anchor" aria-label="anchor" href="#minor-improvements-1-2-0"></a></h3>
@@ -110,7 +114,7 @@
 <ul><li>Strict decoding now enforces RFC 5891 canonical A-label form: a decoded label must re-encode to itself. Non-canonical encodings (e.g. uppercase payloads) are rejected in strict mode while non-strict decoding stays lenient.</li>
 <li>Initial release of punycoder package</li>
 <li>Core punycode encoding and decoding functions (<code><a href="../reference/puny_encode.html">puny_encode()</a></code>, <code><a href="../reference/puny_decode.html">puny_decode()</a></code>)</li>
-<li>URL-aware processing functions (<code><a href="../reference/url_encode.html">url_encode()</a></code>, <code><a href="../reference/url_decode.html">url_decode()</a></code>, <code><a href="../reference/parse_url.html">parse_url()</a></code>)</li>
+<li>URL-aware processing functions (<code>url_encode()</code>, <code>url_decode()</code>, <code>parse_url()</code>)</li>
 <li>Domain validation and utility functions (<code><a href="../reference/is_punycode.html">is_punycode()</a></code>, <code><a href="../reference/is_idn.html">is_idn()</a></code>, <code><a href="../reference/validate_domain.html">validate_domain()</a></code>)</li>
 <li>Comprehensive test suite with RFC 3492 compliance testing</li>
 <li>High-performance C++ backend with Rcpp</li>

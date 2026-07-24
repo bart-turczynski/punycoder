@@ -26,7 +26,6 @@ network protocols and systems. Existing R packages have limitations:
 `punycoder` provides:
 
 - **Reliable encoding/decoding** following RFC 3492 standards
-- **URL-aware processing** for complete URL handling
 - **High performance** for large datasets
 - **Comprehensive validation** with informative error messages
 
@@ -55,23 +54,6 @@ encoded <- puny_encode(domains)
 print(encoded)
 ```
 
-#### URL Processing
-
-``` r
-
-# Encode URLs with Unicode domains
-url_encode(paste0("https", "://", "café.example.com/menu"))
-
-# Decode URLs back to Unicode
-url_decode(paste0("https", "://", "xn--caf-dma.example.com/menu"))
-
-# Parse URLs with IDN handling
-url_parts <- parse_url(
-  paste0("https", "://", "café.example.com:8080/path?q=test#section")
-)
-print(url_parts)
-```
-
 #### Validation and Utilities
 
 ``` r
@@ -90,31 +72,6 @@ print(result)
 ```
 
 ### Data Analysis Workflows
-
-#### Web Scraping with International Domains
-
-``` r
-
-# Example: Processing international URLs for web scraping
-international_hosts <- c("café.paris.fr", "москва.рф", "北京.中国")
-international_paths <- c("/menu", "/news", "/info")
-international_urls <- paste0(
-  "https",
-  "://",
-  international_hosts,
-  international_paths
-)
-
-# Convert to ASCII for HTTP requests
-ascii_urls <- url_encode(international_urls)
-print(ascii_urls)
-
-# Process the data...
-
-# Convert back to Unicode for display
-display_urls <- url_decode(ascii_urls)
-print(display_urls)
-```
 
 #### Bulk Domain Processing
 
@@ -209,12 +166,12 @@ dt <- data.table(
 
 # With dplyr
 library(dplyr)
-urls_df <- data.frame(
-  unicode_url = paste0("https", "://", c("café.com", "москва.рф"))
+domains_df <- data.frame(
+  unicode_domain = c("café.com", "москва.рф")
 ) |>
   mutate(
-    ascii_url = url_encode(unicode_url),
-    is_international = is_idn(unicode_url)
+    ascii_domain = puny_encode(unicode_domain),
+    is_international = is_idn(unicode_domain)
   )
 ```
 

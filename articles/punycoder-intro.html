@@ -115,8 +115,6 @@ handling</li>
 <strong>Reliable encoding/decoding</strong> following RFC 3492
 standards</li>
 <li>
-<strong>URL-aware processing</strong> for complete URL handling</li>
-<li>
 <strong>High performance</strong> for large datasets</li>
 <li>
 <strong>Comprehensive validation</strong> with informative error
@@ -150,25 +148,9 @@ messages</li>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">encoded</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level4">
-<h4 id="url-processing">URL Processing<a class="anchor" aria-label="anchor" href="#url-processing"></a>
-</h4>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Encode URLs with Unicode domains</span></span>
-<span><span class="fu"><a href="../reference/url_encode.html">url_encode</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"https"</span>, <span class="st">"://"</span>, <span class="st">"café.example.com/menu"</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Decode URLs back to Unicode</span></span>
-<span><span class="fu"><a href="../reference/url_decode.html">url_decode</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"https"</span>, <span class="st">"://"</span>, <span class="st">"xn--caf-dma.example.com/menu"</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Parse URLs with IDN handling</span></span>
-<span><span class="va">url_parts</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/parse_url.html">parse_url</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"https"</span>, <span class="st">"://"</span>, <span class="st">"café.example.com:8080/path?q=test#section"</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">url_parts</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level4">
 <h4 id="validation-and-utilities">Validation and Utilities<a class="anchor" aria-label="anchor" href="#validation-and-utilities"></a>
 </h4>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Check if domain is already punycode</span></span>
 <span><span class="fu"><a href="../reference/is_punycode.html">is_punycode</a></span><span class="op">(</span><span class="st">"xn--caf-dma.com"</span><span class="op">)</span> <span class="co"># TRUE</span></span>
 <span><span class="fu"><a href="../reference/is_punycode.html">is_punycode</a></span><span class="op">(</span><span class="st">"café.com"</span><span class="op">)</span> <span class="co"># FALSE</span></span>
@@ -186,33 +168,9 @@ messages</li>
 <h3 id="data-analysis-workflows">Data Analysis Workflows<a class="anchor" aria-label="anchor" href="#data-analysis-workflows"></a>
 </h3>
 <div class="section level4">
-<h4 id="web-scraping-with-international-domains">Web Scraping with International Domains<a class="anchor" aria-label="anchor" href="#web-scraping-with-international-domains"></a>
-</h4>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Example: Processing international URLs for web scraping</span></span>
-<span><span class="va">international_hosts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"café.paris.fr"</span>, <span class="st">"москва.рф"</span>, <span class="st">"北京.中国"</span><span class="op">)</span></span>
-<span><span class="va">international_paths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"/menu"</span>, <span class="st">"/news"</span>, <span class="st">"/info"</span><span class="op">)</span></span>
-<span><span class="va">international_urls</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span>
-<span>  <span class="st">"https"</span>,</span>
-<span>  <span class="st">"://"</span>,</span>
-<span>  <span class="va">international_hosts</span>,</span>
-<span>  <span class="va">international_paths</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Convert to ASCII for HTTP requests</span></span>
-<span><span class="va">ascii_urls</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/url_encode.html">url_encode</a></span><span class="op">(</span><span class="va">international_urls</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">ascii_urls</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Process the data...</span></span>
-<span></span>
-<span><span class="co"># Convert back to Unicode for display</span></span>
-<span><span class="va">display_urls</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/url_decode.html">url_decode</a></span><span class="op">(</span><span class="va">ascii_urls</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">display_urls</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level4">
 <h4 id="bulk-domain-processing">Bulk Domain Processing<a class="anchor" aria-label="anchor" href="#bulk-domain-processing"></a>
 </h4>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Example: Processing large datasets</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span>
 <span><span class="va">sample_domains</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
@@ -235,7 +193,7 @@ messages</li>
 </h3>
 <p>The package provides robust error handling with informative
 messages:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Strict validation (default)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="op">{</span></span>
 <span>  <span class="fu"><a href="../reference/puny_encode.html">puny_encode</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"valid.com"</span>, <span class="st">""</span><span class="op">)</span><span class="op">)</span> <span class="co"># Empty string causes error</span></span>
@@ -263,7 +221,7 @@ efficiently</li>
 <strong>Memory efficient</strong>: Handles large datasets without
 excessive memory use</li>
 </ul>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Benchmark with large dataset</span></span>
 <span><span class="va">large_domains</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"example.com"</span>, <span class="st">"café.com"</span><span class="op">)</span>, <span class="fl">5000</span><span class="op">)</span></span>
 <span></span>
@@ -277,7 +235,7 @@ excessive memory use</li>
 <h3 id="package-options">Package Options<a class="anchor" aria-label="anchor" href="#package-options"></a>
 </h3>
 <p>You can configure package behavior using R options:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Set global strict validation</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>punycoder.strict <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
@@ -292,7 +250,7 @@ excessive memory use</li>
 </h3>
 <p><code>punycoder</code> is designed to integrate well with other R
 packages:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># With data.table</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
 <span><span class="va">dt</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="op">(</span></span>
@@ -302,12 +260,12 @@ packages:</p>
 <span></span>
 <span><span class="co"># With dplyr</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
-<span><span class="va">urls_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>  unicode_url <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"https"</span>, <span class="st">"://"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"café.com"</span>, <span class="st">"москва.рф"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">domains_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  unicode_domain <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"café.com"</span>, <span class="st">"москва.рф"</span><span class="op">)</span></span>
 <span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
-<span>    ascii_url <span class="op">=</span> <span class="fu"><a href="../reference/url_encode.html">url_encode</a></span><span class="op">(</span><span class="va">unicode_url</span><span class="op">)</span>,</span>
-<span>    is_international <span class="op">=</span> <span class="fu"><a href="../reference/is_idn.html">is_idn</a></span><span class="op">(</span><span class="va">unicode_url</span><span class="op">)</span></span>
+<span>    ascii_domain <span class="op">=</span> <span class="fu"><a href="../reference/puny_encode.html">puny_encode</a></span><span class="op">(</span><span class="va">unicode_domain</span><span class="op">)</span>,</span>
+<span>    is_international <span class="op">=</span> <span class="fu"><a href="../reference/is_idn.html">is_idn</a></span><span class="op">(</span><span class="va">unicode_domain</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">

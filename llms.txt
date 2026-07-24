@@ -117,8 +117,6 @@ validate_domain("test.com")
 ## Key Features
 
 - **Reliable Encoding/Decoding**: RFC 3492 compliant punycode conversion
-- **Best-effort host rewriting**: Swap the host of a URL-shaped string
-  in place (not a full URL parser; see below)
 - **High Performance**: Vectorized operations for processing large
   datasets
 - **Comprehensive Validation**: Robust error handling with informative
@@ -127,37 +125,6 @@ validate_domain("test.com")
   with a built-in fallback backend
 
 ## Use Cases
-
-### Web Scraping
-
-Process international websites with Unicode domain names:
-
-``` r
-
-international_urls <- c(
-  "https://café.paris.fr/menu",
-  "https://москва.рф/news",
-  "https://北京.中国/info"
-)
-
-# Convert for HTTP requests (best-effort host rewriting only)
-ascii_urls <- url_encode(international_urls)
-```
-
-> [`url_encode()`](https://bart-turczynski.github.io/punycoder/reference/url_encode.md),
-> [`url_decode()`](https://bart-turczynski.github.io/punycoder/reference/url_decode.md),
-> and
-> [`parse_url()`](https://bart-turczynski.github.io/punycoder/reference/parse_url.md)
-> do **best-effort host extraction and rewriting**, not RFC 3986 /
-> WHATWG URL parsing or canonicalization. They have no percent
-> encoding/decoding, scheme validation, robust port/path/query
-> semantics, full IPv6 (zone IDs / RFC 6874), or serialization
-> guarantees, and are slated for eventual removal in favor of a
-> dedicated URL package consuming punycoder’s host functions. Use
-> [`host_normalize()`](https://bart-turczynski.github.io/punycoder/reference/host_normalize.md)
-> /
-> [`puny_encode()`](https://bart-turczynski.github.io/punycoder/reference/puny_encode.md)
-> directly when you control the host parse.
 
 ### Data Analysis
 
@@ -182,11 +149,6 @@ validate_domain(c("valid.com", "invalid..domain"))
 - IDNA/UTS-46 host normalization:
   [`host_normalize()`](https://bart-turczynski.github.io/punycoder/reference/host_normalize.md),
   [`normalization_profile_info()`](https://bart-turczynski.github.io/punycoder/reference/normalization_profile_info.md)
-- Best-effort URL host rewriting/extraction (not URL
-  parsing/canonicalization):
-  [`url_encode()`](https://bart-turczynski.github.io/punycoder/reference/url_encode.md),
-  [`url_decode()`](https://bart-turczynski.github.io/punycoder/reference/url_decode.md),
-  [`parse_url()`](https://bart-turczynski.github.io/punycoder/reference/parse_url.md)
 - Domain validation utilities:
   [`is_punycode()`](https://bart-turczynski.github.io/punycoder/reference/is_punycode.md),
   [`is_idn()`](https://bart-turczynski.github.io/punycoder/reference/is_idn.md),
@@ -211,10 +173,9 @@ safety; the following are **not** part of its acceptance criteria:
   is visually safe or non-deceptive. Confusable and restriction-level
   checks (UTS \#39 / UTR \#36, which UTS \#46 itself recommends only as
   application/UI-layer steps) belong upstack.
-- **No URL canonicalization.** The `url_*` /
-  [`parse_url()`](https://bart-turczynski.github.io/punycoder/reference/parse_url.md)
-  helpers do best-effort host rewriting only (see above), not RFC 3986 /
-  WHATWG URL parsing.
+- **No URL parsing or canonicalization.** RFC 3986 / WHATWG URL parsing
+  and canonicalization belong upstack; see the `rurl` package, which
+  consumes punycoder’s host functions.
 - **No DNS resolvability or registrability / PSL classification.**
 - **No address parsing.** There is no `email`-to-ASCII helper; splitting
   an address and IDNA-encoding its domain part is an addressing concern
@@ -388,20 +349,6 @@ Predicates for classifying domain names and labels.
   : Test if domain contains internationalized characters
 - [`is_punycode()`](https://bart-turczynski.github.io/punycoder/reference/is_punycode.md)
   : Test if string is punycode encoded
-
-## Deprecated URL Helpers
-
-Best-effort URL host extraction and rewriting. Deprecated in favour of
-dedicated URL packages.
-
-- [`url_encode()`](https://bart-turczynski.github.io/punycoder/reference/url_encode.md)
-  : Best-effort host rewriting in a URL-shaped string (Unicode host to
-  ASCII)
-- [`url_decode()`](https://bart-turczynski.github.io/punycoder/reference/url_decode.md)
-  : Best-effort host rewriting in a URL-shaped string (ASCII punycode to
-  Unicode)
-- [`parse_url()`](https://bart-turczynski.github.io/punycoder/reference/parse_url.md)
-  : Best-effort host extraction from a URL-shaped string
 
 ## Internals
 

@@ -49,9 +49,7 @@ this package), use
 [`puny_decode`](https://bart-turczynski.github.io/punycoder/reference/puny_decode.md)
 for the reverse operation,
 [`host_normalize`](https://bart-turczynski.github.io/punycoder/reference/host_normalize.md)
-for IDNA/UTS-46 host normalization,
-[`url_encode`](https://bart-turczynski.github.io/punycoder/reference/url_encode.md)
-for full URL encoding.
+for IDNA/UTS-46 host normalization.
 
 ## Examples
 

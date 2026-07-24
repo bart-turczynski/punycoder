@@ -31,20 +31,6 @@ Predicates for classifying domain names and labels.
 - [`is_punycode()`](https://bart-turczynski.github.io/punycoder/reference/is_punycode.md)
   : Test if string is punycode encoded
 
-## Deprecated URL Helpers
-
-Best-effort URL host extraction and rewriting. Deprecated in favour of
-dedicated URL packages.
-
-- [`url_encode()`](https://bart-turczynski.github.io/punycoder/reference/url_encode.md)
-  : Best-effort host rewriting in a URL-shaped string (Unicode host to
-  ASCII)
-- [`url_decode()`](https://bart-turczynski.github.io/punycoder/reference/url_decode.md)
-  : Best-effort host rewriting in a URL-shaped string (ASCII punycode to
-  Unicode)
-- [`parse_url()`](https://bart-turczynski.github.io/punycoder/reference/parse_url.md)
-  : Best-effort host extraction from a URL-shaped string
-
 ## Internals
 
 S3 print methods and package overview.

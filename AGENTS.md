@@ -55,28 +55,26 @@ surface; `./configure` prints which backend was selected.
 
 `R/*.R` is a thin wrapper layer. Exported functions are `puny_encode`,
 `puny_decode`, `host_normalize`, `normalization_profile_info`,
-`validate_domain`, `is_punycode`, `is_idn`, plus the deprecated URL
-surface `url_encode`, `url_decode`, `parse_url`. Each validates its
-inputs in R (`R/helpers.R::.call_with_validation`), then dispatches to a
-`*_cpp` shim in `R/RcppExports.R`. The shims call into
-`src/exports.cpp`, which is the only file that talks to Rcpp types —
-everything below it uses `std::string` / `std::vector` and lives in
-`namespace punycoder`.
+`validate_domain`, `is_punycode`, `is_idn`. Each validates its inputs in
+R (`R/helpers.R::.call_with_validation`), then dispatches to a `*_cpp`
+shim in `R/RcppExports.R`. The shims call into `src/exports.cpp`, which
+is the only file that talks to Rcpp types — everything below it uses
+`std::string` / `std::vector` and lives in `namespace punycoder`.
 
 The wrapper layer is split by concern: `R/punycoder.R`
 (puny\_\*/validators surface), `R/normalize.R` (`host_normalize` +
-`normalization_profile_info`), `R/validators.R`, `R/url-utils.R` (the
-deprecated URL surface — its `.deprecate_url_surface()` emits the
-[`.Deprecated()`](https://rdrr.io/r/base/Deprecated.html) warning),
-`R/results.R` (S3 `print`/summary methods for `punycoder_parsed_url` and
-`punycoder_validation`), `R/helpers.R` (input assertions + validation
-dispatch), `R/zzz.R` (`.onLoad` option defaults).
+`normalization_profile_info`), `R/validators.R`, `R/results.R` (S3
+`print`/summary methods for `punycoder_validation`), `R/helpers.R`
+(input assertions + validation dispatch), `R/zzz.R` (`.onLoad` option
+defaults).
 
-The URL surface (`url_encode`/`url_decode`/`parse_url`) is **deprecated
-and slated for removal next release** — it was always best-effort host
-extraction, never an RFC 3986 / WHATWG parser. Don’t extend it; new host
-work goes through `host_normalize` or `puny_*`. URL
-parsing/canonicalization belongs upstack in `rurl`.
+There is **no URL surface**: the former
+`url_encode`/`url_decode`/`parse_url` helpers were best-effort host
+extraction (never an RFC 3986 / WHATWG parser), deprecated in 1.2.0 and
+removed the following release. New host work goes through
+`host_normalize` or `puny_*`; URL parsing/canonicalization belongs
+upstack in `rurl`. `puny_encode`/`puny_decode` reject URL-shaped input
+with an actionable error pointing at `rurl::get_host()`.
 
 ### Native subsystem split (`src/`)
 
@@ -103,14 +101,12 @@ than spreading concerns:
 - `punycoder_backend.cpp` — Backend selection (`select_label_backend`)
   and the `libidn2` adapter guarded by `#ifdef PUNYCODER_USE_LIBIDN2`.
   **All `#ifdef PUNYCODER_USE_LIBIDN2` should stay in this file**; don’t
-  sprinkle them through domain/URL code (per CONTRIBUTING.md).
+  sprinkle them through domain code (per CONTRIBUTING.md).
 - `punycoder_utf8.cpp` — UTF-8 ↔︎ codepoint conversion and ASCII helpers.
 - `punycoder_domain.cpp` — `validate_and_parse_domain`, label-level
   rules (length, hyphens, xn– detection).
-- `punycoder_url.cpp` — `parse_url_string`, host classification (DNS /
-  IPv4 / IPv6), URL rebuild with a substituted host.
 - `punycoder_service.cpp` — `PunycodeService` facade that wires the
-  chosen backend to the domain/URL layers and applies the `strict` flag.
+  chosen backend to the domain layer and applies the `strict` flag.
 - `punycoder_errors.cpp` — `PunycoderError` and the canonical
   `throw_error(ErrorCode, …)` map. **R-facing error message prefixes are
   part of the contract** (per CONTRIBUTING.md) — `exports.cpp` adds
@@ -131,7 +127,8 @@ native, `"fallback"` to force the in-tree algorithm. Tests in
 `tests/testthat/test-backends.R` use `punycoder:::.compare_backends()`
 (which calls `compare_backends_cpp`) to assert the two backends agree on
 RFC 3492 vectors (`inst/testdata/rfc3492_vectors.csv`) and on
-representative URLs; tests `skip_if` when libidn2 isn’t available.
+representative multi-script domains; tests `skip_if` when libidn2 isn’t
+available.
 
 Note the libidn2 path is Unix-only: `configure` defines
 `-DPUNYCODER_USE_LIBIDN2` only on Linux/macOS. `src/Makevars.win` never
@@ -174,7 +171,7 @@ Downloaded UCD files are cached under the git-ignored
 
 ### Tests
 
-`tests/testthat/` is grouped by concern: `test-encoding`, `test-urls`,
+`tests/testthat/` is grouped by concern: `test-encoding`,
 `test-validators`, `test-unicode`, `test-rfc3492` (golden vectors),
 `test-backends` (libidn2 vs fallback parity), `test-contracts` (NA/error
 policy), `test-normalize` (`host_normalize` behavior + profile flags),

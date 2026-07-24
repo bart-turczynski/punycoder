@@ -67,9 +67,9 @@
 <h2 id="architecture">Architecture<a class="anchor" aria-label="anchor" href="#architecture"></a></h2>
 <div class="section level3">
 <h3 id="r-surface--c-core">R surface → C++ core<a class="anchor" aria-label="anchor" href="#r-surface--c-core"></a></h3>
-<p><code>R/*.R</code> is a thin wrapper layer. Exported functions are <code>puny_encode</code>, <code>puny_decode</code>, <code>host_normalize</code>, <code>normalization_profile_info</code>, <code>validate_domain</code>, <code>is_punycode</code>, <code>is_idn</code>, plus the deprecated URL surface <code>url_encode</code>, <code>url_decode</code>, <code>parse_url</code>. Each validates its inputs in R (<code>R/helpers.R::.call_with_validation</code>), then dispatches to a <code>*_cpp</code> shim in <code>R/RcppExports.R</code>. The shims call into <code>src/exports.cpp</code>, which is the only file that talks to Rcpp types — everything below it uses <code>std::string</code> / <code>std::vector</code> and lives in <code>namespace punycoder</code>.</p>
-<p>The wrapper layer is split by concern: <code>R/punycoder.R</code> (puny_*/validators surface), <code>R/normalize.R</code> (<code>host_normalize</code> + <code>normalization_profile_info</code>), <code>R/validators.R</code>, <code>R/url-utils.R</code> (the deprecated URL surface — its <code>.deprecate_url_surface()</code> emits the <code><a href="https://rdrr.io/r/base/Deprecated.html" class="external-link">.Deprecated()</a></code> warning), <code>R/results.R</code> (S3 <code>print</code>/summary methods for <code>punycoder_parsed_url</code> and <code>punycoder_validation</code>), <code>R/helpers.R</code> (input assertions + validation dispatch), <code>R/zzz.R</code> (<code>.onLoad</code> option defaults).</p>
-<p>The URL surface (<code>url_encode</code>/<code>url_decode</code>/<code>parse_url</code>) is <strong>deprecated and slated for removal next release</strong> — it was always best-effort host extraction, never an RFC 3986 / WHATWG parser. Don’t extend it; new host work goes through <code>host_normalize</code> or <code>puny_*</code>. URL parsing/canonicalization belongs upstack in <code>rurl</code>.</p>
+<p><code>R/*.R</code> is a thin wrapper layer. Exported functions are <code>puny_encode</code>, <code>puny_decode</code>, <code>host_normalize</code>, <code>normalization_profile_info</code>, <code>validate_domain</code>, <code>is_punycode</code>, <code>is_idn</code>. Each validates its inputs in R (<code>R/helpers.R::.call_with_validation</code>), then dispatches to a <code>*_cpp</code> shim in <code>R/RcppExports.R</code>. The shims call into <code>src/exports.cpp</code>, which is the only file that talks to Rcpp types — everything below it uses <code>std::string</code> / <code>std::vector</code> and lives in <code>namespace punycoder</code>.</p>
+<p>The wrapper layer is split by concern: <code>R/punycoder.R</code> (puny_*/validators surface), <code>R/normalize.R</code> (<code>host_normalize</code> + <code>normalization_profile_info</code>), <code>R/validators.R</code>, <code>R/results.R</code> (S3 <code>print</code>/summary methods for <code>punycoder_validation</code>), <code>R/helpers.R</code> (input assertions + validation dispatch), <code>R/zzz.R</code> (<code>.onLoad</code> option defaults).</p>
+<p>There is <strong>no URL surface</strong>: the former <code>url_encode</code>/<code>url_decode</code>/<code>parse_url</code> helpers were best-effort host extraction (never an RFC 3986 / WHATWG parser), deprecated in 1.2.0 and removed the following release. New host work goes through <code>host_normalize</code> or <code>puny_*</code>; URL parsing/canonicalization belongs upstack in <code>rurl</code>. <code>puny_encode</code>/<code>puny_decode</code> reject URL-shaped input with an actionable error pointing at <code>rurl::get_host()</code>.</p>
 </div>
 <div class="section level3">
 <h3 id="native-subsystem-split-src">Native subsystem split (<code>src/</code>)<a class="anchor" aria-label="anchor" href="#native-subsystem-split-src"></a></h3>
@@ -83,15 +83,13 @@
 <li>
 <code>unicode_tables_16_0_0.cpp</code> / <code>.h</code> — vendored Unicode 16.0.0 data (combining class, decompositions, composition, UTS #46 mapping/status, combining-mark set, Bidi_Class, Joining_Type). <strong>Generated, never hand-edited</strong> — see the Unicode tables section below.</li>
 <li>
-<code>punycoder_backend.cpp</code> — Backend selection (<code>select_label_backend</code>) and the <code>libidn2</code> adapter guarded by <code>#ifdef PUNYCODER_USE_LIBIDN2</code>. <strong>All <code>#ifdef PUNYCODER_USE_LIBIDN2</code> should stay in this file</strong>; don’t sprinkle them through domain/URL code (per CONTRIBUTING.md).</li>
+<code>punycoder_backend.cpp</code> — Backend selection (<code>select_label_backend</code>) and the <code>libidn2</code> adapter guarded by <code>#ifdef PUNYCODER_USE_LIBIDN2</code>. <strong>All <code>#ifdef PUNYCODER_USE_LIBIDN2</code> should stay in this file</strong>; don’t sprinkle them through domain code (per CONTRIBUTING.md).</li>
 <li>
 <code>punycoder_utf8.cpp</code> — UTF-8 ↔︎ codepoint conversion and ASCII helpers.</li>
 <li>
 <code>punycoder_domain.cpp</code> — <code>validate_and_parse_domain</code>, label-level rules (length, hyphens, xn– detection).</li>
 <li>
-<code>punycoder_url.cpp</code> — <code>parse_url_string</code>, host classification (DNS / IPv4 / IPv6), URL rebuild with a substituted host.</li>
-<li>
-<code>punycoder_service.cpp</code> — <code>PunycodeService</code> facade that wires the chosen backend to the domain/URL layers and applies the <code>strict</code> flag.</li>
+<code>punycoder_service.cpp</code> — <code>PunycodeService</code> facade that wires the chosen backend to the domain layer and applies the <code>strict</code> flag.</li>
 <li>
 <code>punycoder_errors.cpp</code> — <code>PunycoderError</code> and the canonical <code>throw_error(ErrorCode, …)</code> map. <strong>R-facing error message prefixes are part of the contract</strong> (per CONTRIBUTING.md) — <code>exports.cpp</code> adds prefixes like <code>"Error encoding domain: …"</code>. Don’t change those strings without bumping tests.</li>
 <li>
@@ -99,7 +97,7 @@
 </ul></div>
 <div class="section level3">
 <h3 id="backend-selection">Backend selection<a class="anchor" aria-label="anchor" href="#backend-selection"></a></h3>
-<p><code>select_label_backend(BackendPreference)</code> returns a <code>LabelBackend</code> (a pair of encode/decode function pointers plus a name). <code>automatic</code> resolves to <code>"libidn2+fallback"</code> when libidn2 is compiled in (with libidn2 tried first, fallback on exception), <code>"libidn2"</code> to force native, <code>"fallback"</code> to force the in-tree algorithm. Tests in <code>tests/testthat/test-backends.R</code> use <code>punycoder:::.compare_backends()</code> (which calls <code>compare_backends_cpp</code>) to assert the two backends agree on RFC 3492 vectors (<code>inst/testdata/rfc3492_vectors.csv</code>) and on representative URLs; tests <code>skip_if</code> when libidn2 isn’t available.</p>
+<p><code>select_label_backend(BackendPreference)</code> returns a <code>LabelBackend</code> (a pair of encode/decode function pointers plus a name). <code>automatic</code> resolves to <code>"libidn2+fallback"</code> when libidn2 is compiled in (with libidn2 tried first, fallback on exception), <code>"libidn2"</code> to force native, <code>"fallback"</code> to force the in-tree algorithm. Tests in <code>tests/testthat/test-backends.R</code> use <code>punycoder:::.compare_backends()</code> (which calls <code>compare_backends_cpp</code>) to assert the two backends agree on RFC 3492 vectors (<code>inst/testdata/rfc3492_vectors.csv</code>) and on representative multi-script domains; tests <code>skip_if</code> when libidn2 isn’t available.</p>
 <p>Note the libidn2 path is Unix-only: <code>configure</code> defines <code>-DPUNYCODER_USE_LIBIDN2</code> only on Linux/macOS. <code>src/Makevars.win</code> never sets it, so <strong>Windows builds always use the fallback backend</strong> regardless of installed libraries.</p>
 </div>
 <div class="section level3">
@@ -113,7 +111,7 @@
 </div>
 <div class="section level3">
 <h3 id="tests">Tests<a class="anchor" aria-label="anchor" href="#tests"></a></h3>
-<p><code>tests/testthat/</code> is grouped by concern: <code>test-encoding</code>, <code>test-urls</code>, <code>test-validators</code>, <code>test-unicode</code>, <code>test-rfc3492</code> (golden vectors), <code>test-backends</code> (libidn2 vs fallback parity), <code>test-contracts</code> (NA/error policy), <code>test-normalize</code> (<code>host_normalize</code> behavior + profile flags), <code>test-idna-conformance</code> (UTS #46 conformance vectors), <code>test-internals</code>, <code>test-lifecycle</code>, <code>test-performance</code>. Add tests under the matching file for any user-visible change (per CONTRIBUTING.md).</p>
+<p><code>tests/testthat/</code> is grouped by concern: <code>test-encoding</code>, <code>test-validators</code>, <code>test-unicode</code>, <code>test-rfc3492</code> (golden vectors), <code>test-backends</code> (libidn2 vs fallback parity), <code>test-contracts</code> (NA/error policy), <code>test-normalize</code> (<code>host_normalize</code> behavior + profile flags), <code>test-idna-conformance</code> (UTS #46 conformance vectors), <code>test-internals</code>, <code>test-lifecycle</code>, <code>test-performance</code>. Add tests under the matching file for any user-visible change (per CONTRIBUTING.md).</p>
 </div>
 </div>
 <div class="section level2">

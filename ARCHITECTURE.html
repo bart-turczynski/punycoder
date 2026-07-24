@@ -75,12 +75,6 @@
 <code><a href="reference/is_punycode.html">is_punycode()</a></code>, <code><a href="reference/is_idn.html">is_idn()</a></code>, <code><a href="reference/validate_domain.html">validate_domain()</a></code>
 </td>
 <td>Predicate/validation helpers.</td>
-</tr><tr><td>URL surface <em>(deprecated)</em>
-</td>
-<td>
-<code><a href="reference/url_encode.html">url_encode()</a></code>, <code><a href="reference/url_decode.html">url_decode()</a></code>, <code><a href="reference/parse_url.html">parse_url()</a></code>
-</td>
-<td>Best-effort host rewriting. Slated for removal — see ADR-006.</td>
 </tr></tbody></table></div>
 <div class="section level2">
 <h2 id="layering">Layering<a class="anchor" aria-label="anchor" href="#layering"></a></h2>
@@ -88,8 +82,8 @@
 <pre><code>┌──────────────────────────────────────────────────────────────────┐
 │ R wrapper layer  (R/*.R)                                           │
 │   Input validation, NA policy, strict/non-strict option,          │
-│   S3 print/summary, deprecation warnings.                          │
-│   punycoder.R · normalize.R · validators.R · url-utils.R ·        │
+│   S3 print/summary.                                                │
+│   punycoder.R · normalize.R · validators.R ·                      │
 │   results.R · helpers.R · zzz.R                                    │
 └───────────────┬────────────────────────────────────────────────────┘
                 │ .call_with_validation()  →  *_cpp shims
@@ -106,7 +100,7 @@
                 │ std::string / std::vector only, below this line
 ┌───────────────▼────────────────────────────────────────────────────┐
 │ Core  (namespace punycoder, src/*.cpp + punycoder_core.h)           │
-│   service → domain/url/normalize → backend → algorithm/nfc/utf8 →   │
+│   service → domain/normalize → backend → algorithm/nfc/utf8 →       │
 │   vendored Unicode tables.                                          │
 └──────────────────────────────────────────────────────────────────┘</code></pre>
 <p>All declarations for the core live in a single header, <code>src/punycoder_core.h</code>; implementations are split by responsibility across <code>src/*.cpp</code>. Editing that header (especially the <code>ErrorCode</code> enum) requires a <strong>clean rebuild</strong> — R’s build does not track header dependencies, so stale <code>.o</code> files cause silent ABI skew. See ADR-009.</p>
@@ -115,7 +109,7 @@
 <h2 id="module-map">Module map<a class="anchor" aria-label="anchor" href="#module-map"></a></h2>
 <div class="section level3">
 <h3 id="r-wrapper-layer-r">R wrapper layer (<code>R/</code>)<a class="anchor" aria-label="anchor" href="#r-wrapper-layer-r"></a></h3>
-<table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>File</th>
+<table class="table"><thead><tr><th>File</th>
 <th>Responsibility</th>
 </tr></thead><tbody><tr><td><code>punycoder.R</code></td>
 <td>
@@ -126,10 +120,8 @@
 </tr><tr><td><code>validators.R</code></td>
 <td>
 <code><a href="reference/is_punycode.html">is_punycode()</a></code>, <code><a href="reference/is_idn.html">is_idn()</a></code>, <code><a href="reference/validate_domain.html">validate_domain()</a></code>.</td>
-</tr><tr><td><code>url-utils.R</code></td>
-<td>Deprecated URL surface; <code>.deprecate_url_surface()</code> emits the <code><a href="https://rdrr.io/r/base/Deprecated.html" class="external-link">.Deprecated()</a></code> warning.</td>
 </tr><tr><td><code>results.R</code></td>
-<td>S3 <code>print</code>/summary for <code>punycoder_parsed_url</code> and <code>punycoder_validation</code>.</td>
+<td>S3 <code>print</code>/summary for <code>punycoder_validation</code>.</td>
 </tr><tr><td><code>helpers.R</code></td>
 <td>Input assertions + <code>.call_with_validation()</code> dispatch.</td>
 </tr><tr><td><code>zzz.R</code></td>
@@ -149,13 +141,10 @@
 <td>Rcpp boundary: NA/strict policy, error prefixes, introspection.</td>
 </tr><tr><td><code>punycoder_service.cpp</code></td>
 <td>
-<code>PunycodeService</code> facade wiring backend → domain/URL, applies <code>strict</code>.</td>
+<code>PunycodeService</code> facade wiring backend → domain layer, applies <code>strict</code>.</td>
 </tr><tr><td><code>punycoder_domain.cpp</code></td>
 <td>
 <code>validate_and_parse_domain</code>, label rules (length, hyphens, <code>xn--</code>).</td>
-</tr><tr><td><code>punycoder_url.cpp</code></td>
-<td>
-<code>parse_url_string</code>, host classification (DNS/IPv4/IPv6), URL rebuild.</td>
 </tr><tr><td>
 <code>punycoder_normalize.cpp</code> / <code>.h</code>
 </td>
@@ -219,7 +208,7 @@
 <li>
 <code>"libidn2"</code> forces native; <code>"fallback"</code> forces the in-tree algorithm.</li>
 </ul><p>libidn2 is a <strong>Punycode accelerator only</strong>, never the IDNA engine — normalization is always in-tree, so behavior is identical with or without it (ADR-003). The libidn2 path is <strong>Unix-only</strong>: <code>configure</code> defines <code>-DPUNYCODER_USE_LIBIDN2</code> only on Linux/macOS; <code>src/Makevars.win</code> never sets it, so <strong>Windows always uses the fallback backend</strong>.</p>
-<p>Parity between backends is asserted by <code>tests/testthat/test-backends.R</code> via <code>punycoder:::.compare_backends()</code> over the RFC 3492 vectors and representative URLs; those tests <code>skip_if</code> libidn2 is unavailable.</p>
+<p>Parity between backends is asserted by <code>tests/testthat/test-backends.R</code> via <code>punycoder:::.compare_backends()</code> over the RFC 3492 vectors and representative multi-script domains; those tests <code>skip_if</code> libidn2 is unavailable.</p>
 </div>
 <div class="section level2">
 <h2 id="build-system">Build system<a class="anchor" aria-label="anchor" href="#build-system"></a></h2>
@@ -258,8 +247,6 @@ runtime / build                          # NEVER downloads anything</code></pre>
 <td>UTS #46 conformance vectors (<code>IdnaTestV2.txt</code>).</td>
 </tr><tr><td><code>test-validators</code></td>
 <td>Predicate/validation helpers.</td>
-</tr><tr><td><code>test-urls</code></td>
-<td>Deprecated URL surface.</td>
 </tr><tr><td><code>test-contracts</code></td>
 <td>NA / error policy (strict vs non-strict).</td>
 </tr><tr><td>
@@ -270,11 +257,11 @@ runtime / build                          # NEVER downloads anything</code></pre>
 <div class="section level2">
 <h2 id="where-to-add-what">Where to add what<a class="anchor" aria-label="anchor" href="#where-to-add-what"></a></h2>
 <ul><li>
-<strong>New host/IDNA behavior</strong> → <code>host_normalize</code> / <code>puny_*</code>, never the deprecated URL surface (ADR-006). URL parsing belongs upstack in <code>rurl</code>.</li>
+<strong>New host/IDNA behavior</strong> → <code>host_normalize</code> / <code>puny_*</code>. URL parsing belongs upstack in <code>rurl</code>; punycoder no longer carries a URL surface (ADR-006).</li>
 <li>
 <strong>New error condition</strong> → add an <code>ErrorCode</code> + <code>throw_error</code> mapping in <code>punycoder_errors.cpp</code>; R-facing prefixes are contract (ADR-007). Clean rebuild after editing the enum (ADR-009).</li>
 <li>
-<strong>Backend-specific code</strong> → <code>punycoder_backend.cpp</code> only; never sprinkle <code>#ifdef PUNYCODER_USE_LIBIDN2</code> through domain/URL code (ADR-008).</li>
+<strong>Backend-specific code</strong> → <code>punycoder_backend.cpp</code> only; never sprinkle <code>#ifdef PUNYCODER_USE_LIBIDN2</code> through domain code (ADR-008).</li>
 <li>
 <strong>Unicode version bump</strong> → <code>data-raw/generate_unicode_tables.R</code>, regenerate, bump the pinned version in <code><a href="reference/normalization_profile_info.html">normalization_profile_info()</a></code>, follow <code>dev/normalization-contract.md</code> §8.</li>
 </ul></div>

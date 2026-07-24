@@ -2,6 +2,29 @@
 
 ## punycoder (development version)
 
+### Breaking changes
+
+- The deprecated URL surface — `url_encode()`, `url_decode()`, and
+  `parse_url()` — has been **removed**, one release after the
+  [`.Deprecated()`](https://rdrr.io/r/base/Deprecated.html) warning
+  cycle introduced in 1.2.0. These were always best-effort host
+  extraction/rewriting, never an RFC 3986 / WHATWG URL parser or
+  canonicalizer. Use the `rurl` package for URL parsing and
+  canonicalization, or pass the host alone to
+  [`host_normalize()`](https://bart-turczynski.github.io/punycoder/reference/host_normalize.md)
+  /
+  [`puny_encode()`](https://bart-turczynski.github.io/punycoder/reference/puny_encode.md)
+  /
+  [`puny_decode()`](https://bart-turczynski.github.io/punycoder/reference/puny_decode.md)
+  for host-only needs.
+  [`puny_encode()`](https://bart-turczynski.github.io/punycoder/reference/puny_encode.md)
+  /
+  [`puny_decode()`](https://bart-turczynski.github.io/punycoder/reference/puny_decode.md)
+  continue to reject URL-shaped input with an actionable error pointing
+  at `rurl::get_host()`. The internal URL parser (`punycoder_url.cpp`)
+  and the `punycoder_parsed_url` print method are gone with the surface
+  (PUNY-rumdaymk).
+
 ### Bug fixes
 
 - [`puny_decode()`](https://bart-turczynski.github.io/punycoder/reference/puny_decode.md)
@@ -59,17 +82,13 @@ unchanged.
 
 ### Deprecated
 
-- [`url_encode()`](https://bart-turczynski.github.io/punycoder/reference/url_encode.md),
-  [`url_decode()`](https://bart-turczynski.github.io/punycoder/reference/url_decode.md),
-  and
-  [`parse_url()`](https://bart-turczynski.github.io/punycoder/reference/parse_url.md)
-  are deprecated and now emit a
-  [`.Deprecated()`](https://rdrr.io/r/base/Deprecated.html) warning on
-  use. They remain exported and fully functional for this release and
-  are scheduled for removal in the next one. These were always
-  best-effort host extraction/rewriting, not RFC 3986 / WHATWG URL
-  parsing; use the `rurl` package for URL parsing and canonicalization,
-  or pass the host alone to
+- `url_encode()`, `url_decode()`, and `parse_url()` are deprecated and
+  now emit a [`.Deprecated()`](https://rdrr.io/r/base/Deprecated.html)
+  warning on use. They remain exported and fully functional for this
+  release and are scheduled for removal in the next one. These were
+  always best-effort host extraction/rewriting, not RFC 3986 / WHATWG
+  URL parsing; use the `rurl` package for URL parsing and
+  canonicalization, or pass the host alone to
   [`host_normalize()`](https://bart-turczynski.github.io/punycoder/reference/host_normalize.md)
   /
   [`puny_encode()`](https://bart-turczynski.github.io/punycoder/reference/puny_encode.md)
@@ -142,10 +161,8 @@ First CRAN release.
 - Core punycode encoding and decoding functions
   ([`puny_encode()`](https://bart-turczynski.github.io/punycoder/reference/puny_encode.md),
   [`puny_decode()`](https://bart-turczynski.github.io/punycoder/reference/puny_decode.md))
-- URL-aware processing functions
-  ([`url_encode()`](https://bart-turczynski.github.io/punycoder/reference/url_encode.md),
-  [`url_decode()`](https://bart-turczynski.github.io/punycoder/reference/url_decode.md),
-  [`parse_url()`](https://bart-turczynski.github.io/punycoder/reference/parse_url.md))
+- URL-aware processing functions (`url_encode()`, `url_decode()`,
+  `parse_url()`)
 - Domain validation and utility functions
   ([`is_punycode()`](https://bart-turczynski.github.io/punycoder/reference/is_punycode.md),
   [`is_idn()`](https://bart-turczynski.github.io/punycoder/reference/is_idn.md),

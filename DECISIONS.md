@@ -147,33 +147,32 @@ be “unified” with the codec’s throw-on-strict behavior. See
 
 ------------------------------------------------------------------------
 
-## ADR-006 — The URL surface is deprecated and slated for removal
+## ADR-006 — The URL surface is removed
 
-**Status:** Accepted
+**Status:** Accepted (removal completed; supersedes the earlier
+“deprecated and slated for removal” decision)
 
-**Context.**
-[`url_encode()`](https://bart-turczynski.github.io/punycoder/reference/url_encode.md)
-/
-[`url_decode()`](https://bart-turczynski.github.io/punycoder/reference/url_decode.md)
-/
-[`parse_url()`](https://bart-turczynski.github.io/punycoder/reference/parse_url.md)
-were always best-effort host extraction/rewriting — never an RFC 3986 /
-WHATWG URL parser (no percent-coding, scheme validation, robust
-port/path/query semantics, full IPv6, or serialization guarantees).
+**Context.** `url_encode()` / `url_decode()` / `parse_url()` were always
+best-effort host extraction/rewriting — never an RFC 3986 / WHATWG URL
+parser (no percent-coding, scheme validation, robust port/path/query
+semantics, full IPv6, or serialization guarantees).
 
-**Decision.** As of 1.2.0 these emit a
-[`.Deprecated()`](https://rdrr.io/r/base/Deprecated.html) warning
-(`.deprecate_url_surface()` in `url-utils.R`); they remain exported and
-functional for that release and are scheduled for removal in the next.
-New host work goes through
+**Decision.** They were deprecated in 1.2.0 with a
+[`.Deprecated()`](https://rdrr.io/r/base/Deprecated.html) warning,
+giving CRAN callers one warning cycle, and are **removed** in the
+following release: the R functions, the `*_cpp` shims, and the entire
+`punycoder_url.cpp` URL parser/host-classifier are gone. New host work
+goes through
 [`host_normalize()`](https://bart-turczynski.github.io/punycoder/reference/host_normalize.md)
 / `puny_*`; URL parsing/canonicalization belongs upstack in `rurl`.
-`puny_encode`/`puny_decode` reject URL-shaped input
+`puny_encode`/`puny_decode` still reject URL-shaped input
 (`looks_like_url_input()`) with an actionable error pointing at `rurl`.
 
-**Consequences.** Do not extend the URL surface. Removal is a planned
-breaking change tracked for the next release. See `NEWS.md` (1.2.0
-Deprecated) and the README “Non-goals” section.
+**Consequences.** punycoder no longer exposes any URL surface — it is a
+pure IDNA/Punycode/host-normalization engine. The URL-only citations
+(RFC 3986/3987, WHATWG URL, RFC 5952/4291/6874) left
+`dev/normalization-contract.md` with the surface. See `NEWS.md` for the
+removal entry.
 
 ------------------------------------------------------------------------
 

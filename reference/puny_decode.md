@@ -49,9 +49,7 @@ IDNA/UTS-46 host normalization, see
 [`puny_encode`](https://bart-turczynski.github.io/punycoder/reference/puny_encode.md)
 for the reverse operation,
 [`host_normalize`](https://bart-turczynski.github.io/punycoder/reference/host_normalize.md)
-for IDNA/UTS-46 host normalization,
-[`url_decode`](https://bart-turczynski.github.io/punycoder/reference/url_decode.md)
-for full URL decoding.
+for IDNA/UTS-46 host normalization.
 
 ## Examples
 
