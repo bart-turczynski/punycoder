@@ -25,6 +25,15 @@ Use the codec when you need the literal ASCII-Compatible Encoding of a
 label; use \code{\link[=host_normalize]{host_normalize()}} when you need a standards-profiled
 comparison form for a host name.
 }
+\examples{
+# Tier 1 - low-level codec: the raw RFC 3492 transform.
+puny_encode("caf\u00E9.com")
+puny_decode("xn--caf-dma.com")
+
+# Tier 2 - UTS #46: canonical lowercase ASCII comparison form.
+host_normalize(c("Example.COM", "M\u00DCNCHEN.de"))
+
+}
 \seealso{
 Useful links:
 \itemize{
@@ -45,3 +54,4 @@ Authors:
 }
 
 }
+\keyword{internal}
