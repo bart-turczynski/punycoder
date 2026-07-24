@@ -55,9 +55,7 @@ puny_encode <- function(x, strict = getOption("punycoder.strict", TRUE)) {
 #' or NFC. For IDNA/UTS-46 host normalization, see [host_normalize()].
 #'
 #' @param x Character vector of ASCII punycode domains to decode
-#' @param strict Logical; whether to apply strict validation. Defaults to
-#'   `getOption("punycoder.strict", TRUE)`. In strict mode the raw codec
-#'   enforces structural checks but not DNS host length limits.
+#' @inheritParams puny_encode
 #' @return A character vector the same length as \code{x}, with each element
 #'   containing the Unicode-decoded domain name. Elements corresponding to
 #'   \code{NA} inputs are \code{NA_character_}. In non-strict mode, domains

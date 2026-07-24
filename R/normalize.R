@@ -56,9 +56,7 @@
 host_normalize <- function(x, check_hyphens = TRUE, use_std3 = TRUE,
                            verify_dns_length = TRUE) {
   .assert_character(x, "x")
-  .assert_flag(check_hyphens, "check_hyphens")
-  .assert_flag(use_std3, "use_std3")
-  .assert_flag(verify_dns_length, "verify_dns_length")
+  .assert_normalize_flags(check_hyphens, use_std3, verify_dns_length)
   out <- host_normalize_cpp(enc2utf8(x), check_hyphens, use_std3,
                             verify_dns_length)
   names(out) <- names(x)
@@ -115,9 +113,7 @@ host_normalize <- function(x, check_hyphens = TRUE, use_std3 = TRUE,
 #' @export
 normalization_profile_info <- function(check_hyphens = TRUE, use_std3 = TRUE,
                                        verify_dns_length = TRUE) {
-  .assert_flag(check_hyphens, "check_hyphens")
-  .assert_flag(use_std3, "use_std3")
-  .assert_flag(verify_dns_length, "verify_dns_length")
+  .assert_normalize_flags(check_hyphens, use_std3, verify_dns_length)
   data.frame(
     profile = .normalization_profile_token(
       check_hyphens, use_std3, verify_dns_length
