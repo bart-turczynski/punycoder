@@ -66,8 +66,7 @@ test_that("strict parameter works", {
   expect_no_error(puny_decode("example.com", strict = FALSE))
 
   # Non-strict mode should return NA for invalid input elements
-  expect_error(puny_encode("invalid..domain", strict = TRUE))
-  expect_true(is.na(puny_encode("invalid..domain", strict = FALSE)))
+  expect_strict_contract(puny_encode, "invalid..domain")
 })
 
 test_that("puny domain helpers reject full URLs", {
@@ -76,22 +75,11 @@ test_that("puny domain helpers reject full URLs", {
 
   # The URL guard emits a dedicated, actionable message pointing at the
   # upstack host extractor rather than the generic label-character error.
-  expect_error(
-    puny_encode(unicode_url, strict = TRUE),
-    "looks like a URL.*rurl::get_host"
-  )
-  expect_error(
-    puny_decode(unicode_url, strict = TRUE),
-    "looks like a URL.*rurl::get_host"
-  )
-  expect_error(
-    puny_decode(ascii_url, strict = TRUE),
-    "looks like a URL.*rurl::get_host"
-  )
+  url_guard <- "looks like a URL.*rurl::get_host"
 
-  expect_true(is.na(puny_encode(unicode_url, strict = FALSE)))
-  expect_true(is.na(puny_decode(unicode_url, strict = FALSE)))
-  expect_true(is.na(puny_decode(ascii_url, strict = FALSE)))
+  expect_strict_contract(puny_encode, unicode_url, url_guard)
+  expect_strict_contract(puny_decode, unicode_url, url_guard)
+  expect_strict_contract(puny_decode, ascii_url, url_guard)
 })
 
 test_that("multi-label IDN round-trips cleanly", {
@@ -143,13 +131,10 @@ test_that("mixed ASCII, Unicode, xn labels keep strict decode behavior", {
 })
 
 test_that("strict and non-strict paths handle malformed punycode differently", {
-  expect_error(puny_decode("xn--", strict = TRUE), "Error decoding domain")
-  expect_true(is.na(puny_decode("xn--", strict = FALSE)))
-  expect_error(puny_decode("xn--z", strict = TRUE), "Error decoding domain")
-  expect_true(is.na(puny_decode("xn--z", strict = FALSE)))
+  expect_strict_contract(puny_decode, "xn--", "Error decoding domain")
+  expect_strict_contract(puny_decode, "xn--z", "Error decoding domain")
 
-  expect_error(puny_encode("", strict = TRUE), "Error encoding domain")
-  expect_true(is.na(puny_encode("", strict = FALSE)))
+  expect_strict_contract(puny_encode, "", "Error encoding domain")
 })
 
 test_that("strict defaults follow global punycoder.strict option", {
@@ -184,8 +169,7 @@ test_that("punycode handles uppercase and trailing dots", {
 })
 
 test_that("punycode decode reports invalid payload characters", {
-  expect_error(puny_decode("xn--ab*", strict = TRUE), "hyphens")
-  expect_true(is.na(puny_decode("xn--ab*", strict = FALSE)))
+  expect_strict_contract(puny_decode, "xn--ab*", "hyphens")
 })
 
 test_that("strict decode enforces canonical A-label round-trip", {
@@ -207,10 +191,8 @@ test_that("strict decode enforces canonical A-label round-trip", {
 })
 
 test_that("empty string edge cases", {
-  expect_error(puny_encode("", strict = TRUE), "Error encoding domain")
-  expect_true(is.na(puny_encode("", strict = FALSE)))
-  expect_error(puny_decode("", strict = TRUE), "Error decoding domain")
-  expect_true(is.na(puny_decode("", strict = FALSE)))
+  expect_strict_contract(puny_encode, "", "Error encoding domain")
+  expect_strict_contract(puny_decode, "", "Error decoding domain")
 })
 
 test_that("mixed valid/invalid/NA in same vector", {
