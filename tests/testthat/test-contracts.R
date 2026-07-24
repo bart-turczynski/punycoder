@@ -61,8 +61,7 @@ test_that("fallback decode rejects non-LDH A-label input (PUNY-ypjwnagl)", {
     "xn---%-u4o"              # percent sign
   )
   for (lab in non_ldh) {
-    expect_true(is.na(puny_decode(lab, strict = FALSE)), info = lab)
-    expect_error(puny_decode(lab, strict = TRUE), "^Error decoding domain:")
+    expect_strict_contract(puny_decode, lab, "^Error decoding domain:")
   }
 })
 
@@ -70,8 +69,7 @@ test_that("fallback decode rejects an empty Bootstring payload (rxvwqsou)", {
   # "xn---" is the ACE prefix followed by a delimiter and an empty payload: it
   # decodes to nothing and is not a valid A-label. Echoing it back would hide a
   # failure from the caller, so non-strict returns NA and strict errors.
-  expect_true(is.na(puny_decode("xn---", strict = FALSE)))
-  expect_error(puny_decode("xn---", strict = TRUE), "^Error decoding domain:")
+  expect_strict_contract(puny_decode, "xn---", "^Error decoding domain:")
 })
 
 test_that("oversized labels are bounded in both strict and non-strict mode", {
