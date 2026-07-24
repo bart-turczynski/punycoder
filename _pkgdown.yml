@@ -48,10 +48,11 @@ reference:
       - is_punycode
 
   - title: "Internals"
-    desc: S3 print methods and package overview.
+    desc: S3 print and summary methods, and package overview.
     contents:
       - punycoder-package
       - starts_with("print.")
+      - starts_with("summary.")
 
 footer:
   structure:

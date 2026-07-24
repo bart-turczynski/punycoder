@@ -15,9 +15,15 @@
 Invisibly returns \code{x}.
 }
 \description{
-Print method for punycoder validation results
+Prints a count header followed by one block per domain, truncated to the
+first 10 elements. Error bullets carry the machine-readable error code in
+brackets; use \code{\link[=summary.punycoder_validation]{summary()}} for
+counts by error code across the whole vector.
 }
 \examples{
 result <- validate_domain(c("example.com", "xn--bad-label-"))
 print(result)
+}
+\seealso{
+\code{\link{summary.punycoder_validation}} for the aggregate view.
 }
