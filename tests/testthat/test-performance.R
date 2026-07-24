@@ -21,7 +21,8 @@
 # normalizer.
 #
 # Real performance work belongs in a dedicated benchmark run against a clean
-# `rm -f src/*.o && R CMD INSTALL .` build -- never against these numbers.
+# `/bin/sh -c 'rm -f src/*.o; R CMD INSTALL .'` build -- never against these
+# numbers.
 
 benchmark_seconds <- function(fn, input, iterations = 5L) {
   # Warm up so lazy loading and first-touch allocation stay out of the timing.

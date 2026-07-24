@@ -24,7 +24,13 @@ The `libidn2` backend is optional. On macOS: `brew install libidn2 pkg-config`. 
 
 ### Stale objects: clean-rebuild before you trust a build
 
-Leftover `src/*.o` files silently corrupt builds in two different ways. Before benchmarking, before profiling, and after any header edit, run `rm -f src/*.o` and reinstall.
+Leftover `src/*.o` files silently corrupt builds in two different ways. Before benchmarking, before profiling, and after any header edit, clear the objects and reinstall:
+
+```sh
+/bin/sh -c 'rm -f src/*.o; R CMD INSTALL .'
+```
+
+**Run it through `/bin/sh -c` exactly as written, and do not "simplify" it back to a bare `rm -f src/*.o && R CMD INSTALL .`.** In fish — the maintainer's shell — an unmatched glob is a hard error, not a silent no-op: when `src/` is already clean, `src/*.o` matches nothing, fish aborts with `no matches found: src/*.o`, and the rest of the `&&` chain never runs. The build or benchmark you thought you ran did not run. Wrapping in `/bin/sh -c` also lets `;` replace `&&`, so an already-clean `src/` is not treated as a failure.
 
 - **`-O0` contamination.** `devtools::test()` and `devtools::load_all()` compile via `pkgbuild::compile_dll()`, whose debug flags are `-UNDEBUG -Wall -pedantic -g -O0`. Those unoptimized objects stay in `src/`. A later `R CMD INSTALL .` recompiles only the sources whose `.cpp` changed and links the leftover `-O0` objects into the installed package — measured ~5x slower `host_normalize`, with no warning anywhere.
 - **Header staleness.** R's generated `Makevars` tracks `.cpp` mtimes, not header dependencies. Editing a header (especially the `ErrorCode` enum in `src/punycoder_core.h`) leaves objects compiled against the old declarations, producing silent ABI skew rather than a compile error.
