@@ -24,6 +24,24 @@
   `strict = FALSE`, so the two backends agree on every input (PUNY-ypjwnagl,
   PUNY-rxvwqsou).
 
+* `puny_encode()`, `puny_decode()`, and `validate_domain()` now transcode
+  character input to UTF-8 before dispatching to native code, and Unicode
+  output is explicitly marked as UTF-8. Previously only `host_normalize()`
+  transcoded, so a Latin-1-marked (or non-UTF-8 native) host reached the UTF-8
+  decoder as ill-formed bytes and the same string produced different answers
+  depending on how R happened to mark it (PUNY-egaqhtnc, #67).
+
+## Performance
+
+* `host_normalize()` is roughly 25-30% faster. Label validation no longer
+  re-runs Unicode NFC on labels taken straight from the label split: NFC is
+  applied to the whole host before splitting, and U+002E is a safe break point
+  (it appears in no canonical decomposition and no composition pair), so those
+  labels are already in NFC by construction. Punycode-decoded A-label payloads,
+  which never go through that pass, are still checked. Output is unchanged on
+  every input in the UTS #46 conformance corpus, under all supported flag
+  combinations (PUNY-thyalpud).
+
 # punycoder 1.2.1
 
 Maintenance release over the 1.2.0 development tag; the public API is unchanged.

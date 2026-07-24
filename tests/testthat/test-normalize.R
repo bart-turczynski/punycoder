@@ -36,6 +36,25 @@ test_that("a non-canonical A-label payload is rejected", {
   expect_identical(host_normalize("xn--abc.com"), NA_character_)
 })
 
+test_that("V1 (NFC) holds for U-labels and is enforced on A-label payloads", {
+  # Pins the invariant that lets validate_label() skip re-normalizing labels
+  # that came straight from the split: NFC runs on the whole string before the
+  # split, and U+002E is a safe break, so those labels are already NFC.
+  #
+  # "cafe" + U+0301 COMBINING ACUTE ACCENT is not NFC; whole-string NFC
+  # composes it to U+00E9 before the label is ever validated, so the decomposed
+  # spelling yields the same canonical host as the precomposed one.
+  expect_identical(host_normalize("cafe\u0301.com"), "xn--caf-dma.com")
+  expect_identical(host_normalize("caf\u00e9.com"), "xn--caf-dma.com")
+
+  # A Punycode payload never goes through that pass, so V1 is still the
+  # operative check there. xn--cafe-yvc is the A-label of the *decomposed*
+  # sequence: it decodes to a non-NFC U-label and must be rejected, while the
+  # A-label of the composed form is accepted unchanged.
+  expect_identical(host_normalize("xn--cafe-yvc.com"), NA_character_)
+  expect_identical(host_normalize("xn--caf-dma.com"), "xn--caf-dma.com")
+})
+
 test_that("mixed-case A-label payload normalizes via UTS-46 mapping", {
   # dev/normalization-contract.md section 5 lists "xn--MNCHEN-3ya.de" -> NA as
   # a "non-canonical A-label payload" row. That row is inconsistent with the

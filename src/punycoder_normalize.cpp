@@ -201,9 +201,21 @@ bool validate_label(const std::vector<uint32_t>& label, bool from_alabel,
                     const NormalizeOptions& opts) {
     if (label.empty()) return false;  // empty label (leading/consecutive dots)
 
-    // V1: label must be in NFC. (Whole-string NFC was applied before the
-    // split; for decoded A-labels this is the operative check.)
-    if (nfc(label) != label) return false;
+    // V1: label must be in NFC.
+    //
+    // Only decoded A-label payloads need checking. host_normalize_one() applies
+    // NFC to the whole string (step 3b) *before* splitting on U+002E, and
+    // U+002E is a safe break: it is a starter (ccc 0) that appears in no
+    // canonical decomposition and in no composition pair, so canonical
+    // ordering never reorders across it and composition never spans it.
+    // NFC(a "." b) is therefore NFC(a) "." NFC(b), and a label taken straight
+    // from that split is already in NFC by construction. Re-normalizing it here
+    // allocated two vectors and walked the Unicode tables per label for a
+    // result that could not differ.
+    //
+    // A Punycode-decoded A-label payload never went through that pass, so for
+    // it this is the operative check.
+    if (from_alabel && nfc(label) != label) return false;
 
     // V5: must not begin with a combining mark.
     if (u16::is_combining_mark(label.front())) return false;
