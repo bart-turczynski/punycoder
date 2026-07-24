@@ -12,3 +12,12 @@ raw_utf8 <- function(...) {
   Encoding(s) <- "UTF-8"
   s
 }
+
+# Build a string from bytes in the Latin-1 encoding. This exercises the R
+# boundary's responsibility to transcode non-UTF-8 character input before
+# passing it to native code.
+latin1_bytes <- function(...) {
+  s <- rawToChar(as.raw(c(...)))
+  Encoding(s) <- "latin1"
+  s
+}
