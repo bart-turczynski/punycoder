@@ -1,5 +1,6 @@
 #include "punycoder_normalize.h"
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -352,7 +353,13 @@ HostNormalizeResult host_normalize_one(const std::string& input,
 
     // Step 3c: split into labels on U+002E and resolve each to its U-label form
     // (decoding xn-- labels) so CheckBidi can examine the whole domain.
+    // The label count is exactly the separator count plus one, so the vector can
+    // be sized once. Growing it instead move-constructs a vector and a string
+    // per LabelWork at every reallocation.
     std::vector<LabelWork> labels;
+    labels.reserve(static_cast<std::size_t>(
+        std::count(normalized.begin(), normalized.end(), kFullStop) + 1
+    ));
     std::vector<uint32_t> piece;
     piece.reserve(normalized.size());
     for (std::size_t i = 0; i <= normalized.size(); ++i) {

@@ -65,7 +65,12 @@ std::vector<uint32_t> utf8_to_codepoints(const std::string& input) {
 
 std::string codepoints_to_utf8(const std::vector<uint32_t>& codepoints) {
     std::string output;
-    output.reserve(codepoints.size() * 4);
+    // One byte per code point, not four. Post-mapping host text is
+    // ASCII-dominant, so size() is the exact width in the common case, and a
+    // short ASCII host stays inside libstdc++/libc++ small-string storage --
+    // reserving 4x forces a heap allocation the label never needed. Non-ASCII
+    // labels grow from here, which costs one reallocation on a rarer path.
+    output.reserve(codepoints.size());
 
     for (uint32_t cp : codepoints) {
         if (cp <= 0x7F) {
