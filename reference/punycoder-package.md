@@ -47,3 +47,17 @@ Authors:
 
 - Bart Turczynski <bartek@turczynski.pl>
   ([ORCID](https://orcid.org/0000-0002-8788-7980))
+
+## Examples
+
+``` r
+# Tier 1 - low-level codec: the raw RFC 3492 transform.
+puny_encode("caf\u00E9.com")
+#> [1] "xn--caf-dma.com"
+puny_decode("xn--caf-dma.com")
+#> [1] "café.com"
+
+# Tier 2 - UTS #46: canonical lowercase ASCII comparison form.
+host_normalize(c("Example.COM", "M\u00DCNCHEN.de"))
+#> [1] "example.com"       "xn--mnchen-3ya.de"
+```
