@@ -41,7 +41,7 @@
   .assert_character(x, x_arg)
   .assert_flag(strict, "strict")
   .warn_if_na(x)
-  cpp_fn(x, strict)
+  cpp_fn(enc2utf8(x), strict)
 }
 
 #' Wrap domain validation results with package classes and attributes
@@ -68,5 +68,5 @@
 .compare_backends <- function(x, mode, strict = TRUE) {
   .assert_character(x, "x")
   .assert_flag(strict, "strict")
-  compare_backends_cpp(x, mode, strict)
+  compare_backends_cpp(enc2utf8(x), mode, strict)
 }

@@ -113,6 +113,16 @@ test_that("backend comparison propagates NA inputs as NA", {
   }
 })
 
+test_that("backend comparison transcodes Latin-1 input to UTF-8", {
+  latin1 <- latin1_bytes(0x63, 0x61, 0x66, 0xE9, 0x2E, 0x63, 0x6F, 0x6D)
+  result <- punycoder:::.compare_backends(latin1, "encode_domain")
+
+  expect_identical(result$fallback, "xn--caf-dma.com")
+  if (isTRUE(result$available)) {
+    expect_identical(result$libidn2, "xn--caf-dma.com")
+  }
+})
+
 test_that("backend comparison reports unsupported modes as errors", {
   result <- punycoder:::.compare_backends("example.com", "bogus_mode")
 

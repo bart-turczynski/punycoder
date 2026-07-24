@@ -82,5 +82,5 @@ validate_domain <- function(x, strict = getOption("punycoder.strict", TRUE)) {
   .assert_character(x)
   .assert_flag(strict, "strict")
 
-  .new_validation_result(validate_domain_cpp(x, strict), strict)
+  .new_validation_result(validate_domain_cpp(enc2utf8(x), strict), strict)
 }
