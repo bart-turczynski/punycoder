@@ -62,6 +62,15 @@
 <li>Full release check: <code>R CMD build . &amp;&amp; R CMD check --as-cran punycoder_*.tar.gz</code>.</li>
 <li>Reset the configure artifact: <code>./cleanup</code> (removes generated <code>src/Makevars</code>).</li>
 </ul><p>The <code>libidn2</code> backend is optional. On macOS: <code>brew install libidn2 pkg-config</code>. The fallback C++ path covers the same surface; <code>./configure</code> prints which backend was selected.</p>
+<div class="section level3">
+<h3 id="stale-objects-clean-rebuild-before-you-trust-a-build">Stale objects: clean-rebuild before you trust a build<a class="anchor" aria-label="anchor" href="#stale-objects-clean-rebuild-before-you-trust-a-build"></a></h3>
+<p>Leftover <code>src/*.o</code> files silently corrupt builds in two different ways. Before benchmarking, before profiling, and after any header edit, run <code>rm -f src/*.o</code> and reinstall.</p>
+<ul><li>
+<strong><code>-O0</code> contamination.</strong> <code><a href="https://devtools.r-lib.org/reference/test.html" class="external-link">devtools::test()</a></code> and <code><a href="https://devtools.r-lib.org/reference/load_all.html" class="external-link">devtools::load_all()</a></code> compile via <code><a href="https://pkgbuild.r-lib.org/reference/compile_dll.html" class="external-link">pkgbuild::compile_dll()</a></code>, whose debug flags are <code>-UNDEBUG -Wall -pedantic -g -O0</code>. Those unoptimized objects stay in <code>src/</code>. A later <code>R CMD INSTALL .</code> recompiles only the sources whose <code>.cpp</code> changed and links the leftover <code>-O0</code> objects into the installed package — measured ~5x slower <code>host_normalize</code>, with no warning anywhere.</li>
+<li>
+<strong>Header staleness.</strong> R’s generated <code>Makevars</code> tracks <code>.cpp</code> mtimes, not header dependencies. Editing a header (especially the <code>ErrorCode</code> enum in <code>src/punycoder_core.h</code>) leaves objects compiled against the old declarations, producing silent ABI skew rather than a compile error.</li>
+</ul><p>Corollary for performance work: <strong>any timing taken without a clean rebuild is meaningless</strong>, and so is any timing taken under <code><a href="https://devtools.r-lib.org/reference/test.html" class="external-link">devtools::test()</a></code> (which always runs <code>-O0</code>). Benchmark against a clean <code>R CMD INSTALL</code>, and confirm the compile lines actually show the flags you expect. <code>tests/testthat/test-performance.R</code> is deliberately a loose smoke check for this reason — see the note at the top of that file.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="architecture">Architecture<a class="anchor" aria-label="anchor" href="#architecture"></a></h2>

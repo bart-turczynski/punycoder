@@ -49,6 +49,37 @@ The `libidn2` backend is optional. On macOS:
 `brew install libidn2 pkg-config`. The fallback C++ path covers the same
 surface; `./configure` prints which backend was selected.
 
+### Stale objects: clean-rebuild before you trust a build
+
+Leftover `src/*.o` files silently corrupt builds in two different ways.
+Before benchmarking, before profiling, and after any header edit, run
+`rm -f src/*.o` and reinstall.
+
+- **`-O0` contamination.**
+  [`devtools::test()`](https://devtools.r-lib.org/reference/test.html)
+  and
+  [`devtools::load_all()`](https://devtools.r-lib.org/reference/load_all.html)
+  compile via
+  [`pkgbuild::compile_dll()`](https://pkgbuild.r-lib.org/reference/compile_dll.html),
+  whose debug flags are `-UNDEBUG -Wall -pedantic -g -O0`. Those
+  unoptimized objects stay in `src/`. A later `R CMD INSTALL .`
+  recompiles only the sources whose `.cpp` changed and links the
+  leftover `-O0` objects into the installed package — measured ~5x
+  slower `host_normalize`, with no warning anywhere.
+- **Header staleness.** R’s generated `Makevars` tracks `.cpp` mtimes,
+  not header dependencies. Editing a header (especially the `ErrorCode`
+  enum in `src/punycoder_core.h`) leaves objects compiled against the
+  old declarations, producing silent ABI skew rather than a compile
+  error.
+
+Corollary for performance work: **any timing taken without a clean
+rebuild is meaningless**, and so is any timing taken under
+[`devtools::test()`](https://devtools.r-lib.org/reference/test.html)
+(which always runs `-O0`). Benchmark against a clean `R CMD INSTALL`,
+and confirm the compile lines actually show the flags you expect.
+`tests/testthat/test-performance.R` is deliberately a loose smoke check
+for this reason — see the note at the top of that file.
+
 ## Architecture
 
 ### R surface → C++ core
