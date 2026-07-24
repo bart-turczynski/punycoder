@@ -37,6 +37,34 @@
   `NA` under `strict = FALSE`, so the two backends agree on every input
   (PUNY-ypjwnagl, PUNY-rxvwqsou).
 
+- [`puny_encode()`](https://bart-turczynski.github.io/punycoder/reference/puny_encode.md),
+  [`puny_decode()`](https://bart-turczynski.github.io/punycoder/reference/puny_decode.md),
+  and
+  [`validate_domain()`](https://bart-turczynski.github.io/punycoder/reference/validate_domain.md)
+  now transcode character input to UTF-8 before dispatching to native
+  code, and Unicode output is explicitly marked as UTF-8. Previously
+  only
+  [`host_normalize()`](https://bart-turczynski.github.io/punycoder/reference/host_normalize.md)
+  transcoded, so a Latin-1-marked (or non-UTF-8 native) host reached the
+  UTF-8 decoder as ill-formed bytes and the same string produced
+  different answers depending on how R happened to mark it
+  (PUNY-egaqhtnc,
+  [\#67](https://github.com/bart-turczynski/punycoder/issues/67)).
+
+### Performance
+
+- [`host_normalize()`](https://bart-turczynski.github.io/punycoder/reference/host_normalize.md)
+  is roughly 25-30% faster. Label validation no longer re-runs Unicode
+  NFC on labels taken straight from the label split: NFC is applied to
+  the whole host before splitting, and U+002E is a safe break point (it
+  appears in no canonical decomposition and no composition pair), so
+  those labels are already in NFC by construction. Punycode-decoded
+  A-label payloads, which never go through that pass, are still checked.
+  Output is unchanged on every input in the UTS
+  [\#46](https://github.com/bart-turczynski/punycoder/issues/46)
+  conformance corpus, under all supported flag combinations
+  (PUNY-thyalpud).
+
 ## punycoder 1.2.1
 
 CRAN release: 2026-07-19
