@@ -82,6 +82,32 @@ test_that("non-strict decode of a non-ACE Unicode label passes through", {
   expect_true(is.na(puny_decode(raw_utf8(0xFF), strict = FALSE)))
 })
 
+test_that("fallback decode rejects non-LDH A-label input (PUNY-ypjwnagl)", {
+  # A valid A-label is letter-digit-hyphen; literal (basic) code points that are
+  # not LDH -- '(' ')' ',' '%' etc. -- must be rejected, not decoded, so the
+  # in-tree fallback agrees with libidn2 rather than passing punctuation through.
+  # strict mode is rejected earlier by the domain layer's LDH check; non-strict
+  # reaches the fallback decoder, which now surfaces NA instead of a lenient
+  # best-effort string.
+  non_ldh <- c(
+    "xn--(o)-ge4ax01c3t74t",  # parentheses
+    "xn--6,-r4e6182wo1ra",    # comma
+    "xn---%-u4o"              # percent sign
+  )
+  for (lab in non_ldh) {
+    expect_true(is.na(puny_decode(lab, strict = FALSE)), info = lab)
+    expect_error(puny_decode(lab, strict = TRUE), "^Error decoding domain:")
+  }
+})
+
+test_that("fallback decode rejects an empty Bootstring payload (PUNY-rxvwqsou)", {
+  # "xn---" is the ACE prefix followed by a delimiter and an empty payload: it
+  # decodes to nothing and is not a valid A-label. Echoing it back would hide a
+  # failure from the caller, so non-strict returns NA and strict errors.
+  expect_true(is.na(puny_decode("xn---", strict = FALSE)))
+  expect_error(puny_decode("xn---", strict = TRUE), "^Error decoding domain:")
+})
+
 test_that("oversized labels are bounded in both strict and non-strict mode", {
   # A crafted xn-- label far beyond the 63-octet DNS limit must not drive the
   # O(n^2) reference decoder into a quadratic-time / unbounded-allocation DoS.
