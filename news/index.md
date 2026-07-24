@@ -25,6 +25,21 @@
   and the `punycoder_parsed_url` print method are gone with the surface
   (PUNY-rumdaymk).
 
+### New features
+
+- [`validate_domain()`](https://bart-turczynski.github.io/punycoder/reference/validate_domain.md)
+  results are now readable at scale.
+  [`print()`](https://rdrr.io/r/base/print.html) opens with a count
+  header (`12 domains: 5 valid, 7 invalid (strict = TRUE)`), stops after
+  10 per-domain blocks with a `... and N more` footer instead of dumping
+  one block per element, and shows each error’s machine-readable code
+  alongside its message. A new
+  [`summary()`](https://rdrr.io/r/base/summary.html) method condenses
+  the whole vector into a data frame of `error_code` / `n` sorted by
+  count descending, carrying `n`, `n_valid`, `n_invalid`, and `strict`
+  as attributes, so failures across a large batch can be tallied
+  programmatically (PUNY-wqmwuvtt).
+
 ### Bug fixes
 
 - [`puny_decode()`](https://bart-turczynski.github.io/punycoder/reference/puny_decode.md)

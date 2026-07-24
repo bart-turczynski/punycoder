@@ -58,12 +58,16 @@ validate_domain("example.com")
 #> Punycoder Domain Validation Results
 #> ==================================
 #> 
+#> 1 domain: 1 valid, 0 invalid (strict = TRUE)
+#> 
 #> Domain: example.com 
 #> Valid:  TRUE 
 #> 
 validate_domain("caf\u00E9.example.com")
 #> Punycoder Domain Validation Results
 #> ==================================
+#> 
+#> 1 domain: 1 valid, 0 invalid (strict = TRUE)
 #> 
 #> Domain: café.example.com 
 #> Valid:  TRUE 
@@ -73,18 +77,20 @@ validate_domain(c("valid.com", "invalid..com", long_label))
 #> Punycoder Domain Validation Results
 #> ==================================
 #> 
+#> 3 domains: 1 valid, 2 invalid (strict = TRUE)
+#> 
 #> Domain: valid.com 
 #> Valid:  TRUE 
 #> 
 #> Domain: invalid..com 
 #> Valid:  FALSE 
 #> Errors:
-#>   - Domain contains empty label 
+#>   - Domain contains empty label [domain_empty_label]
 #> 
 #> Domain: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
 #> Valid:  FALSE 
 #> Errors:
-#>   - Domain label too long (max 63 characters) 
+#>   - Domain label too long (max 63 characters) [domain_label_too_long]
 #> 
 # }
 ```

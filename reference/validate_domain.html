@@ -104,12 +104,16 @@ valid domains). Missing input uses <code>"domain_na"</code>.</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Punycoder Domain Validation Results</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ==================================</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 domain: 1 valid, 0 invalid (strict = TRUE)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Domain: example.com </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Valid:  TRUE </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="fu">validate_domain</span><span class="op">(</span><span class="st">"caf\u00E9.example.com"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Punycoder Domain Validation Results</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ==================================</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 domain: 1 valid, 0 invalid (strict = TRUE)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Domain: café.example.com </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Valid:  TRUE </span>
@@ -119,18 +123,20 @@ valid domains). Missing input uses <code>"domain_na"</code>.</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Punycoder Domain Validation Results</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ==================================</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 domains: 1 valid, 2 invalid (strict = TRUE)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Domain: valid.com </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Valid:  TRUE </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Domain: invalid..com </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Valid:  FALSE </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Errors:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   - Domain contains empty label </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   - Domain contains empty label [domain_empty_label]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Domain: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Valid:  FALSE </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Errors:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   - Domain label too long (max 63 characters) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   - Domain label too long (max 63 characters) [domain_label_too_long]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>

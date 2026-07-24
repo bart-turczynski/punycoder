@@ -33,10 +33,14 @@ Predicates for classifying domain names and labels.
 
 ## Internals
 
-S3 print methods and package overview.
+S3 print and summary methods, and package overview.
 
 - [`punycoder`](https://bart-turczynski.github.io/punycoder/reference/punycoder-package.md)
   [`punycoder-package`](https://bart-turczynski.github.io/punycoder/reference/punycoder-package.md)
   : Unicode and Punycode Domain Name Processing
 - [`print(`*`<punycoder_validation>`*`)`](https://bart-turczynski.github.io/punycoder/reference/print.punycoder_validation.md)
   : Print method for punycoder validation results
+- [`print(`*`<punycoder_validation_summary>`*`)`](https://bart-turczynski.github.io/punycoder/reference/print.punycoder_validation_summary.md)
+  : Print method for punycoder validation summaries
+- [`summary(`*`<punycoder_validation>`*`)`](https://bart-turczynski.github.io/punycoder/reference/summary.punycoder_validation.md)
+  : Summarize punycoder validation results
