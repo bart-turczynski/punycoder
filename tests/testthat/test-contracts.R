@@ -85,7 +85,7 @@ test_that("non-strict decode of a non-ACE Unicode label passes through", {
 test_that("fallback decode rejects non-LDH A-label input (PUNY-ypjwnagl)", {
   # A valid A-label is letter-digit-hyphen; literal (basic) code points that are
   # not LDH -- '(' ')' ',' '%' etc. -- must be rejected, not decoded, so the
-  # in-tree fallback agrees with libidn2 rather than passing punctuation through.
+  # in-tree fallback agrees with libidn2 rather than passing punctuation on.
   # strict mode is rejected earlier by the domain layer's LDH check; non-strict
   # reaches the fallback decoder, which now surfaces NA instead of a lenient
   # best-effort string.
@@ -100,7 +100,7 @@ test_that("fallback decode rejects non-LDH A-label input (PUNY-ypjwnagl)", {
   }
 })
 
-test_that("fallback decode rejects an empty Bootstring payload (PUNY-rxvwqsou)", {
+test_that("fallback decode rejects an empty Bootstring payload (rxvwqsou)", {
   # "xn---" is the ACE prefix followed by a delimiter and an empty payload: it
   # decodes to nothing and is not a valid A-label. Echoing it back would hide a
   # failure from the caller, so non-strict returns NA and strict errors.
