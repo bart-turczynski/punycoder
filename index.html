@@ -158,6 +158,47 @@
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Domain: test.com </span></span>
 <span><span class="co">#&gt; Valid:  TRUE</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="command-line-use">Command-line use<a class="anchor" aria-label="anchor" href="#command-line-use"></a>
+</h3>
+<p><code>punycoder</code> is a library, not a CLI, but a one-line <code>Rscript</code> wrapper covers the usual shell need: turning an IDN into the ASCII form that <code>dig</code>, <code>nslookup</code>, or <code>curl</code> will actually accept. No extra install, no <code>bin/</code> script. The snippets below are POSIX <code>sh</code>/<code>bash</code> — keep the <code>-e</code> argument in single quotes so the shell leaves the R code alone.</p>
+<p>Unicode host → ASCII, via the UTS #46 canonical form:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'cat(punycoder::host_normalize(commandArgs(TRUE)), sep = "\n")'</span> münchen.de</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="co">#&gt; xn--mnchen-3ya.de</span></span></code></pre></div>
+<p>Use <code><a href="reference/puny_encode.html">puny_encode()</a></code> instead when you want the raw RFC 3492 transform with no UTS #46 mapping, and <code><a href="reference/puny_decode.html">puny_decode()</a></code> to go back the other way:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'cat(punycoder::puny_encode(commandArgs(TRUE)), sep = "\n")'</span> münchen.de</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co">#&gt; xn--mnchen-3ya.de</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'cat(punycoder::puny_decode(commandArgs(TRUE)), sep = "\n")'</span> xn--mnchen-3ya.de</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co">#&gt; münchen.de</span></span></code></pre></div>
+<p>Feeding a resolver is then just command substitution (drop <code>sep</code> so nothing but the host is printed):</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="ex">dig</span> +short <span class="st">"</span><span class="va">$(</span><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'cat(punycoder::host_normalize(commandArgs(TRUE)))'</span> münchen.de<span class="va">)</span><span class="st">"</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co">#&gt; 194.246.166.100</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="ex">nslookup</span> <span class="st">"</span><span class="va">$(</span><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'cat(punycoder::host_normalize(commandArgs(TRUE)))'</span> münchen.de<span class="va">)</span><span class="st">"</span></span></code></pre></div>
+<p>All three functions are vectorized, so several hosts can go through one R startup and out to <code>xargs</code>:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'cat(punycoder::host_normalize(commandArgs(TRUE)), sep = "\n")'</span> münchen.de москва.рф <span class="kw">|</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  <span class="fu">xargs</span> <span class="at">-n</span> 1 dig +short</span></code></pre></div>
+<div class="section level4">
+<h4 id="failed-conversions">Failed conversions<a class="anchor" aria-label="anchor" href="#failed-conversions"></a>
+</h4>
+<p><code><a href="reference/host_normalize.html">host_normalize()</a></code> never aborts: an input it cannot normalize comes back as <code>NA</code>, which prints as a literal <code>NA</code> line rather than silently disappearing from the pipeline.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'cat(punycoder::host_normalize(commandArgs(TRUE)), sep = "\n")'</span> münchen.de <span class="st">'bad..domain'</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="co">#&gt; xn--mnchen-3ya.de</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="co">#&gt; NA</span></span></code></pre></div>
+<p><code><a href="reference/puny_encode.html">puny_encode()</a></code> and <code><a href="reference/puny_decode.html">puny_decode()</a></code> behave differently: they are strict by default, so a bad input stops the script with a non-zero exit status.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'cat(punycoder::puny_encode(commandArgs(TRUE)), sep = "\n")'</span> <span class="st">'bad..domain'</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="co">#&gt; Error: Error encoding domain: Domain contains empty label</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="co">#&gt; Execution halted</span></span></code></pre></div>
+<p>Pass <code>strict = FALSE</code> to get the per-element <code>NA</code> behavior instead, so one bad host does not take down a batch:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'cat(punycoder::puny_encode(commandArgs(TRUE), strict = FALSE), sep = "\n")'</span> münchen.de <span class="st">'bad..domain'</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="co">#&gt; xn--mnchen-3ya.de</span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="co">#&gt; NA</span></span></code></pre></div>
+<p>Since <code>NA</code> is printed, not swallowed, drop it before piping to a resolver — otherwise <code>dig</code> dutifully looks up a host named <code>NA</code>:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'h &lt;- punycoder::host_normalize(commandArgs(TRUE)); cat(h[!is.na(h)], sep = "\n")'</span> münchen.de <span class="st">'bad..domain'</span> <span class="kw">|</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>  <span class="fu">xargs</span> <span class="at">-n</span> 1 dig +short</span></code></pre></div>
+</div>
+</div>
 </div>
 <div class="section level2">
 <h2 id="key-features">Key Features<a class="anchor" aria-label="anchor" href="#key-features"></a>
@@ -180,7 +221,7 @@
 <h3 id="data-analysis">Data Analysis<a class="anchor" aria-label="anchor" href="#data-analysis"></a>
 </h3>
 <p>Clean and standardize URL datasets:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Identify international domains</span></span>
 <span><span class="fu"><a href="reference/is_idn.html">is_idn</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"café.com"</span>, <span class="st">"example.com"</span>, <span class="st">"москва.рф"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
