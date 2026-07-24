@@ -18,7 +18,12 @@
 is_punycode <- function(x) {
   .assert_character(x)
 
-  grepl("(^|\\.)(xn--)", x, ignore.case = TRUE)
+  # Deliberately NOT `perl = TRUE`, unlike `is_idn()` below: PCRE rejects
+  # ill-formed UTF-8 that the default engine tolerates. On an input such as
+  # "xn--a" followed by an encoded UTF-16 surrogate (ED A0 80), the default
+  # engine returns TRUE silently while PCRE warns and returns FALSE. Input here
+  # is not passed through `enc2utf8()`, so those bytes reach `grepl()` verbatim.
+  grepl("(^|\\.)xn--", x, ignore.case = TRUE)
 }
 
 #' Test if domain contains internationalized characters
