@@ -37,6 +37,14 @@ get_validation_summary <- function(validation_result) {
   if (is.null(strict)) NA else strict
 }
 
+# "1 domain" / "N domains" for the count headers.
+# @keywords internal
+# @noRd
+.fmt_domain_count <- function(n) {
+  noun <- if (identical(as.integer(n), 1L)) "domain" else "domains"
+  paste(.fmt_count(n), noun)
+}
+
 #' Print method for punycoder validation results
 #'
 #' Prints a count header followed by one block per domain, truncated to the
@@ -59,8 +67,8 @@ print.punycoder_validation <- function(x, ...) {
   cat("Punycoder Domain Validation Results\n")
   cat("==================================\n\n")
   cat(sprintf(
-    "%s domains: %s valid, %s invalid (strict = %s)\n\n",
-    .fmt_count(n), .fmt_count(n_valid), .fmt_count(n - n_valid),
+    "%s: %s valid, %s invalid (strict = %s)\n\n",
+    .fmt_domain_count(n), .fmt_count(n_valid), .fmt_count(n - n_valid),
     .validation_strict(x)
   ))
 
@@ -159,8 +167,8 @@ print.punycoder_validation_summary <- function(x, ...) {
     "Punycoder validation summary (strict = %s)\n", .validation_strict(x)
   ))
   cat(sprintf(
-    "%s domains: %s valid, %s invalid\n",
-    .fmt_count(attr(x, "n")),
+    "%s: %s valid, %s invalid\n",
+    .fmt_domain_count(attr(x, "n")),
     .fmt_count(attr(x, "n_valid")),
     .fmt_count(attr(x, "n_invalid"))
   ))

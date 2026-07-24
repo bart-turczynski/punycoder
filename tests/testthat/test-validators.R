@@ -133,6 +133,33 @@ test_that("print method shows a count header and error codes", {
   expect_true(any(grepl("[domain_label_hyphen]", output, fixed = TRUE)))
 })
 
+test_that("count headers use the singular noun at exactly one domain", {
+  one <- validate_domain("example.com")
+  two <- validate_domain(c("example.com", "test.org"))
+
+  expect_true(any(grepl(
+    "1 domain: 1 valid, 0 invalid (strict = TRUE)",
+    capture.output(print(one)),
+    fixed = TRUE
+  )))
+  expect_true(any(grepl(
+    "1 domain: 1 valid, 0 invalid",
+    capture.output(print(summary(one))),
+    fixed = TRUE
+  )))
+
+  expect_true(any(grepl(
+    "2 domains: 2 valid, 0 invalid (strict = TRUE)",
+    capture.output(print(two)),
+    fixed = TRUE
+  )))
+  expect_true(any(grepl(
+    "2 domains: 2 valid, 0 invalid",
+    capture.output(print(summary(two))),
+    fixed = TRUE
+  )))
+})
+
 test_that("print method truncates above 10 elements", {
   domains <- sprintf("example%d.com", seq_len(12))
   output <- capture.output(print(validate_domain(domains)))
