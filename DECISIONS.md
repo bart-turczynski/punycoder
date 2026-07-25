@@ -247,10 +247,12 @@ is answerable without searching at all.
 
 **Every constant and array above is computed in
 `data-raw/generate_unicode_tables.R` from the same UCD vectors the search
-reads.** The generator also asserts the shape it assumed — it stops if a future
-Unicode version extends a bounds-tested table down into ASCII, or gives a
-composition pair an ASCII second element, rather than emitting a guard that
-would skip real data.
+reads.** A derived bound therefore stays *correct* whatever the data does; what
+a version bump could break is the *shape choice*. If a bounds-tested table grew
+down into ASCII, its guard would quietly stop firing and ASCII would fall back
+into the binary search — a silent performance regression, with no wrong answer
+to reveal it. The generator asserts the shape it assumed so that bump fails
+loudly at generation time instead.
 
 **Consequences.** The fast and slow paths cannot disagree, and a Unicode
 version bump moves the boundaries automatically. Hand-writing a boundary into

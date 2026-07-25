@@ -335,29 +335,44 @@ bidi_ascii <- vapply(ascii_cps, function(cp) {
   bidi_ranges$value[[range_index_at(bidi_ranges$lo, bidi_ranges$hi, cp)]]
 }, integer(1))
 
-# Tables the bounds test is expected to cover for ASCII. Assert it, so that if
-# a future Unicode version extends one of them down into ASCII this stops
-# rather than silently emitting a guard that skips real data.
-for (nm in c("ccc", "mark", "joining")) {
-  lo <- switch(nm,
-    ccc = ccc_ranges$lo, mark = mark_ranges$lo, joining = joining_ranges$lo
-  )
+# The four tables the bounds test is expected to answer ASCII for. A derived
+# bound stays CORRECT no matter what the data does -- what a version bump could
+# break is the shape choice: if one of these grew down into ASCII, its guard
+# would quietly stop firing and ASCII would fall back into the binary search,
+# a silent performance regression with no wrong answer to reveal it. Assert the
+# shape so that bump fails loudly here instead.
+bounds_tested <- list(
+  ccc = ccc_ranges$lo,
+  mark = mark_ranges$lo,
+  decomposition = as.integer(names(full_decomp)),
+  joining = joining_ranges$lo
+)
+for (nm in names(bounds_tested)) {
+  lo <- bounds_tested[[nm]]
   if (covers_ascii(lo)) {
     stop(sprintf(
-      "%s ranges now reach ASCII (first = U+%04X); it needs a 128-entry
-       direct index like idna/bidi, not a bounds test", nm, min(lo)
+      paste0(
+        "the %s table now reaches ASCII (first = U+%04X), so its bounds test ",
+        "no longer answers ASCII; give it a 128-entry direct index like ",
+        "idna/bidi instead"
+      ), nm, min(lo)
     ))
   }
 }
 
 # The second element of a composition pair is always a combining character, so
 # a bound on b alone keeps ASCII text out of the pair search entirely. (A bound
-# on a would not: the smallest a is U+003C.)
+# on a would not: the smallest a is U+003C.) Same reasoning as above -- the
+# bound is derived and cannot go wrong, only stop paying off.
 comp_b_first <- min(comp_b)
 comp_b_last <- max(comp_b)
-if (comp_b_first < 0x80L) {
-  stop("a composition pair now has an ASCII second element; the b-bound guard
-       in canonical_compose() is no longer a fast path")
+if (covers_ascii(comp_b)) {
+  stop(sprintf(
+    paste0(
+      "a composition pair now has an ASCII second element (U+%04X), so the ",
+      "b-bound in canonical_compose() no longer keeps ASCII out of the search"
+    ), comp_b_first
+  ))
 }
 
 # ---------------------------------------------------------------------------
