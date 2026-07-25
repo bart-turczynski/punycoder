@@ -122,13 +122,15 @@ test_that("the profile token distinguishes a non-default table set", {
 })
 
 test_that("each shipped table set is idempotent over the conformance corpus", {
-  path <- system.file("testdata", "IdnaTestV2.txt", package = "punycoder")
-  skip_if(!nzchar(path), "IdnaTestV2.txt fixture not installed")
-
-  corpus <- idna_v2_corpus(path)
-  expect_gt(length(corpus), 6000L)
-
+  # Each engine runs over the corpus Unicode published WITH it, so a version's
+  # own newly assigned code points are actually exercised.
   for (v in unicode_versions()) {
+    path <- idna_fixture_path(v)
+    skip_if(!nzchar(path), paste("IdnaTestV2 fixture not installed for", v))
+
+    corpus <- idna_v2_corpus(path)
+    expect_gt(length(corpus), 6000L)
+
     once <- host_normalize(corpus, unicode_version = v)
     keep <- !is.na(once)
     twice <- host_normalize(once[keep], unicode_version = v)
@@ -137,9 +139,52 @@ test_that("each shipped table set is idempotent over the conformance corpus", {
   }
 })
 
-test_that("16.0.0 and 17.0.0 agree except on code points 17.0.0 assigns", {
-  path <- system.file("testdata", "IdnaTestV2.txt", package = "punycoder")
-  skip_if(!nzchar(path), "IdnaTestV2.txt fixture not installed")
+# The invariant the whole multi-version epic rests on: a Unicode bump is
+# provably accept-only for this pipeline (every code point that changed between
+# the shipped versions moved OUT of `disallowed`, never into it), so a newer
+# table set may newly accept a host but must never reject one an older set
+# accepted, nor return a different value for it. That is strictly stronger and
+# more durable than any fixed delta count, and it mirrors the "relaxation is
+# monotone" assertion the flag knobs get in test-idna-conformance.R.
+test_that("a newer table set only ever accepts more, never differently", {
+  # Ordered numerically, not with sort(): a lexical sort of version strings
+  # breaks the moment a single-digit major is shipped alongside a double-digit
+  # one (sort(c("9.0.0", "10.0.0")) puts 10 first), which would pair the
+  # versions backwards and assert monotonicity in the wrong direction -- a test
+  # that passes while checking the opposite of what it claims.
+  versions <- unicode_versions()
+  versions <- versions[order(numeric_version(versions))]
+  skip_if(length(versions) < 2L, "build ships only one table set")
+
+  for (i in seq_len(length(versions) - 1L)) {
+    older <- versions[[i]]
+    newer <- versions[[i + 1L]]
+
+    # Run over BOTH corpora: the newer one carries the newly assigned code
+    # points, the older one guards the inputs that already worked.
+    for (cv in versions) {
+      path <- idna_fixture_path(cv)
+      skip_if(!nzchar(path), paste("IdnaTestV2 fixture not installed for", cv))
+
+      corpus <- idna_v2_corpus(path)
+      a <- host_normalize(corpus, unicode_version = older)
+      b <- host_normalize(corpus, unicode_version = newer)
+      label <- paste(older, "->", newer, "over the", cv, "corpus")
+
+      # Nothing the older set accepts may become NA under the newer one ...
+      expect_false(any(!is.na(a) & is.na(b)), info = label)
+      # ... and nothing may come back with a different value.
+      expect_false(any(!is.na(a) & !is.na(b) & a != b), info = label)
+    }
+  }
+})
+
+test_that("16.0.0 and 17.0.0 differ only on code points 17.0.0 assigns", {
+  # The delta count below is a fact about the 16.0.0 CORPUS specifically (the
+  # 17.0.0 corpus adds rows for further newly assigned code points and has a
+  # different count), so this test names its corpus rather than looping.
+  path <- idna_fixture_path("16.0.0")
+  skip_if(!nzchar(path), "IdnaTestV2 fixture not installed for 16.0.0")
 
   corpus <- idna_v2_corpus(path)
   v16 <- host_normalize(corpus, unicode_version = "16.0.0")
