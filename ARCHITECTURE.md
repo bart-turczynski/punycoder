@@ -186,15 +186,22 @@ composition, UTS #46 mapping/status, combining-mark set, `Bidi_Class`,
 16.0.0). Bumping the version is a deliberate, reviewed behavior change — see
 ADR-004 and `dev/normalization-contract.md` §8.
 
-The generated accessors share one `range_lookup` binary search (plus a
-`key_lookup` for the point-keyed decomposition index and a bespoke pair search
-for composition), and each answers ASCII without searching: the two tables that
-cover ASCII (UTS #46 mapping, `Bidi_Class`) via a 128-entry direct index, the
-rest via a bounds test against their own first/last listed code point. **Every
-one of those constants and arrays is derived in the generator** from the same
-UCD vectors the search reads, so a version bump moves them automatically and
-the fast path cannot disagree with the slow one. Never hand-write a boundary
-into the emitted C++ — see ADR-011.
+The four accessors that profile hot — combining class, UTS #46 mapping,
+decomposition, `Bidi_Class` — are **two-stage tries**: `STAGE2[(STAGE1[cp >>
+SHIFT] << SHIFT) | (cp & MASK)]`, two loads and no branches, O(1) for every
+code point rather than only for ASCII. Identical blocks are stored once, which
+is what keeps them affordable; the unassigned gaps share one block. Where a
+table lists nothing below its first code point (U+0300 for combining class,
+U+00C0 for decomposition) a derived low bound still sits in front of the trie,
+because answering ASCII from a compare beats answering it from two loads. The
+two accessors consulted once per *label* rather than once per code point
+(`is_combining_mark`, `joining_type`) keep the `range_lookup` binary search;
+`canonical_compose` is keyed on a *pair* and keeps its own search and its
+`b`-bound. **Every one of those arrays, constants, element types and block
+sizes is derived in the generator** from the same UCD vectors the accessor
+reads, and the generator verifies each trie against its source ranges for all
+1,114,112 code points before emitting it. Never hand-write a boundary into the
+emitted C++ — see ADR-011 and ADR-012.
 
 ## Test taxonomy (`tests/testthat/`)
 
