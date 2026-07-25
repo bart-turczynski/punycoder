@@ -16,6 +16,10 @@ data-raw/.ucd-cache/
 
 # R CMD check results
 *.Rcheck/
+# Stray top-level copy of tests/ that R CMD check can leave behind. Not source:
+# it is byte-identical to tests/, and at top level it trips the CRAN
+# "Non-standard file/directory found at top level" NOTE.
+punycoder-tests/
 
 # RStudio files
 .Rproj.user/
