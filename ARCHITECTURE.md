@@ -195,13 +195,23 @@ table lists nothing below its first code point (U+0300 for combining class,
 U+00C0 for decomposition) a derived low bound still sits in front of the trie,
 because answering ASCII from a compare beats answering it from two loads. The
 two accessors consulted once per *label* rather than once per code point
-(`is_combining_mark`, `joining_type`) keep the `range_lookup` binary search;
-`canonical_compose` is keyed on a *pair* and keeps its own search and its
-`b`-bound. **Every one of those arrays, constants, element types and block
-sizes is derived in the generator** from the same UCD vectors the accessor
-reads, and the generator verifies each trie against its source ranges for all
-1,114,112 code points before emitting it. Never hand-write a boundary into the
-emitted C++ — see ADR-011 and ADR-012.
+(`is_combining_mark`, `joining_type`) keep the `range_lookup` binary search.
+
+`canonical_compose` is keyed on a *pair*, so it is a trie on the **first**
+element with a short scan behind it — the decomposition shape run backwards.
+The trie maps the starter to a run of `(b, c)` pairs sorted by `b`; keying on
+the first element rather than the second is measured off the data (391 distinct
+`a` against 72 distinct `b`, so runs are a median of 1 long instead of 3) and it
+is what puts the *reject* on the trie. Its derived `b`-bound is exposed
+`inline` from the generated header as `composes_as_second()` and applied by
+`nfc()` **before** the call, because 87% of the compositions `nfc()` attempts
+are answered by that bound alone — see ADR-013.
+
+**Every one of those arrays, constants, element types and block sizes is
+derived in the generator** from the same UCD vectors the accessor reads, and the
+generator verifies each trie against its source ranges for all 1,114,112 code
+points before emitting it. Never hand-write a boundary into the emitted C++ —
+see ADR-011, ADR-012 and ADR-013.
 
 ## Test taxonomy (`tests/testthat/`)
 

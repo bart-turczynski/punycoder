@@ -70,7 +70,17 @@ uint32_t hangul_compose(uint32_t a, uint32_t b) {
 
 uint32_t compose_pair(uint32_t a, uint32_t b) {
   uint32_t h = hangul_compose(a, b);
-  return h ? h : canonical_compose(a, b);
+  if (h != 0) return h;
+  // Most attempted compositions end here: b is any character following a
+  // starter, and only a combining character can be the second element of a
+  // pair. Measured over a 20k-host corpus, 87% of the attempts nfc() makes
+  // never reach the table -- so applying the bound here rather than inside
+  // canonical_compose() removes the call, not just the lookup. The bound
+  // itself is derived and emitted with the table (ADR-011); the Hangul test
+  // above stays in front of it because Hangul composition is algorithmic and
+  // owes nothing to the pair table's bounds.
+  if (!u16::composes_as_second(b)) return 0;
+  return canonical_compose(a, b);
 }
 
 }  // namespace

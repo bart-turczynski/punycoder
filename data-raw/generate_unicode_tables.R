@@ -341,8 +341,10 @@ idna_off <- cumsum(idna_len) - idna_len
 # joining_type keep their bounds test and their search: both are consulted once
 # per LABEL, not once per code point, so a trie would add 15-20 KB of
 # permanently cold table to shorten a search that barely registers.
-# canonical_compose is keyed on a PAIR of code points and does not fit this
-# shape at all; it keeps its own search and its b-bound (PUNY-mbzhgbta).
+#
+# canonical_compose is keyed on a PAIR of code points, so it cannot be a trie
+# the way the four above are -- but it can be a trie on ONE element of the pair
+# with a short scan behind it, which is what it now is (PUNY-mbzhgbta, below).
 # ---------------------------------------------------------------------------
 
 # One value per code point in [0, max_cp], expanded from [lo, hi] = value rows.
@@ -503,17 +505,56 @@ for (nm in names(bounds_tested)) {
   }
 }
 
+# Composition: the decomposition shape run backwards. A trie on ONE element of
+# the pair maps it to a run of partners to scan, so the pair lookup becomes the
+# same two loads plus a short walk that canonical_decomposition already is.
+#
+# WHICH element is measured off the data rather than picked. The 961 pairs hold
+# 391 distinct a but only 72 distinct b, so keying on a leaves runs with a
+# median of 1 and a maximum of 19, where keying on b would leave 3 and 117.
+# Keying on a also puts the REJECT on the trie, which is where the time
+# actually went: a starter that never composes -- every CJK ideograph, every
+# Hangul syllable, every unaccented letter -- used to walk the whole 961-pair
+# search only to conclude 0, and now costs two loads.
+comp_rle <- rle(comp_a)
+comp_keys <- comp_rle$values
+comp_run <- comp_rle$lengths
+comp_off <- cumsum(comp_run) - comp_run
+
+comp_space <- rep(0L, n_cp)
+comp_space[comp_keys + 1L] <- seq_along(comp_keys)
+comp_trie <- build_trie("canonical composition", comp_space, 0L)
+
+# build_trie() has already proved the a -> run mapping over all 1,114,112 code
+# points. What remains of the accessor is the scan, so check what the scan
+# assumes: that each run holds exactly the pairs recorded for its own a, in
+# strictly ascending b. Those two together are the whole accessor -- a b that
+# is not in the run cannot match anything in it, so the b-bound in front is an
+# optimization and not part of the contract.
+for (i in seq_along(comp_keys)) {
+  idx <- comp_off[i] + seq_len(comp_run[i])
+  if (!all(comp_a[idx] == comp_keys[i]) ||
+    is.unsorted(comp_b[idx], strictly = TRUE)) {
+    stop(sprintf(
+      "the canonical composition run for U+%04X is not a sorted partition",
+      comp_keys[i]
+    ))
+  }
+}
+
 # The second element of a composition pair is always a combining character, so
-# a bound on b alone keeps ASCII text out of the pair search entirely. (A bound
-# on a would not: the smallest a is U+003C.) Same reasoning as above -- the
-# bound is derived and cannot go wrong, only stop paying off.
+# a bound on b alone keeps ASCII text out of the structure entirely -- with no
+# memory access at all, which still beats the trie's two loads. (A bound on a
+# would not: the smallest a is U+003C.) Same reasoning as the bounds-tested
+# tables above: the bound is derived and cannot go wrong, only stop paying off,
+# so assert the shape it assumes.
 comp_b_first <- min(comp_b)
 comp_b_last <- max(comp_b)
 if (covers_ascii(comp_b)) {
   stop(sprintf(
     paste0(
       "a composition pair now has an ASCII second element (U+%04X), so the ",
-      "b-bound in canonical_compose() no longer keeps ASCII out of the search"
+      "b-bound in canonical_compose() no longer keeps ASCII out of the lookup"
     ), comp_b_first
   ))
 }
@@ -611,27 +652,30 @@ emit_trie <- function(prefix, trie) {
 # all, which still beats the trie's two loads. Tables that cover ASCII (UTS-46
 # mapping, Bidi_Class) have no such bound and go straight to the trie, which is
 # what lets it subsume their 128-entry ASCII arrays.
-trie_guard <- function(prefix, trie) {
-  parts <- sprintf("cp > %s_LAST", prefix)
+#
+# `var` is the accessor's parameter name: every trie but the composition one is
+# keyed on the code point `cp`, and that one is keyed on the first element `a`.
+trie_guard <- function(prefix, trie, var = "cp") {
+  parts <- sprintf("%s > %s_LAST", var, prefix)
   if (trie$first > 0L) {
-    parts <- c(sprintf("cp < %s_FIRST", prefix), parts)
+    parts <- c(sprintf("%s < %s_FIRST", var, prefix), parts)
   }
   paste(parts, collapse = " || ")
 }
 
 # The same test the other way round, for the accessors that read better as
 # "in range -> look it up" than as an early return.
-trie_in_range <- function(prefix, trie) {
-  parts <- sprintf("cp <= %s_LAST", prefix)
+trie_in_range <- function(prefix, trie, var = "cp") {
+  parts <- sprintf("%s <= %s_LAST", var, prefix)
   if (trie$first > 0L) {
-    parts <- c(sprintf("cp >= %s_FIRST", prefix), parts)
+    parts <- c(sprintf("%s >= %s_FIRST", var, prefix), parts)
   }
   paste(parts, collapse = " && ")
 }
 
 # The trie lookup as it appears inside an accessor body.
-trie_call <- function(prefix) {
-  sprintf("trie_lookup(%s2, %s1, %s_SHIFT, cp)", prefix, prefix, prefix)
+trie_call <- function(prefix, var = "cp") {
+  sprintf("trie_lookup(%s2, %s1, %s_SHIFT, %s)", prefix, prefix, prefix, var)
 }
 
 guard <- "PUNYCODER_UNICODE_TABLES_16_0_0_H"
@@ -669,6 +713,16 @@ const uint32_t *canonical_decomposition(uint32_t cp, uint32_t &len);
 // Primary canonical composition of starter a and combiner b; 0 if none.
 uint32_t canonical_compose(uint32_t a, uint32_t b);
 
+// True if b can be the SECOND element of some canonical composition pair.
+// This is the bound canonical_compose() applies before anything else, exposed
+// here so a caller can apply it BEFORE the call rather than after: b is always
+// a combining character, so ordinary text answers it without touching memory,
+// and at that point the call itself is the whole cost. Both bounds are derived
+// from the pair table like every other constant in this file (ADR-011).
+inline bool composes_as_second(uint32_t b) {
+  return b >= %s && b <= %s;
+}
+
 // UTS-46 status of cp. If the status is mapped, deviation, or
 // disallowed_std3_mapped and a mapping exists, sets map/len to the target
 // sequence (len may be 0 for an empty mapping). Unlisted code points are
@@ -695,7 +749,8 @@ JoiningType joining_type(uint32_t cp);
 }  // namespace punycoder
 
 #endif  // %s
-", unicode_version, guard, guard, guard
+", unicode_version, guard, guard, hexlit(comp_b_first), hexlit(comp_b_last),
+  guard
 )
 
 writeLines(header, "src/unicode_tables_16_0_0.h")
@@ -783,21 +838,38 @@ src <- c(
   ),
   emit_trie("DECOMP_TRIE", decomp_trie),
   "",
-  "// --- Canonical composition pairs (sorted by a, then b) ---",
-  "struct CompEntry { uint32_t a, b, c; };",
+  "// --- Canonical composition (two-stage trie on the FIRST element) ---",
+  "// A pair key cannot be a trie the way the tables above are, but ONE",
+  "// element of it can: this is the decomposition shape run backwards. The",
+  "// trie maps the starter a to a 1-BASED index into COMP_INDEX (0 = a never",
+  "// composes), which delimits the run of (b, c) pairs in COMP_DATA to scan.",
+  "//",
+  "// Keying on a rather than b is measured off the data, not picked: 961",
+  "// pairs hold 391 distinct a but only 72 distinct b, so a-runs are a median",
+  "// of 1 and a maximum of 19 long where b-runs would be 3 and 117. It also",
+  "// puts the reject on the trie, which is where the time went -- a starter",
+  "// that never composes is two loads, not a walk over all 961 pairs.",
   sprintf(
-    "const CompEntry COMP_TABLE[] = {\n%s\n};",
-    chunk(
-      sprintf(
-        "{%s, %s, %s}", hexlit(comp_a), hexlit(comp_b), hexlit(comp_c)
-      ),
-      3L
-    )
+    "struct CompIndex { %s off; %s len; };",
+    elem_type(comp_off), elem_type(comp_run)
   ),
-  sprintf("const size_t COMP_N = %d;", length(comp_a)),
+  sprintf(
+    "const CompIndex COMP_INDEX[] = {\n%s\n};",
+    chunk(sprintf("{%d, %d}", comp_off, comp_run), 8L)
+  ),
+  "// Each run is sorted by b, so the scan stops early on a miss -- and the",
+  "// common Latin accents (U+0300..U+030C) sort first in every run that has",
+  "// them, so a hit on one is found in the first iteration or two.",
+  "struct CompPair { uint32_t b, c; };",
+  sprintf(
+    "const CompPair COMP_DATA[] = {\n%s\n};",
+    chunk(sprintf("{%s, %s}", hexlit(comp_b), hexlit(comp_c)), 4L)
+  ),
+  emit_trie("COMP_TRIE", comp_trie),
   "// Bounds of the SECOND element only: b is always a combining character,",
   "// while a can be ASCII (the smallest is U+003C), so only a b-bound keeps",
-  "// ASCII text out of the pair search.",
+  "// ASCII text out of the lookup -- and it does so with no memory access at",
+  "// all, which still beats the trie's two loads.",
   sprintf(
     "const uint32_t COMP_B_FIRST = %s, COMP_B_LAST = %s;",
     hexlit(comp_b_first), hexlit(comp_b_last)
@@ -876,13 +948,14 @@ src <- c(
   "",
   "uint32_t canonical_compose(uint32_t a, uint32_t b) {",
   "  if (b < COMP_B_FIRST || b > COMP_B_LAST) return 0;",
-  "  size_t lo = 0, hi = COMP_N;",
-  "  while (lo < hi) {",
-  "    const size_t mid = (lo + hi) / 2;",
-  "    const CompEntry &e = COMP_TABLE[mid];",
-  "    if (a < e.a || (a == e.a && b < e.b)) hi = mid;",
-  "    else if (a > e.a || (a == e.a && b > e.b)) lo = mid + 1;",
-  "    else return e.c;",
+  sprintf("  if (%s) return 0;", trie_guard("COMP_TRIE", comp_trie, "a")),
+  sprintf("  const uint32_t i = %s;", trie_call("COMP_TRIE", "a")),
+  "  if (i == 0) return 0;",
+  "  const CompIndex &e = COMP_INDEX[i - 1];",
+  "  for (uint32_t j = 0; j < e.len; ++j) {",
+  "    const CompPair &p = COMP_DATA[e.off + j];",
+  "    if (p.b == b) return p.c;",
+  "    if (p.b > b) break;  // the run is sorted by b",
   "  }",
   "  return 0;",
   "}",
@@ -924,15 +997,17 @@ writeLines(src, "src/unicode_tables_16_0_0.cpp")
 message(sprintf(
   paste0(
     "generated src/unicode_tables_16_0_0.{h,cpp}: marks=%d ranges, ",
-    "comp=%d pairs, joining=%d ranges, idna=%d ranges -> %d distinct values ",
+    "comp=%d pairs over %d first elements (runs: median %g, max %d), ",
+    "joining=%d ranges, idna=%d ranges -> %d distinct values ",
     "(map data %d), decomp=%d (data %d)"
   ),
-  nrow(mark_ranges), length(comp_a), nrow(joining_ranges), length(idna_lo),
-  length(idna_value_status), length(idna_data), length(decomp_keys),
-  length(decomp_data)
+  nrow(mark_ranges), length(comp_a), length(comp_keys),
+  stats::median(comp_run), max(comp_run), nrow(joining_ranges),
+  length(idna_lo), length(idna_value_status), length(idna_data),
+  length(decomp_keys), length(decomp_data)
 ))
 
-for (t in list(ccc_trie, decomp_trie, idna_trie, bidi_trie)) {
+for (t in list(ccc_trie, decomp_trie, idna_trie, bidi_trie, comp_trie)) {
   message(sprintf(
     "  %-24s trie: block %4d, stage1 %6d x %-8s stage2 %6d x %-8s %6.1f KB",
     t$name, t$block, length(t$stage1), elem_type(t$stage1),
