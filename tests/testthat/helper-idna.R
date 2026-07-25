@@ -91,6 +91,16 @@ idna_load_v2 <- function(path) {
   )
 }
 
+# The corpus as a plain vector of distinct host inputs: both the source column
+# and the expected A-label column, since a valid output is itself a valid input
+# and doubling the pool costs nothing. Used by the tests that compare two table
+# sets or two builds against each other rather than against an expectation.
+idna_v2_corpus <- function(path) {
+  df <- idna_load_v2(path)
+  corpus <- unique(c(df$source, df$to_ascii))
+  corpus[nzchar(corpus)]
+}
+
 # Status codes a profile must IGNORE when a flag is false (file legend).
 # v1 ships strict (all flags true) -> ignore nothing. This hook lets B reuse the
 # corpus for relaxed profiles without re-deriving expectations.
