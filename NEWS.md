@@ -57,6 +57,30 @@
 
 ## Performance
 
+* `host_normalize()` is faster again on non-ASCII hosts --- **1.05x** when every
+  host is non-ASCII, 1.04x at 50%, 1.03x at 20%, unchanged on all-ASCII input
+  --- with the last Unicode table still on a binary search converted. Canonical
+  composition is keyed on a *pair* of code points, so it could not become a trie
+  the way the four accessors below did; it is now a trie on the **first** element
+  with a short scan over that starter's partners behind it. Keying on the first
+  element is measured rather than assumed: the 961 pairs hold 391 distinct first
+  elements but only 72 distinct second ones, so the runs to scan are a median of
+  1 long instead of 3, and it is the first element that answers the common
+  *reject* --- a starter that never composes, such as any CJK ideograph, used to
+  walk the whole 961-pair search only to conclude 0. The accessor is 6.1x faster
+  on that reject path and 2.5x on a successful composition, and its share of self
+  time falls from 5.3% to 1.9%.
+
+  The end-to-end figure is smaller than either of those because most attempted
+  compositions never reach the table at all: 87% of them are answered by the
+  bound on the second element, since that element is just the next character
+  after a starter and ordinary text is not combining marks. That bound is now
+  exposed `inline` from the generated header and applied *before* the call
+  rather than inside it, which is what makes the ASCII-heavy end of the range
+  faster rather than merely unchanged. Output is unchanged on every input in the
+  UTS #46 conformance corpus under all supported flag combinations
+  (PUNY-mbzhgbta).
+
 * `host_normalize()` is faster on non-ASCII hosts --- **1.25x** when every host
   is non-ASCII, 1.16x at 50%, 1.08x at 20%, and unchanged on all-ASCII input
   --- and the installed shared object is **64 KB smaller**. The four Unicode

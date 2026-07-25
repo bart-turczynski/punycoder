@@ -333,3 +333,65 @@ identical; `CCC_RANGES`, `BIDI_RANGES`, `IDNA_RANGES`, `IDNA_ASCII` and
 `src/unicode_tables_16_0_0.h` is untouched, so the native API is unchanged.
 Verified byte-identical on 6,403 conformance inputs × 8 flag combinations, and
 on `is_idn`/`is_punycode`/`puny_encode`/`puny_decode` over the same corpus.
+
+---
+
+## ADR-013 — Composition is a trie on the first element, and its bound belongs to the caller
+
+**Status:** Accepted
+
+**Context.** ADR-012 left `canonical_compose` on a binary search over all 961
+pairs, because a key that is a *pair* does not fit a trie. Re-profiling after
+the tries landed made it the largest table cost remaining: **5.3% of self time**
+on an all-non-ASCII corpus, against 12.8% for the four tries combined.
+
+**Decision.** Two changes, and the second is the one the profile was really
+pointing at.
+
+- **A trie on one element of the pair.** Composition becomes the decomposition
+  shape run backwards: the trie maps the starter `a` to a 1-based index into
+  `COMP_INDEX`, which delimits a run of `(b, c)` pairs in `COMP_DATA` to scan.
+  *Which* element is measured off the data, not picked: the 961 pairs hold 391
+  distinct `a` but only 72 distinct `b`, so keying on `a` leaves runs with a
+  median of 1 and a maximum of 19, where keying on `b` would leave 3 and 117.
+  Keying on `a` also puts the *reject* on the trie, which is where the time
+  went — a starter that never composes (every CJK ideograph, every Hangul
+  syllable) used to walk the whole search only to conclude 0.
+- **The `b`-bound moves to the call site.** The profile share was misleading
+  about *what* was expensive. Tracing the calls `nfc()` actually makes over a
+  20k-host corpus found **87% of them answered by the bound alone** — `b` is
+  simply the next character after a starter, and ordinary text is not combining
+  marks. For those the call itself was the entire cost, and no lookup structure
+  can help. The generated header now exposes `composes_as_second(b)` `inline`,
+  and `compose_pair()` applies it *before* the call. Both bounds are still
+  derived from the pair table, so this exports a generated constant rather than
+  hand-writing one (ADR-011). The Hangul test stays in front of it: Hangul
+  composition is algorithmic and owes nothing to the pair table's bounds.
+
+**Consequences.** `canonical_compose` self time falls from **5.3% to 1.9%**, and
+all table lookups from 16.5% to 12.8%. In isolation the accessor is **6.1x**
+faster on the reject path and **2.5x** on the hit path. End to end the change is
+smaller than either figure suggests, because most compose attempts never reached
+the table: measured on clean `-O2` builds of both versions installed side by
+side and alternated (no rebuild between samples, min of 9 batched samples per
+point), `host_normalize` over 20k hosts goes **1.05x** all-non-ASCII, 1.04x at
+50%, 1.03x at 20%, and 1.01x — neutral — on all-ASCII input. A three-way run
+confirms both halves earn their place: the trie carries the non-ASCII end and
+does nothing at 0%, the inline bound carries the ASCII end. `__const` grows
+5,700 bytes (the trie costs 7.8 KB; dropping the now-implied `a` field from
+every pair returns 3.8 KB), which page padding absorbs into a 224-byte increase
+in the installed shared object.
+
+This is the first change since ADR-011 to touch `src/unicode_tables_16_0_0.h`.
+It only *adds* to it, and the addition is generated like everything else in the
+file, so the accessor signatures remain the API boundary they were.
+
+Verified in three layers, as ADR-012 established: the generator proves the
+`a` → run mapping over all 1,114,112 code points and then checks that each run
+holds exactly its own pairs in ascending `b`; a standalone harness links the old
+and new generated files into one binary and finds no disagreement over 4.9
+billion `(a, b)` pairs, plus the six untouched accessors over every code point;
+and `host_normalize` is byte-identical on 6,403 conformance inputs × 8 flag
+combinations, extended to `is_idn`/`is_punycode`/`puny_encode`/`puny_decode`.
+Every array outside the composition section is byte-identical to what ADR-012
+emitted.

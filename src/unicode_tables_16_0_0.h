@@ -31,6 +31,16 @@ const uint32_t *canonical_decomposition(uint32_t cp, uint32_t &len);
 // Primary canonical composition of starter a and combiner b; 0 if none.
 uint32_t canonical_compose(uint32_t a, uint32_t b);
 
+// True if b can be the SECOND element of some canonical composition pair.
+// This is the bound canonical_compose() applies before anything else, exposed
+// here so a caller can apply it BEFORE the call rather than after: b is always
+// a combining character, so ordinary text answers it without touching memory,
+// and at that point the call itself is the whole cost. Both bounds are derived
+// from the pair table like every other constant in this file (ADR-011).
+inline bool composes_as_second(uint32_t b) {
+  return b >= 0x300 && b <= 0x16D67;
+}
+
 // UTS-46 status of cp. If the status is mapped, deviation, or
 // disallowed_std3_mapped and a mapping exists, sets map/len to the target
 // sequence (len may be 0 for an empty mapping). Unlisted code points are
