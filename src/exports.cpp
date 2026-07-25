@@ -5,7 +5,7 @@
 
 #include "punycoder_core.h"
 #include "punycoder_normalize.h"
-#include "unicode_tables_16_0_0.h"
+#include "punycoder_unicode_version.h"
 
 namespace {
 
@@ -245,10 +245,13 @@ Rcpp::CharacterVector host_normalize_cpp(Rcpp::CharacterVector x,
     return out;
 }
 
-// Pinned Unicode version of the vendored UTS-46 + NFC data, the single source
-// of truth read by normalization_profile_info() (contract section 7).
+// Unicode version of the table set host_normalize() uses by default -- the
+// single source of truth read by normalization_profile_info() (contract
+// section 7). Reported from the version registry rather than from a table
+// header, so this file does not recompile when a table set is added.
 //
 // [[Rcpp::export]]
 std::string normalization_unicode_version_cpp() {
-    return std::string(punycoder::u16::UNICODE_VERSION);
+    return std::string(
+        punycoder::unicode_version_string(punycoder::kDefaultUnicodeVersion));
 }
