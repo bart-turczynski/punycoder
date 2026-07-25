@@ -72,11 +72,11 @@ struct Normalizer {
     typedef typename T::IdnaStatus IdnaStatus;
     typedef typename T::JoiningType JoiningType;
 
-    // UTS-46 mapping (contract step 3a) over the pinned Unicode 16.0.0 table.
-    // Returns false if any code point is disallowed under the profile. With
-    // UseSTD3ASCIIRules = true the disallowed_std3_* statuses are treated as
-    // disallowed; non-LDH ASCII that the 16.0.0 table marks `valid` is rejected
-    // later by the per-label STD3 check. With use_std3 = false the table's
+    // UTS-46 mapping (contract step 3a) over T's table. Returns false if any
+    // code point is disallowed under the profile. With UseSTD3ASCIIRules = true
+    // the disallowed_std3_* statuses are treated as disallowed; non-LDH ASCII
+    // that the table marks `valid` is rejected later by the per-label STD3
+    // check. With use_std3 = false the table's
     // disallowed_std3_valid / disallowed_std3_mapped entries are instead treated
     // as valid / mapped (UTS #46 §5), so characters such as "_" survive mapping.
     static bool map_codepoints(const std::vector<uint32_t>& in,
@@ -426,7 +426,6 @@ struct Normalizer {
 
         return {true, result};
     }
-
 };
 
 }  // namespace
