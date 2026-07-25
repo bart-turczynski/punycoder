@@ -265,7 +265,7 @@ situates it against representative libraries.
 | Unicode NFC | explicit (UAX #15) | implicit in nameprep | not documented | via `x/net` |
 | Pinned Unicode version | yes — 16.0.0, regenerable | no (frozen at build) | no | tracks Go release |
 | CheckBidi / CheckJoiners | always on | not surfaced | not documented | partial |
-| UTS #46 conformance corpus (`IdnaTestV2`) | yes | no | no | — |
+| UTS #46 conformance corpus (`IdnaTestV2`) | yes — one per shipped Unicode version | no | no | — |
 | Strict / `NA` per-element policy | yes | undocumented | `validate` flag | n/a (CLI) |
 | Vectorized | yes | yes | n/a | n/a |
 | Maintenance | active | last commit 2015 | maintained | maintained |

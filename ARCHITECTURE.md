@@ -257,7 +257,7 @@ Grouped by concern; add tests to the matching file for any user-visible change:
 | `test-rfc3492` | RFC 3492 golden vectors (`inst/testdata/rfc3492_vectors.csv`). |
 | `test-backends` | libidn2 vs fallback parity. |
 | `test-normalize` | `host_normalize` behavior + profile flags. |
-| `test-idna-conformance` | UTS #46 conformance vectors (`IdnaTestV2.txt`). |
+| `test-idna-conformance` | UTS #46 conformance vectors, once per shipped Unicode version (`inst/testdata/IdnaTestV2-<version>.txt`). |
 | `test-validators` | Predicate/validation helpers. |
 | `test-contracts` | NA / error policy (strict vs non-strict). |
 | `test-unicode`, `test-internals`, `test-lifecycle`, `test-performance` | Supporting coverage. |

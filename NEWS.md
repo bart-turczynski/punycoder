@@ -163,6 +163,31 @@
   every input in the UTS #46 conformance corpus, under all supported flag
   combinations (PUNY-thyalpud).
 
+## Internal
+
+* The UTS #46 conformance suite now runs once per shipped Unicode version,
+  against the corpus Unicode published with that version. There was a single
+  `inst/testdata/IdnaTestV2.txt` of 16.0.0 vintage and one hardcoded expectation
+  set, so the 17.0.0 table set added alongside 16.0.0 was only ever checked
+  against 16.0.0's expectations --- a corpus that predates it and cannot
+  exercise anything 17.0.0 changed. Each version now has its own vendored corpus
+  (`inst/testdata/IdnaTestV2-16.0.0.txt`, dated 2024-07-03;
+  `inst/testdata/IdnaTestV2-17.0.0.txt`, dated 2025-05-01), named with the
+  dotted version exactly as `unicode_versions()` reports it so tests build the
+  path with no tag translation. A new `data-raw/fetch_idna_fixtures.R` acquires
+  them the way the UCD table generator does: network access at generation time
+  only, a per-version cache under a git-ignored `data-raw/.idna-cache/`, and a
+  shape check so a truncated download or an HTML error page cannot be committed
+  and quietly weaken every conformance assertion. The pinned A4_2 root-dot
+  deviation count is a property of the fixture rather than of the engine, so it
+  is per-version too (57 at 16.0.0, 59 at 17.0.0, both entirely A4_2 with zero
+  false rejections), and a version with no listed count fails loudly instead of
+  skipping its check. Added with it is the invariant the multi-version work
+  actually rests on, which no fixed delta count can express: a newer table set
+  may newly *accept* a host, but must never reject one an older set accepted,
+  nor return a different value for one both accept. No package code changed and
+  no result moved (PUNY-qfautzhz).
+
 # punycoder 1.2.1
 
 Maintenance release over the 1.2.0 development tag; the public API is unchanged.
