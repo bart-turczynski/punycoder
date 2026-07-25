@@ -89,12 +89,11 @@ test_that("16.0.0 and 17.0.0 agree except on code points 17.0.0 assigns", {
   # the two table sets on this corpus is of that one kind -- a newly assigned
   # code point going NA -> value, never a value changing.
   expect_true(all(is.na(v16[!same])))
-  expect_false(any(is.na(v17[!same])))
+  expect_false(anyNA(v17[!same]))
   expect_length(delta, 3L)
 
   new_in_17 <- intToUtf8(c(0x32931L, 0x32B9AL), multiple = TRUE)
   expect_true(all(is.na(punycoder:::.host_normalize_version(new_in_17,
                                                             "16.0.0"))))
-  expect_false(any(is.na(punycoder:::.host_normalize_version(new_in_17,
-                                                             "17.0.0"))))
+  expect_false(anyNA(punycoder:::.host_normalize_version(new_in_17, "17.0.0")))
 })
