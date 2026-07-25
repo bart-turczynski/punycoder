@@ -8,7 +8,8 @@ host_normalize(
   x,
   check_hyphens = TRUE,
   use_std3 = TRUE,
-  verify_dns_length = TRUE
+  verify_dns_length = TRUE,
+  unicode_version = NULL
 )
 }
 \arguments{
@@ -26,6 +27,10 @@ restricts ASCII to letters, digits, and hyphen. \code{FALSE} admits other ASCII
 \item{verify_dns_length}{Logical scalar. When \code{TRUE} (the default) each
 A-label must be 1-63 octets and the whole host <= 253. \code{FALSE} drops the
 length limits (empty labels are still rejected as structural errors).}
+
+\item{unicode_version}{Character scalar naming a Unicode table set this build
+ships, or \code{NULL} (the default) for the pinned one. See
+\code{\link[=unicode_versions]{unicode_versions()}}. An unshipped version is an error.}
 }
 \value{
 A character vector the same length as \code{x}. Each element is the
@@ -43,8 +48,17 @@ preserving whether the input carried a single terminal root dot.
 \details{
 Unlike \code{\link[=puny_encode]{puny_encode()}}, invalid input is reported by returning
 \code{NA_character_} (never by aborting), so a caller can layer its own policy.
-The profile is fixed at one pinned Unicode version per release; see
-\code{\link[=normalization_profile_info]{normalization_profile_info()}} for the machine-readable identity.
+See \code{\link[=normalization_profile_info]{normalization_profile_info()}} for the machine-readable identity of the
+profile a given call applies.
+
+A build ships one or more Unicode table sets and pins one of them as the
+default; \code{unicode_version} selects among them and \code{\link[=unicode_versions]{unicode_versions()}} lists
+what is available. Naming a version the build does not ship is an error, not
+a fall back to the default — a silent fallback would let a caller record a
+profile identity describing a normalization that never ran. The Unicode
+version is a parameter of UTS #46 conformance (all three conformance clauses
+are phrased \emph{"Given a version of Unicode..."}), so selecting one stays
+conformant.
 
 This is a \strong{UTS #46 profile, not IDNA2008 / RFC 5891 conformance.} UTS #46
 is compatibility processing and deliberately differs from IDNA2008 — it
@@ -70,8 +84,10 @@ upstack in \code{rurl}, not here.
 host_normalize(c("Example.COM", "münchen.de", "example.com."))
 host_normalize("a_b.com") # NA: STD3 rejects "_"
 host_normalize("a_b.com", use_std3 = FALSE) # "a_b.com"
+host_normalize("example.com", unicode_version = unicode_versions()[[1L]])
 }
 \seealso{
 \code{\link[=normalization_profile_info]{normalization_profile_info()}} for the profile identity,
+\code{\link[=unicode_versions]{unicode_versions()}} for the table sets available,
 \code{\link[=puny_encode]{puny_encode()}} for the lower-level RFC 3492 transform.
 }

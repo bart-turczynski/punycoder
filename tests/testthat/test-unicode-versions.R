@@ -3,16 +3,16 @@
 # per host and everything past that branch is bound to one table set
 # (PUNY-kfpxsquq, ADR-015).
 #
-# The hooks used here are internal on purpose. The public surface pins one
-# Unicode version -- picking one per call is separate work -- but without a way
-# to reach the non-default instantiation from R, half the shipped table code
-# would never be executed by the test suite at all.
+# Selection is public as of PUNY-wjlfpppq: host_normalize(unicode_version=) and
+# unicode_versions(). One internal hook remains, .unicode_version_info(), which
+# additionally exposes what each table unit reports about ITSELF -- the public
+# function deliberately does not, since only a wiring test needs it.
 #
 # This file is ASCII-clean: every non-ASCII input comes from the fixture or from
 # an explicit intToUtf8() of a named code point.
 
 test_that("every shipped table set reports its own registry version", {
-  info <- punycoder:::.unicode_versions()
+  info <- punycoder:::.unicode_version_info()
 
   expect_gt(length(info$version), 1L) # two versions coexisting is the point
   expect_false(anyDuplicated(info$version) > 0L)
@@ -26,33 +26,100 @@ test_that("every shipped table set reports its own registry version", {
   expect_identical(info$reported, info$version)
 })
 
+test_that("unicode_versions() reports the shipped set", {
+  expect_identical(unicode_versions(),
+                   punycoder:::.unicode_version_info()$version)
+  expect_type(unicode_versions(), "character")
+})
+
 test_that("the default table set is the one the profile reports", {
-  info <- punycoder:::.unicode_versions()
+  info <- punycoder:::.unicode_version_info()
   expect_identical(normalization_profile_info()$unicode_version, info$default)
+  # NULL is the only implicit answer, and it means the pin -- not "whatever is
+  # newest", which would change behavior under the caller on a version bump.
+  expect_identical(host_normalize("Example.COM", unicode_version = NULL),
+                   host_normalize("Example.COM",
+                                  unicode_version = info$default))
 })
 
 test_that("selecting the default version reproduces host_normalize exactly", {
   x <- c("Example.COM", "example.com.", "a_b.com", "xn--mnchen-3ya.de",
          "not..valid", "", NA_character_)
-  default <- punycoder:::.unicode_versions()$default
+  default <- punycoder:::.unicode_version_info()$default
 
-  expect_identical(punycoder:::.host_normalize_version(x, default),
+  expect_identical(host_normalize(x, unicode_version = default),
                    host_normalize(x))
   # ... and under a relaxed profile too: the version rides on the same options
   # struct as the flags, so a mix-up there would show up only here.
   expect_identical(
-    punycoder:::.host_normalize_version(x, default, use_std3 = FALSE),
+    host_normalize(x, use_std3 = FALSE, unicode_version = default),
     host_normalize(x, use_std3 = FALSE)
   )
 })
 
-test_that("an unshipped Unicode version is a caller error, not NA", {
+test_that("names are preserved when a version is selected", {
+  x <- c(a = "Example.COM", b = "über.de")
+  expect_identical(names(host_normalize(x, unicode_version = "17.0.0")),
+                   c("a", "b"))
+})
+
+test_that("an unshipped Unicode version is an actionable error, not NA", {
   # host_normalize()'s NA-on-invalid contract covers invalid host DATA. A
-  # version that was never compiled in is a bad argument, so it stops.
-  expect_error(punycoder:::.host_normalize_version("example.com", "15.0.0"),
+  # version that was never compiled in is a bad argument, so it stops -- and it
+  # must never silently fall back to the pin, which would let a caller record a
+  # profile identity describing a normalization that never ran (PUNY-nblrvplp).
+  expect_error(host_normalize("example.com", unicode_version = "15.0.0"),
                "Unsupported Unicode version")
-  expect_error(punycoder:::.host_normalize_version("example.com", "16"),
+  expect_error(host_normalize("example.com", unicode_version = "16"),
                "Unsupported Unicode version")
+
+  # The message names what IS available, so the fix needs no documentation.
+  err <- tryCatch(host_normalize("example.com", unicode_version = "15.0.0"),
+                  error = conditionMessage)
+  for (v in unicode_versions()) expect_match(err, v, fixed = TRUE)
+
+  expect_error(host_normalize("example.com", unicode_version = NA_character_),
+               "single non-NA character string")
+  expect_error(host_normalize("example.com", unicode_version = 16),
+               "single non-NA character string")
+  expect_error(host_normalize("example.com",
+                              unicode_version = c("16.0.0", "17.0.0")),
+               "single non-NA character string")
+  expect_error(
+    normalization_profile_info(unicode_version = "15.0.0"),
+    "Unsupported Unicode version"
+  )
+})
+
+test_that("the profile token distinguishes a non-default table set", {
+  info <- punycoder:::.unicode_version_info()
+  other <- setdiff(info$version, info$default)
+  skip_if(length(other) == 0L, "build ships only one table set")
+
+  # The pinned default keeps the historical token byte-for-byte: existing cache
+  # keys must not move just because a second table set is now compiled in.
+  expect_identical(normalization_profile_info()$profile,
+                   "uts46-nontransitional-std3-v1")
+  expect_identical(
+    normalization_profile_info(unicode_version = info$default)$profile,
+    "uts46-nontransitional-std3-v1"
+  )
+
+  # Anything else appends a tag, on the same rule as a relaxed flag, so two
+  # genuinely different normalizations can never mint identical() tokens.
+  alt <- normalization_profile_info(unicode_version = other[[1L]])
+  expect_identical(alt$profile,
+                   paste0("uts46-nontransitional-std3-v1+unicode-",
+                          other[[1L]]))
+  expect_identical(alt$unicode_version, other[[1L]])
+  expect_false(identical(alt$profile, normalization_profile_info()$profile))
+
+  # The version tag composes with the flag tags in fixed order.
+  expect_identical(
+    normalization_profile_info(use_std3 = FALSE,
+                               unicode_version = other[[1L]])$profile,
+    paste0("uts46-nontransitional-std3-v1+no-std3+unicode-", other[[1L]])
+  )
 })
 
 test_that("each shipped table set is idempotent over the conformance corpus", {
@@ -62,10 +129,10 @@ test_that("each shipped table set is idempotent over the conformance corpus", {
   corpus <- idna_v2_corpus(path)
   expect_gt(length(corpus), 6000L)
 
-  for (v in punycoder:::.unicode_versions()$version) {
-    once <- punycoder:::.host_normalize_version(corpus, v)
+  for (v in unicode_versions()) {
+    once <- host_normalize(corpus, unicode_version = v)
     keep <- !is.na(once)
-    twice <- punycoder:::.host_normalize_version(once[keep], v)
+    twice <- host_normalize(once[keep], unicode_version = v)
     expect_identical(twice, once[keep],
                      info = paste("not idempotent under Unicode", v))
   }
@@ -76,8 +143,8 @@ test_that("16.0.0 and 17.0.0 agree except on code points 17.0.0 assigns", {
   skip_if(!nzchar(path), "IdnaTestV2.txt fixture not installed")
 
   corpus <- idna_v2_corpus(path)
-  v16 <- punycoder:::.host_normalize_version(corpus, "16.0.0")
-  v17 <- punycoder:::.host_normalize_version(corpus, "17.0.0")
+  v16 <- host_normalize(corpus, unicode_version = "16.0.0")
+  v17 <- host_normalize(corpus, unicode_version = "17.0.0")
 
   same <- (is.na(v16) & is.na(v17)) | (!is.na(v16) & !is.na(v17) & v16 == v17)
   delta <- corpus[!same]
@@ -93,7 +160,7 @@ test_that("16.0.0 and 17.0.0 agree except on code points 17.0.0 assigns", {
   expect_length(delta, 3L)
 
   new_in_17 <- intToUtf8(c(0x32931L, 0x32B9AL), multiple = TRUE)
-  expect_true(all(is.na(punycoder:::.host_normalize_version(new_in_17,
-                                                            "16.0.0"))))
-  expect_false(anyNA(punycoder:::.host_normalize_version(new_in_17, "17.0.0")))
+  expect_true(all(is.na(host_normalize(new_in_17,
+                                            unicode_version = "16.0.0"))))
+  expect_false(anyNA(host_normalize(new_in_17, unicode_version = "17.0.0")))
 })

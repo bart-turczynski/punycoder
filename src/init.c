@@ -12,10 +12,9 @@ extern SEXP _punycoder_puny_decode_cpp(SEXP, SEXP);
 extern SEXP _punycoder_validate_domain_cpp(SEXP, SEXP);
 extern SEXP _punycoder_backend_info_cpp();
 extern SEXP _punycoder_compare_backends_cpp(SEXP, SEXP, SEXP);
-extern SEXP _punycoder_host_normalize_cpp(SEXP, SEXP, SEXP, SEXP);
+extern SEXP _punycoder_host_normalize_cpp(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _punycoder_normalization_unicode_version_cpp();
 extern SEXP _punycoder_unicode_versions_cpp();
-extern SEXP _punycoder_host_normalize_version_cpp(SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
     {"_punycoder_puny_encode_cpp", (DL_FUNC) &_punycoder_puny_encode_cpp, 2},
@@ -23,10 +22,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_punycoder_validate_domain_cpp", (DL_FUNC) &_punycoder_validate_domain_cpp, 2},
     {"_punycoder_backend_info_cpp", (DL_FUNC) &_punycoder_backend_info_cpp, 0},
     {"_punycoder_compare_backends_cpp", (DL_FUNC) &_punycoder_compare_backends_cpp, 3},
-    {"_punycoder_host_normalize_cpp", (DL_FUNC) &_punycoder_host_normalize_cpp, 4},
+    {"_punycoder_host_normalize_cpp", (DL_FUNC) &_punycoder_host_normalize_cpp, 5},
     {"_punycoder_normalization_unicode_version_cpp", (DL_FUNC) &_punycoder_normalization_unicode_version_cpp, 0},
     {"_punycoder_unicode_versions_cpp", (DL_FUNC) &_punycoder_unicode_versions_cpp, 0},
-    {"_punycoder_host_normalize_version_cpp", (DL_FUNC) &_punycoder_host_normalize_version_cpp, 5},
     {NULL, NULL, 0}
 };
 

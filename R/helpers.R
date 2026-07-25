@@ -35,6 +35,40 @@
   .assert_flag(verify_dns_length, "verify_dns_length")
 }
 
+#' Resolve and validate a requested Unicode version
+#'
+#' `NULL` means the version this build pins, which is the only implicit answer
+#' allowed. Anything else must name a table set the build actually shipped: an
+#' unsupported version is a hard error listing what is available, never a silent
+#' fall back to the default. Silent fallback would let a caller record a
+#' reproducibility key describing a normalization that never ran, which is the
+#' failure PUNY-nblrvplp exists to prevent.
+#'
+#' @param unicode_version `NULL` or a single version string
+#' @return The resolved version string
+#' @keywords internal
+#' @noRd
+.resolve_unicode_version <- function(unicode_version) {
+  info <- unicode_versions_cpp()
+  if (is.null(unicode_version)) {
+    return(info$default)
+  }
+  if (!is.character(unicode_version) || length(unicode_version) != 1L ||
+        is.na(unicode_version)) {
+    stop("`unicode_version` must be NULL or a single non-NA character string",
+         call. = FALSE)
+  }
+  if (!unicode_version %in% info$version) {
+    stop(sprintf(
+      paste0("Unsupported Unicode version: \"%s\". This build of punycoder ",
+             "ships %s (default \"%s\")."),
+      unicode_version, paste0("\"", info$version, "\"", collapse = ", "),
+      info$default
+    ), call. = FALSE)
+  }
+  unicode_version
+}
+
 #' Lexical predicate matching restricted to well-formed UTF-8
 #'
 #' Shared engine for `is_punycode()` and `is_idn()`, which promise a strictly
@@ -124,22 +158,11 @@
   compare_backends_cpp(enc2utf8(x), mode, strict)
 }
 
-# Internal Unicode table-set helpers used by tests. Not API: the public surface
-# pins one Unicode version, and per-call selection is a separate piece of work.
+# Internal table-set metadata used by tests: the registry strings, the strings
+# the table units report about themselves, and the pinned default. The public
+# unicode_versions() exposes only the first of those.
 # @keywords internal
 # @noRd
-.unicode_versions <- function() {
+.unicode_version_info <- function() {
   unicode_versions_cpp()
-}
-
-# @keywords internal
-# @noRd
-.host_normalize_version <- function(x, version, check_hyphens = TRUE,
-                                    use_std3 = TRUE, verify_dns_length = TRUE) {
-  .assert_character(x, "x")
-  .assert_normalize_flags(check_hyphens, use_std3, verify_dns_length)
-  out <- host_normalize_version_cpp(enc2utf8(x), version, check_hyphens,
-                                    use_std3, verify_dns_length)
-  names(out) <- names(x)
-  out
 }
