@@ -6,6 +6,10 @@
 #' @param x Character vector to test
 #' @return A logical vector the same length as \code{x}, where \code{TRUE}
 #'   indicates the element contains a punycode-encoded label (xn-- prefix).
+#'   Never \code{NA} and never an error: an element that is not well-formed
+#'   UTF-8 is reported as \code{FALSE}, matching \code{\link{is_idn}} and
+#'   base R's own \code{\link{validUTF8}}. Use \code{validUTF8(x)} to tell
+#'   "not punycode" apart from "not well-formed text".
 #' @seealso \code{\link{is_idn}} for detecting Unicode domains,
 #'   \code{\link{puny_decode}} for decoding punycode domains.
 #' @examples
@@ -18,12 +22,13 @@
 is_punycode <- function(x) {
   .assert_character(x)
 
-  # Deliberately NOT `perl = TRUE`, unlike `is_idn()` below: PCRE rejects
-  # ill-formed UTF-8 that the default engine tolerates. On an input such as
-  # "xn--a" followed by an encoded UTF-16 surrogate (ED A0 80), the default
-  # engine returns TRUE silently while PCRE warns and returns FALSE. Input here
-  # is not passed through `enc2utf8()`, so those bytes reach `grepl()` verbatim.
-  grepl("(^|\\.)xn--", x, ignore.case = TRUE)
+  # Deliberately NOT `perl = TRUE`, unlike `is_idn()` below: PCRE adds no
+  # matching capability a fixed "xn--" marker needs. The engines used to
+  # disagree on ill-formed UTF-8 -- on "xn--a" followed by an encoded UTF-16
+  # surrogate (ED A0 80) the default engine matched bytewise and returned TRUE
+  # while PCRE warned and returned FALSE -- but `.detect_valid_utf8()` now
+  # settles that before either engine runs, so the choice is free.
+  .detect_valid_utf8(x, "(^|\\.)xn--", ignore.case = TRUE)
 }
 
 #' Test if domain contains internationalized characters
@@ -33,7 +38,11 @@ is_punycode <- function(x) {
 #'
 #' @param x Character vector of domain names to test
 #' @return A logical vector the same length as \code{x}, where \code{TRUE}
-#'   indicates the element contains non-ASCII Unicode characters.
+#'   indicates the element contains non-ASCII Unicode characters. Never
+#'   \code{NA} and never an error: an element that is not well-formed UTF-8 is
+#'   reported as \code{FALSE}, matching \code{\link{is_punycode}} and base R's
+#'   own \code{\link{validUTF8}}. Use \code{validUTF8(x)} to tell "not
+#'   internationalized" apart from "not well-formed text".
 #' @seealso \code{\link{is_punycode}} for detecting punycode domains,
 #'   \code{\link{puny_encode}} for encoding Unicode domains.
 #' @examples
@@ -50,8 +59,10 @@ is_punycode <- function(x) {
 is_idn <- function(x) {
   .assert_character(x)
 
-  # Portable non-ASCII check across regex engines.
-  grepl("[^\\x00-\\x7F]", x, perl = TRUE)
+  # Portable non-ASCII check across regex engines. `.detect_valid_utf8()`
+  # keeps ill-formed bytes away from PCRE, so the "invalid UTF-8" warning this
+  # call used to emit is now structurally impossible rather than suppressed.
+  .detect_valid_utf8(x, "[^\\x00-\\x7F]", perl = TRUE)
 }
 
 #' Comprehensive domain name validation

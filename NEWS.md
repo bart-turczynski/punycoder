@@ -13,6 +13,19 @@
   parser (`punycoder_url.cpp`) and the `punycoder_parsed_url` print method are
   gone with the surface (PUNY-rumdaymk).
 
+* `is_punycode()` and `is_idn()` now agree on input that is not well-formed
+  UTF-8, and both report `FALSE` for it. Previously `is_punycode()` reported
+  `TRUE` **silently** for such input --- steering callers into `puny_decode()`
+  for a string every other function in the package refuses to process --- while
+  `is_idn()` warned and reported `FALSE`. The split was not deliberate:
+  `is_punycode()` matches with R's default TRE engine, which matches bytewise,
+  and `is_idn()` used `perl = TRUE`, where PCRE validates UTF-8 first. Both now
+  share one gate, so the spurious `is_idn()` warning is gone too. The predicates
+  remain total and strictly logical --- never `NA`, never an error --- so
+  `if (is_punycode(x))` is always safe; call `validUTF8(x)` to distinguish "not
+  punycode" from "not well-formed text". Answers for well-formed input,
+  including strings marked `latin1`, are unchanged (PUNY-cewysjxi).
+
 ## New features
 
 * `validate_domain()` results are now readable at scale. `print()` opens with a

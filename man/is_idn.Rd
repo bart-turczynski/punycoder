@@ -11,7 +11,11 @@ is_idn(x)
 }
 \value{
 A logical vector the same length as \code{x}, where \code{TRUE}
-indicates the element contains non-ASCII Unicode characters.
+indicates the element contains non-ASCII Unicode characters. Never
+\code{NA} and never an error: an element that is not well-formed UTF-8 is
+reported as \code{FALSE}, matching \code{\link{is_punycode}} and base R's
+own \code{\link{validUTF8}}. Use \code{validUTF8(x)} to tell "not
+internationalized" apart from "not well-formed text".
 }
 \description{
 Determines whether a domain name contains Unicode characters that

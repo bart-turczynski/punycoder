@@ -12,6 +12,10 @@ is_punycode(x)
 \value{
 A logical vector the same length as \code{x}, where \code{TRUE}
 indicates the element contains a punycode-encoded label (xn-- prefix).
+Never \code{NA} and never an error: an element that is not well-formed
+UTF-8 is reported as \code{FALSE}, matching \code{\link{is_idn}} and
+base R's own \code{\link{validUTF8}}. Use \code{validUTF8(x)} to tell
+"not punycode" apart from "not well-formed text".
 }
 \description{
 Determines whether a given string or domain name is already encoded
