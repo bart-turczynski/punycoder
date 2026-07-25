@@ -1,6 +1,16 @@
-# Parser for the official UTS #46 corpus (inst/testdata/IdnaTestV2.txt).
+# Parser for the official UTS #46 corpus (inst/testdata/IdnaTestV2-<ver>.txt).
 # Format reference: the file header (Columns c1..c7, status-code legend).
 # Kept in a helper so the conformance test reads as assertions, not parsing.
+
+# One vendored corpus per shipped Unicode version, so each engine is checked
+# against the expectations published WITH it (PUNY-qfautzhz). The filename holds
+# the DOTTED version exactly as unicode_versions() returns it -- no tag
+# translation at the call site. (The C++ side uses an underscore form,
+# unicode_tables_16_0_0.cpp, only because a C++ identifier cannot hold a dot.)
+idna_fixture_path <- function(version) {
+  system.file("testdata", sprintf("IdnaTestV2-%s.txt", version),
+              package = "punycoder")
+}
 
 # Unescape \uXXXX and \x{H+} to the actual character, positionally (so a
 # replacement that is itself a backslash cannot be misinterpreted).

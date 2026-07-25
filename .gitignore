@@ -9,6 +9,10 @@
 # on demand). The generated src/unicode_tables_*.cpp is committed; these are not.
 data-raw/.ucd-cache/
 
+# Same, for data-raw/fetch_idna_fixtures.R: the vendored
+# inst/testdata/IdnaTestV2-*.txt corpora are committed, the downloads are not.
+data-raw/.idna-cache/
+
 # Compiled Object files
 *.o
 *.so

@@ -252,7 +252,7 @@ recorded key describe a normalization that never happened.
 - The relaxed flags (`check_hyphens`, `use_std3`, `verify_dns_length`) are
   monotone: relaxing any of them must never change a result the full profile
   already accepts, only ever turn rejections into acceptances. Verified across
-  the IdnaTestV2 corpus.
+  every vendored IdnaTestV2 corpus, one per shipped Unicode version.
 - Embedder note: the C++ normalization helpers implement their per-input
   invalid-result contract by catching internal `PunycoderError` exceptions. R
   package builds use normal C++ exception support; vendored builds, including

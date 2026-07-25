@@ -10,8 +10,8 @@ repos:
     hooks:
       - id: check-added-large-files
         args: ['--maxkb=5120']
-      # inst/testdata/ holds byte-sensitive conformance vectors (the Unicode
-      # IdnaTestV2.txt suite and the RFC 3492 vectors), so the whitespace/EOF
+      # inst/testdata/ holds byte-sensitive conformance vectors (the per-version
+      # Unicode IdnaTestV2 corpora and the RFC 3492 vectors), so the whitespace/EOF
       # fixers must not rewrite them.
       - id: end-of-file-fixer
         exclude: '^inst/testdata/'

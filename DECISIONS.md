@@ -214,7 +214,10 @@ fully-qualified `example.com.`.
 **Decision.** Capture a single terminal root dot before processing and re-append
 it after; `example.com.` normalizes to `example.com.`. This is the one documented
 divergence from strict `VerifyDnsLength`, confirmed against the UTS #46
-conformance corpus (`IdnaTestV2.txt`, Unicode 16.0.0).
+conformance corpora (`inst/testdata/IdnaTestV2-<version>.txt`, one per shipped
+Unicode version), where it accounts for every deviation and no false rejection
+(57 rows at 16.0.0, 59 at 17.0.0 — the count is a property of the fixture, so it
+is pinned per version).
 
 **Consequences.** Leading dots, consecutive dots, and multi-terminal dots remain
 invalid (empty labels → `NA`). See `NEWS.md` (1.2.0 Internal) and

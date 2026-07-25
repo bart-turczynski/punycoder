@@ -22,11 +22,15 @@ Contact: bartek+punycoder@turczynski.pl
   DerivedNormalizationProps.txt, and IdnaMappingTable.txt for UTS #46).
   - Homepage: https://www.unicode.org/Public/16.0.0/
   - License: Unicode License v3 (https://www.unicode.org/license.txt)
-- `inst/testdata/IdnaTestV2.txt` is the official UTS #46 conformance corpus,
-  vendored verbatim from the Unicode Character Database, version 16.0.0
-  (dated 2024-07-03). It is used by `tests/testthat/test-idna-conformance.R` to
-  verify `host_normalize()` against the standard.
-  - Homepage: https://www.unicode.org/Public/idna/16.0.0/IdnaTestV2.txt
+- `inst/testdata/IdnaTestV2-<version>.txt` are the official UTS #46 conformance
+  corpora, one per shipped Unicode version, vendored verbatim from the Unicode
+  Character Database by `data-raw/fetch_idna_fixtures.R`. They are used by
+  `tests/testthat/test-idna-conformance.R` to verify `host_normalize()` against
+  the standard at each version it can normalize with.
+  - `inst/testdata/IdnaTestV2-16.0.0.txt`, version 16.0.0 (dated 2024-07-03)
+    - Homepage: https://www.unicode.org/Public/16.0.0/idna/IdnaTestV2.txt
+  - `inst/testdata/IdnaTestV2-17.0.0.txt`, version 17.0.0 (dated 2025-05-01)
+    - Homepage: https://www.unicode.org/Public/17.0.0/idna/IdnaTestV2.txt
   - License: Unicode License v3 (https://www.unicode.org/license.txt)
 
 ## Inspiration and compatibility notes
