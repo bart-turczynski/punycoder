@@ -6,7 +6,7 @@
 
 #include "punycoder_core.h"
 #include "punycoder_nfc.h"
-#include "unicode_tables_16_0_0.h"
+#include "unicode_tables_registry.h"
 
 namespace punycoder {
 
@@ -216,7 +216,7 @@ bool validate_label(const std::vector<uint32_t>& label, bool from_alabel,
     //
     // A Punycode-decoded A-label payload never went through that pass, so for
     // it this is the operative check.
-    if (from_alabel && nfc(label) != label) return false;
+    if (from_alabel && nfc<u16::Tables>(label) != label) return false;
 
     // V5: must not begin with a combining mark.
     if (u16::is_combining_mark(label.front())) return false;
@@ -349,7 +349,7 @@ HostNormalizeResult host_normalize_one(const std::string& input,
     // Step 3a: UTS-46 map. Step 3b: NFC.
     std::vector<uint32_t> mapped;
     if (!map_codepoints(cps, mapped, opts.use_std3)) return invalid();
-    const std::vector<uint32_t> normalized = nfc(mapped);
+    const std::vector<uint32_t> normalized = nfc<u16::Tables>(mapped);
 
     // Step 3c: split into labels on U+002E and resolve each to its U-label form
     // (decoding xn-- labels) so CheckBidi can examine the whole domain.
