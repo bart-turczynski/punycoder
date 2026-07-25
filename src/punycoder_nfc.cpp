@@ -83,10 +83,44 @@ uint32_t compose_pair(uint32_t a, uint32_t b) {
   return canonical_compose(a, b);
 }
 
+// UAX #15 "Detecting Normalization Forms". A sequence is already in NFC when
+// every character is NFC_Quick_Check=Yes and no run of combining marks is out
+// of canonical order.
+//
+// `maybe` is a real third value -- the character MAY compose with what
+// precedes it -- so it falls through to the full pipeline alongside `no`.
+// Folding it into `yes` would be silently correct on almost every input and
+// wrong on exactly the input the pipeline exists to fix.
+//
+// The pass pays for itself because nearly all real host text is already in
+// NFC: it replaces two vector allocations and three passes with one pass and
+// none. For ASCII, nfc_inert() answers every character with one compare and no
+// table read -- which is why the bound is applied here, inlined, rather than
+// left to the guards inside combining_class() and nfc_quick_check(), where it
+// would sit behind a function call.
+bool is_nfc(const std::vector<uint32_t> &v) {
+  uint8_t last_cc = 0;
+  for (uint32_t cp : v) {
+    if (u16::nfc_inert(cp)) {
+      last_cc = 0;
+      continue;
+    }
+    const uint8_t cc = combining_class(cp);
+    if (cc != 0 && cc < last_cc) return false;  // out of canonical order
+    if (u16::nfc_quick_check(cp) != u16::NfcQuickCheck::yes) return false;
+    last_cc = cc;
+  }
+  return true;
+}
+
 }  // namespace
 
 std::vector<uint32_t> nfc(const std::vector<uint32_t> &input) {
   if (input.empty()) return {};
+
+  // 0. Quick check. NFC is idempotent, so a sequence that is already in NFC is
+  //    its own answer and the three passes below would only rebuild it.
+  if (is_nfc(input)) return input;
 
   // 1. Full canonical decomposition.
   std::vector<uint32_t> d;

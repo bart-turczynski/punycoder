@@ -41,6 +41,20 @@ inline bool composes_as_second(uint32_t b) {
   return b >= 0x300 && b <= 0x16D67;
 }
 
+// NFC_Quick_Check (UAX #15). `maybe` means the character MAY compose with
+// what precedes it, so it is not a weaker `no` -- a caller that folds it into
+// `yes` is wrong on exactly the input a quick check exists to detect.
+enum class NfcQuickCheck : uint8_t { yes = 0, no = 1, maybe = 2 };
+NfcQuickCheck nfc_quick_check(uint32_t cp);
+
+// True if cp can play no part in whether a sequence is in NFC: every code
+// point below this bound has combining class 0 and NFC_Quick_Check=Yes, so a
+// run of them is already normalized. Inline because the check that uses it
+// runs once per character and this answers all of ASCII without a call, let
+// alone a table read. The bound is the lower of the two tables' first listed
+// code point, derived like every other constant here (ADR-011).
+inline bool nfc_inert(uint32_t cp) { return cp < 0x300; }
+
 // UTS-46 status of cp. If the status is mapped, deviation, or
 // disallowed_std3_mapped and a mapping exists, sets map/len to the target
 // sequence (len may be 0 for an empty mapping). Unlisted code points are
