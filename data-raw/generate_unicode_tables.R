@@ -288,9 +288,126 @@ joining_ranges <- parse_prop_ranges(
 )
 
 # ---------------------------------------------------------------------------
+# Fast paths.
+#
+# Every accessor below is a binary search over a few hundred to a few thousand
+# ranges -- ~14 data-dependent, branch-mispredicting probes per code point for
+# the UTS-46 table alone. Host input is overwhelmingly ASCII, so each accessor
+# gets a guard that answers ASCII without probing. Both guard shapes are
+# DERIVED HERE from the same vectors the search reads, so a Unicode version
+# bump that moves a boundary moves the guard with it and the fast path cannot
+# disagree with the slow one.
+#
+# Which shape a table gets follows from its data:
+#   * lists nothing below U+0080 -> the [first, last] bounds test alone answers
+#     ASCII, with no memory access at all (ccc, marks, decomposition, joining);
+#   * covers ASCII -> a 128-entry direct index replaces the search (UTS-46
+#     mapping, Bidi_Class).
+# ---------------------------------------------------------------------------
+
+# Index of the single range covering cp. Errors if the table is ambiguous or
+# has a hole there, which would mean the range builder above is broken.
+range_index_at <- function(lo, hi, cp) {
+  i <- which(lo <= cp & cp <= hi)
+  if (length(i) != 1L) {
+    stop(sprintf(
+      "code point U+%04X falls in %d ranges, expected exactly 1", cp, length(i)
+    ))
+  }
+  i
+}
+
+covers_ascii <- function(lo) min(lo) < 0x80L
+
+ascii_cps <- 0:127
+
+# UTS-46 mapping: emit the range INDEX rather than the status, so the fast path
+# and the search return the identical IdnaRange and the mapping-data pointer is
+# computed in one place.
+idna_ascii <- vapply(
+  ascii_cps, function(cp) range_index_at(idna_lo, idna_hi, cp) - 1L, integer(1)
+)
+if (length(idna_lo) > 65535L) {
+  stop("IDNA_RANGES no longer fits a uint16_t index; widen IDNA_ASCII")
+}
+
+bidi_ascii <- vapply(ascii_cps, function(cp) {
+  bidi_ranges$value[[range_index_at(bidi_ranges$lo, bidi_ranges$hi, cp)]]
+}, integer(1))
+
+# The four tables the bounds test is expected to answer ASCII for. A derived
+# bound stays CORRECT no matter what the data does -- what a version bump could
+# break is the shape choice: if one of these grew down into ASCII, its guard
+# would quietly stop firing and ASCII would fall back into the binary search,
+# a silent performance regression with no wrong answer to reveal it. Assert the
+# shape so that bump fails loudly here instead.
+bounds_tested <- list(
+  ccc = ccc_ranges$lo,
+  mark = mark_ranges$lo,
+  decomposition = as.integer(names(full_decomp)),
+  joining = joining_ranges$lo
+)
+for (nm in names(bounds_tested)) {
+  lo <- bounds_tested[[nm]]
+  if (covers_ascii(lo)) {
+    stop(sprintf(
+      paste0(
+        "the %s table now reaches ASCII (first = U+%04X), so its bounds test ",
+        "no longer answers ASCII; give it a 128-entry direct index like ",
+        "idna/bidi instead"
+      ), nm, min(lo)
+    ))
+  }
+}
+
+# The second element of a composition pair is always a combining character, so
+# a bound on b alone keeps ASCII text out of the pair search entirely. (A bound
+# on a would not: the smallest a is U+003C.) Same reasoning as above -- the
+# bound is derived and cannot go wrong, only stop paying off.
+comp_b_first <- min(comp_b)
+comp_b_last <- max(comp_b)
+if (covers_ascii(comp_b)) {
+  stop(sprintf(
+    paste0(
+      "a composition pair now has an ASCII second element (U+%04X), so the ",
+      "b-bound in canonical_compose() no longer keeps ASCII out of the search"
+    ), comp_b_first
+  ))
+}
+
+# ---------------------------------------------------------------------------
 # Emit the C++ header and source.
 # ---------------------------------------------------------------------------
 hexlit <- function(x) sprintf("0x%X", x)
+
+# The derived [first, last] bounds of a table, and the guard expression that
+# uses them. A half whose bound is the edge of the code space is dropped from
+# both: an always-false test would be dead code in the generated file.
+max_cp <- 0x10FFFFL
+
+has_lo_guard <- function(lo) min(lo) > 0L
+has_hi_guard <- function(hi) max(hi) < max_cp
+
+bounds_const <- function(prefix, lo, hi) {
+  parts <- character(0)
+  if (has_lo_guard(lo)) {
+    parts <- c(parts, sprintf("%s_FIRST = %s", prefix, hexlit(min(lo))))
+  }
+  if (has_hi_guard(hi)) {
+    parts <- c(parts, sprintf("%s_LAST = %s", prefix, hexlit(max(hi))))
+  }
+  if (!length(parts)) {
+    return(character(0))
+  }
+  sprintf("const uint32_t %s;", toString(parts))
+}
+
+guard_expr <- function(prefix, lo, hi) {
+  parts <- character(0)
+  if (has_lo_guard(lo)) parts <- c(parts, sprintf("cp < %s_FIRST", prefix))
+  if (has_hi_guard(hi)) parts <- c(parts, sprintf("cp > %s_LAST", prefix))
+  paste(parts, collapse = " || ")
+}
 chunk <- function(strs, per = 8L) {
   if (!length(strs)) {
     return("")
@@ -308,7 +425,8 @@ chunk <- function(strs, per = 8L) {
 }
 
 guard <- "PUNYCODER_UNICODE_TABLES_16_0_0_H"
-header <- sprintf("// Generated by generate_unicode_tables.R. DO NOT EDIT.
+header <- sprintf(
+  "// Generated by data-raw/generate_unicode_tables.R. DO NOT EDIT BY HAND.
 // Unicode %s. Accessors for NFC + UTS-46 used by canonical-host normalization.
 #ifndef %s
 #define %s
@@ -367,7 +485,8 @@ JoiningType joining_type(uint32_t cp);
 }  // namespace punycoder
 
 #endif  // %s
-", unicode_version, guard, guard, guard)
+", unicode_version, guard, guard, guard
+)
 
 writeLines(header, "src/unicode_tables_16_0_0.h")
 
@@ -391,8 +510,6 @@ src <- c(
   sprintf("// Unicode %s.", unicode_version),
   '#include "unicode_tables_16_0_0.h"',
   "",
-  "#include <algorithm>",
-  "",
   "namespace punycoder {",
   "namespace u16 {",
   "",
@@ -400,8 +517,45 @@ src <- c(
   "",
   "namespace {",
   "",
+  "// One binary search over a sorted, non-overlapping [lo, hi] range table,",
+  "// shared by every range-keyed property below. The accessors differ only in",
+  "// the table searched and the value an unlisted code point falls back to.",
+  "template <typename Range>",
+  "inline const Range *range_lookup(const Range *ranges, size_t n,",
+  "                                 uint32_t cp) {",
+  "  size_t lo = 0, hi = n;",
+  "  while (lo < hi) {",
+  "    const size_t mid = (lo + hi) / 2;",
+  "    if (cp < ranges[mid].lo) hi = mid;",
+  "    else if (cp > ranges[mid].hi) lo = mid + 1;",
+  "    else return &ranges[mid];",
+  "  }",
+  "  return nullptr;",
+  "}",
+  "",
+  "// The same search over a table keyed by a single code point rather than a",
+  "// span (canonical decomposition: adjacent code points share nothing, so",
+  "// there is no range to compress).",
+  "template <typename Entry>",
+  "inline const Entry *key_lookup(const Entry *entries, size_t n,",
+  "                               uint32_t cp) {",
+  "  size_t lo = 0, hi = n;",
+  "  while (lo < hi) {",
+  "    const size_t mid = (lo + hi) / 2;",
+  "    if (cp < entries[mid].cp) hi = mid;",
+  "    else if (cp > entries[mid].cp) lo = mid + 1;",
+  "    else return &entries[mid];",
+  "  }",
+  "  return nullptr;",
+  "}",
+  "",
+  "// Where a table lists nothing below U+0080 it carries the derived bounds",
+  "// of its own data instead of an ASCII index: a code point outside",
+  "// [FIRST, LAST] is in no range, so returning the default there is exactly",
+  "// what the search would have concluded -- just without the probes.",
+  "",
   "// --- Canonical combining class ranges (sorted by lo) ---",
-  "struct CccRange { uint32_t lo, hi; uint8_t ccc; };",
+  "struct CccRange { uint32_t lo, hi; uint8_t value; };",
   sprintf(
     "const CccRange CCC_RANGES[] = {\n%s\n};",
     chunk(sprintf(
@@ -410,6 +564,7 @@ src <- c(
     ), 4L)
   ),
   sprintf("const size_t CCC_N = %d;", nrow(ccc_ranges)),
+  bounds_const("CCC", ccc_ranges$lo, ccc_ranges$hi),
   "",
   "// --- Combining-mark ranges (Mn/Mc/Me, sorted by lo) ---",
   "struct MarkRange { uint32_t lo, hi; };",
@@ -420,6 +575,7 @@ src <- c(
     )
   ),
   sprintf("const size_t MARK_N = %d;", nrow(mark_ranges)),
+  bounds_const("MARK", mark_ranges$lo, mark_ranges$hi),
   "",
   "// --- Canonical decomposition (index sorted by cp + flat data) ---",
   "struct DecompEntry { uint32_t cp; uint32_t off; uint32_t len; };",
@@ -428,6 +584,7 @@ src <- c(
     chunk(sprintf("{%s, %d, %d}", hexlit(decomp_keys), offs, lens), 4L)
   ),
   sprintf("const size_t DECOMP_N = %d;", length(decomp_keys)),
+  bounds_const("DECOMP", decomp_keys, decomp_keys),
   sprintf("const uint32_t DECOMP_DATA[] = {\n%s\n};", chunk(hexlit(flat), 8L)),
   "",
   "// --- Canonical composition pairs (sorted by a, then b) ---",
@@ -442,6 +599,13 @@ src <- c(
     )
   ),
   sprintf("const size_t COMP_N = %d;", length(comp_a)),
+  "// Bounds of the SECOND element only: b is always a combining character,",
+  "// while a can be ASCII (the smallest is U+003C), so only a b-bound keeps",
+  "// ASCII text out of the pair search.",
+  sprintf(
+    "const uint32_t COMP_B_FIRST = %s, COMP_B_LAST = %s;",
+    hexlit(comp_b_first), hexlit(comp_b_last)
+  ),
   "",
   "// --- UTS-46 mapping table (ranges sorted by lo + flat mapping data) ---",
   "struct IdnaRange { uint32_t lo, hi; uint8_t status; uint32_t off, len; };"
@@ -474,6 +638,13 @@ src <- c(
   } else {
     "const uint32_t IDNA_MAP_DATA[] = {0};"
   },
+  "// This table covers ASCII, so no bounds test can skip it. Index of the",
+  "// covering range for each ASCII code point instead -- the accessor then",
+  "// reads the same IdnaRange the search would have found.",
+  sprintf(
+    "const uint16_t IDNA_ASCII[128] = {\n%s\n};",
+    chunk(sprintf("%d", idna_ascii), 12L)
+  ),
   "",
   "// --- Bidi_Class ranges (RFC 5893, sorted by lo) ---",
   "struct BidiRange { uint32_t lo, hi; uint8_t value; };",
@@ -485,6 +656,12 @@ src <- c(
     ), 4L)
   ),
   sprintf("const size_t BIDI_N = %d;", nrow(bidi_ranges)),
+  bounds_const("BIDI", bidi_ranges$lo, bidi_ranges$hi),
+  "// Bidi_Class covers ASCII too; its values are small enough to inline.",
+  sprintf(
+    "const uint8_t BIDI_ASCII[128] = {\n%s\n};",
+    chunk(sprintf("%d", bidi_ascii), 16L)
+  ),
   "",
   "// --- Joining_Type ranges (IDNA2008 ContextJ, sorted by lo) ---",
   "struct JoiningRange { uint32_t lo, hi; uint8_t value; };",
@@ -496,50 +673,46 @@ src <- c(
     ), 4L)
   ),
   sprintf("const size_t JOINING_N = %d;", nrow(joining_ranges)),
+  bounds_const("JOINING", joining_ranges$lo, joining_ranges$hi),
   "",
   "}  // namespace",
   "",
   "uint8_t combining_class(uint32_t cp) {",
-  "  size_t lo = 0, hi = CCC_N;",
-  "  while (lo < hi) {",
-  "    size_t mid = (lo + hi) / 2;",
-  "    if (cp < CCC_RANGES[mid].lo) hi = mid;",
-  "    else if (cp > CCC_RANGES[mid].hi) lo = mid + 1;",
-  "    else return CCC_RANGES[mid].ccc;",
-  "  }",
-  "  return 0;",
+  sprintf(
+    "  if (%s) return 0;", guard_expr("CCC", ccc_ranges$lo, ccc_ranges$hi)
+  ),
+  "  const CccRange *r = range_lookup(CCC_RANGES, CCC_N, cp);",
+  "  return r ? r->value : 0;",
   "}",
   "",
   "bool is_combining_mark(uint32_t cp) {",
-  "  size_t lo = 0, hi = MARK_N;",
-  "  while (lo < hi) {",
-  "    size_t mid = (lo + hi) / 2;",
-  "    if (cp < MARK_RANGES[mid].lo) hi = mid;",
-  "    else if (cp > MARK_RANGES[mid].hi) lo = mid + 1;",
-  "    else return true;",
-  "  }",
-  "  return false;",
+  sprintf(
+    "  if (%s) return false;",
+    guard_expr("MARK", mark_ranges$lo, mark_ranges$hi)
+  ),
+  "  return range_lookup(MARK_RANGES, MARK_N, cp) != nullptr;",
   "}",
   "",
   "const uint32_t *canonical_decomposition(uint32_t cp, uint32_t &len) {",
-  "  size_t lo = 0, hi = DECOMP_N;",
-  "  while (lo < hi) {",
-  "    size_t mid = (lo + hi) / 2;",
-  "    if (cp < DECOMP_INDEX[mid].cp) hi = mid;",
-  "    else if (cp > DECOMP_INDEX[mid].cp) lo = mid + 1;",
-  "    else {",
-  "      len = DECOMP_INDEX[mid].len;",
-  "      return &DECOMP_DATA[DECOMP_INDEX[mid].off];",
-  "    }",
+  sprintf(
+    "  const DecompEntry *e = (%s)",
+    guard_expr("DECOMP", decomp_keys, decomp_keys)
+  ),
+  "                             ? nullptr",
+  "                             : key_lookup(DECOMP_INDEX, DECOMP_N, cp);",
+  "  if (e == nullptr) {",
+  "    len = 0;",
+  "    return nullptr;",
   "  }",
-  "  len = 0;",
-  "  return nullptr;",
+  "  len = e->len;",
+  "  return &DECOMP_DATA[e->off];",
   "}",
   "",
   "uint32_t canonical_compose(uint32_t a, uint32_t b) {",
+  "  if (b < COMP_B_FIRST || b > COMP_B_LAST) return 0;",
   "  size_t lo = 0, hi = COMP_N;",
   "  while (lo < hi) {",
-  "    size_t mid = (lo + hi) / 2;",
+  "    const size_t mid = (lo + hi) / 2;",
   "    const CompEntry &e = COMP_TABLE[mid];",
   "    if (a < e.a || (a == e.a && b < e.b)) hi = mid;",
   "    else if (a > e.a || (a == e.a && b > e.b)) lo = mid + 1;",
@@ -549,43 +722,40 @@ src <- c(
   "}",
   "",
   "IdnaStatus idna_lookup(uint32_t cp, const uint32_t *&map, uint32_t &len) {",
-  "  size_t lo = 0, hi = IDNA_N;",
-  "  while (lo < hi) {",
-  "    size_t mid = (lo + hi) / 2;",
-  "    const IdnaRange &r = IDNA_RANGES[mid];",
-  "    if (cp < r.lo) hi = mid;",
-  "    else if (cp > r.hi) lo = mid + 1;",
-  "    else {",
-  "      len = r.len;",
-  "      map = r.len ? &IDNA_MAP_DATA[r.off] : nullptr;",
-  "      return static_cast<IdnaStatus>(r.status);",
-  "    }",
+  "  const IdnaRange *r = cp < 0x80",
+  "                           ? &IDNA_RANGES[IDNA_ASCII[cp]]",
+  "                           : range_lookup(IDNA_RANGES, IDNA_N, cp);",
+  "  if (r == nullptr) {",
+  "    map = nullptr;",
+  "    len = 0;",
+  "    return IdnaStatus::disallowed;",
   "  }",
-  "  map = nullptr;",
-  "  len = 0;",
-  "  return IdnaStatus::disallowed;",
+  "  len = r->len;",
+  "  map = r->len ? &IDNA_MAP_DATA[r->off] : nullptr;",
+  "  return static_cast<IdnaStatus>(r->status);",
   "}",
   "",
   "BidiClass bidi_class(uint32_t cp) {",
-  "  size_t lo = 0, hi = BIDI_N;",
-  "  while (lo < hi) {",
-  "    size_t mid = (lo + hi) / 2;",
-  "    if (cp < BIDI_RANGES[mid].lo) hi = mid;",
-  "    else if (cp > BIDI_RANGES[mid].hi) lo = mid + 1;",
-  "    else return static_cast<BidiClass>(BIDI_RANGES[mid].value);",
-  "  }",
-  "  return BidiClass::L;",
+  "  if (cp < 0x80) return static_cast<BidiClass>(BIDI_ASCII[cp]);",
+  if (nzchar(guard_expr("BIDI", bidi_ranges$lo, bidi_ranges$hi))) {
+    sprintf(
+      "  if (%s) return BidiClass::L;",
+      guard_expr("BIDI", bidi_ranges$lo, bidi_ranges$hi)
+    )
+  } else {
+    character(0)
+  },
+  "  const BidiRange *r = range_lookup(BIDI_RANGES, BIDI_N, cp);",
+  "  return r ? static_cast<BidiClass>(r->value) : BidiClass::L;",
   "}",
   "",
   "JoiningType joining_type(uint32_t cp) {",
-  "  size_t lo = 0, hi = JOINING_N;",
-  "  while (lo < hi) {",
-  "    size_t mid = (lo + hi) / 2;",
-  "    if (cp < JOINING_RANGES[mid].lo) hi = mid;",
-  "    else if (cp > JOINING_RANGES[mid].hi) lo = mid + 1;",
-  "    else return static_cast<JoiningType>(JOINING_RANGES[mid].value);",
-  "  }",
-  "  return JoiningType::U;",
+  sprintf(
+    "  if (%s) return JoiningType::U;",
+    guard_expr("JOINING", joining_ranges$lo, joining_ranges$hi)
+  ),
+  "  const JoiningRange *r = range_lookup(JOINING_RANGES, JOINING_N, cp);",
+  "  return r ? static_cast<JoiningType>(r->value) : JoiningType::U;",
   "}",
   "",
   "}  // namespace u16",

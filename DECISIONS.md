@@ -219,3 +219,48 @@ conformance corpus (`IdnaTestV2.txt`, Unicode 16.0.0).
 **Consequences.** Leading dots, consecutive dots, and multi-terminal dots remain
 invalid (empty labels → `NA`). See `NEWS.md` (1.2.0 Internal) and
 `dev/normalization-contract.md` §4.
+
+---
+
+## ADR-011 — Unicode accessor fast paths are derived in the generator, never hand-written
+
+**Status:** Accepted
+
+**Context.** The seven accessors in `src/unicode_tables_16_0_0.cpp` were seven
+near-identical binary searches. Profiling `host_normalize` over a 20k-host
+corpus put them at **56% of process time** — the UTS #46 table alone is 9,185
+ranges, ~14 data-dependent, branch-mispredicting probes per code point. Host
+input is overwhelmingly ASCII, and for ASCII almost every one of those probes
+is answerable without searching at all.
+
+**Decision.** Collapse the searches to one `range_lookup` template (plus a
+`key_lookup` for the point-keyed decomposition index; composition is keyed on a
+*pair* and keeps its own search), and give each accessor a fast path:
+
+- a table that lists nothing below U+0080 — combining class, combining marks,
+  decomposition, `Joining_Type` — takes a bounds test against its own first and
+  last listed code point, answering ASCII with no memory access;
+- a table that covers ASCII — UTS #46 mapping, `Bidi_Class` — takes a 128-entry
+  direct index instead, since no bounds test can skip it;
+- `canonical_compose` bounds its **second** element only: `b` is always a
+  combining character, while `a` can be ASCII (the smallest is U+003C).
+
+**Every constant and array above is computed in
+`data-raw/generate_unicode_tables.R` from the same UCD vectors the search
+reads.** A derived bound therefore stays *correct* whatever the data does; what
+a version bump could break is the *shape choice*. If a bounds-tested table grew
+down into ASCII, its guard would quietly stop firing and ASCII would fall back
+into the binary search — a silent performance regression, with no wrong answer
+to reveal it. The generator asserts the shape it assumed so that bump fails
+loudly at generation time instead.
+
+**Consequences.** The fast and slow paths cannot disagree, and a Unicode
+version bump moves the boundaries automatically. Hand-writing a boundary into
+the emitted C++ — or "simplifying" a derived constant to a literal — reintroduces
+exactly the drift this prevents. Measured on a clean `-O2` build over a 20k-host
+corpus, best-of-5 per sample, both build orders: **1.75x** for all-ASCII input,
+**1.36x** at 20% non-ASCII, **1.21x** at 50%, and **1.12x** even for
+all-non-ASCII input — the last because such hosts still carry ASCII TLDs, dots
+and digits, and because the bounds tests skip the search for most of the BMP,
+not just ASCII. No input class regressed. Verified byte-identical on 6,403
+conformance inputs × 8 flag combinations.

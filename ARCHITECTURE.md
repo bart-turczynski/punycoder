@@ -186,6 +186,16 @@ composition, UTS #46 mapping/status, combining-mark set, `Bidi_Class`,
 16.0.0). Bumping the version is a deliberate, reviewed behavior change — see
 ADR-004 and `dev/normalization-contract.md` §8.
 
+The generated accessors share one `range_lookup` binary search (plus a
+`key_lookup` for the point-keyed decomposition index and a bespoke pair search
+for composition), and each answers ASCII without searching: the two tables that
+cover ASCII (UTS #46 mapping, `Bidi_Class`) via a 128-entry direct index, the
+rest via a bounds test against their own first/last listed code point. **Every
+one of those constants and arrays is derived in the generator** from the same
+UCD vectors the search reads, so a version bump moves them automatically and
+the fast path cannot disagree with the slow one. Never hand-write a boundary
+into the emitted C++ — see ADR-011.
+
 ## Test taxonomy (`tests/testthat/`)
 
 Grouped by concern; add tests to the matching file for any user-visible change:

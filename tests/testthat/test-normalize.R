@@ -255,3 +255,78 @@ test_that("normalization_profile_info validates its flag arguments", {
     "verify_dns_length must be"
   )
 })
+
+# --- Unicode table fast paths (PUNY-zgaqusnu) -------------------------------
+# The seven table accessors in src/unicode_tables_16_0_0.cpp answer ASCII
+# without a binary search: two tables that cover ASCII (UTS-46 mapping,
+# Bidi_Class) via a 128-entry direct index, the rest via a bounds test against
+# their own first/last listed code point. Every one of those constants and
+# arrays is DERIVED in data-raw/generate_unicode_tables.R from the UCD data the
+# search reads, so the fast and slow paths cannot disagree by construction.
+#
+# These tests exist to catch a break in that construction -- a hand-edited
+# boundary, an off-by-one in the emitted index -- which would otherwise show up
+# only as a wrong answer on one code point. They assert the UTS-46 spec, not a
+# snapshot of the tables.
+
+test_that("every ASCII code point maps per UTS-46 (IDNA_ASCII direct index)", {
+  # Exhaustive over the direct-index array. NUL is excluded: R strings cannot
+  # carry an embedded zero byte, so it is unreachable through this surface.
+  cps <- 1:127
+  mid <- vapply(cps, intToUtf8, character(1))
+  got <- host_normalize(paste0("a", mid, "b.com"))
+
+  # Under the strict profile ASCII is LDH-only, with A-Z case-folded by
+  # mapping and U+002E splitting the label.
+  lower <- tolower(mid)
+  ldh <- grepl("^[a-z0-9-]$", lower)
+  expected <- ifelse(ldh, paste0("a", lower, "b.com"), NA_character_)
+  expected[cps == utf8ToInt(".")] <- "a.b.com"
+
+  expect_identical(got, expected)
+
+  # A-Z must actually be folded, not merely accepted.
+  upper <- LETTERS
+  expect_identical(
+    host_normalize(paste0("a", upper, "b.com")),
+    paste0("a", tolower(upper), "b.com")
+  )
+})
+
+test_that("Bidi_Class of ASCII survives the direct index (BIDI_ASCII)", {
+  # An Arabic label makes the whole domain a Bidi domain, so CheckBidi runs and
+  # reads Bidi_Class for the ASCII characters of every other label too.
+  # Digits are EN, letters L, hyphen ES -- the values BIDI_ASCII must carry.
+  arabic <- "\u0645\u062b\u0627\u0644" # "mithal", Arabic script (Bidi AL)
+  expect_false(is.na(host_normalize(paste0(arabic, ".com"))))
+  # RFC 5893 rule 2 admits EN in an RTL label; rule 3 requires it to end in
+  # R/AL/EN/AN, so a trailing ASCII digit is accepted.
+  expect_false(is.na(host_normalize(paste0(arabic, "1.com"))))
+  # Rule 5/6: an LTR label in a Bidi domain may not contain an RTL character,
+  # and may not end in a hyphen (ES).
+  expect_identical(
+    host_normalize(paste0(arabic, ".ex-.com")), NA_character_
+  )
+})
+
+test_that("code points at the derived table bounds keep their properties", {
+  # U+00C0 is the first code point with a canonical decomposition (DECOMP_FIRST)
+  # and U+0300 the first with a nonzero combining class (CCC_FIRST) and the
+  # smallest second element of any composition pair (COMP_B_FIRST). A guard
+  # that were off by one here would silently stop composing.
+  expect_identical(
+    host_normalize("A\u0300.com"), # A + combining grave, composes under NFC
+    host_normalize("\u00c0.com")   # precomposed A-grave
+  )
+  expect_identical(host_normalize("\u00c0.com"), "xn--0ca.com")
+
+  # U+0301 (ccc 230) must still reorder/compose after the guard.
+  expect_identical(
+    host_normalize("e\u0301.com"),
+    host_normalize("\u00e9.com")
+  )
+
+  # V5 (label must not begin with a combining mark) still fires: U+0300 is the
+  # first entry of the combining-mark table (MARK_FIRST).
+  expect_identical(host_normalize("\u0300abc.com"), NA_character_)
+})
