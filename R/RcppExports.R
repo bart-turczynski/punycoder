@@ -29,3 +29,11 @@ normalization_unicode_version_cpp <- function() {
     .Call(`_punycoder_normalization_unicode_version_cpp`)
 }
 
+unicode_versions_cpp <- function() {
+    .Call(`_punycoder_unicode_versions_cpp`)
+}
+
+host_normalize_version_cpp <- function(x, version, check_hyphens = TRUE, use_std3 = TRUE, verify_dns_length = TRUE) {
+    .Call(`_punycoder_host_normalize_version_cpp`, x, version, check_hyphens, use_std3, verify_dns_length)
+}
+

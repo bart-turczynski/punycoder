@@ -123,3 +123,23 @@
   .assert_flag(strict, "strict")
   compare_backends_cpp(enc2utf8(x), mode, strict)
 }
+
+# Internal Unicode table-set helpers used by tests. Not API: the public surface
+# pins one Unicode version, and per-call selection is a separate piece of work.
+# @keywords internal
+# @noRd
+.unicode_versions <- function() {
+  unicode_versions_cpp()
+}
+
+# @keywords internal
+# @noRd
+.host_normalize_version <- function(x, version, check_hyphens = TRUE,
+                                    use_std3 = TRUE, verify_dns_length = TRUE) {
+  .assert_character(x, "x")
+  .assert_normalize_flags(check_hyphens, use_std3, verify_dns_length)
+  out <- host_normalize_version_cpp(enc2utf8(x), version, check_hyphens,
+                                    use_std3, verify_dns_length)
+  names(out) <- names(x)
+  out
+}

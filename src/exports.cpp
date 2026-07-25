@@ -255,3 +255,69 @@ std::string normalization_unicode_version_cpp() {
     return std::string(
         punycoder::unicode_version_string(punycoder::kDefaultUnicodeVersion));
 }
+
+// Internal (punycoder:::), like compare_backends_cpp/backend_info_cpp: test
+// hooks, not API. The public R surface pins one Unicode version; choosing one
+// per call is PUNY-wjlfpppq. Without these the non-default table sets are
+// unreachable from R and R CMD check could not exercise them at all.
+//
+// Each shipped version, with the string the registry gives it and the string
+// its own table unit reports. See table_reported_version().
+//
+// [[Rcpp::export]]
+Rcpp::List unicode_versions_cpp() {
+    const std::size_t n = punycoder::unicode_version_count();
+    Rcpp::CharacterVector registry(n);
+    Rcpp::CharacterVector reported(n);
+
+    for (std::size_t i = 0; i < n; ++i) {
+        const punycoder::UnicodeVersion v = punycoder::unicode_version_at(i);
+        registry[i] = punycoder::unicode_version_string(v);
+        reported[i] = punycoder::table_reported_version(v);
+    }
+
+    return Rcpp::List::create(
+        Rcpp::Named("version") = registry,
+        Rcpp::Named("reported") = reported,
+        Rcpp::Named("default") = std::string(punycoder::unicode_version_string(
+            punycoder::kDefaultUnicodeVersion))
+    );
+}
+
+// host_normalize_cpp() against an explicitly chosen table set. Unlike the
+// public path this DOES stop on bad input: an unshipped version is a caller
+// error, not invalid host data, so it is not part of the NA-on-invalid
+// contract.
+//
+// [[Rcpp::export]]
+Rcpp::CharacterVector host_normalize_version_cpp(Rcpp::CharacterVector x,
+                                                 std::string version,
+                                                 bool check_hyphens = true,
+                                                 bool use_std3 = true,
+                                                 bool verify_dns_length = true) {
+    punycoder::NormalizeOptions opts;
+    opts.check_hyphens = check_hyphens;
+    opts.use_std3 = use_std3;
+    opts.verify_dns_length = verify_dns_length;
+    if (!punycoder::unicode_version_from_string(version.c_str(),
+                                                opts.unicode_version)) {
+        Rcpp::stop("Unsupported Unicode version: " + version);
+    }
+
+    R_xlen_t n = x.size();
+    Rcpp::CharacterVector out(n);
+
+    for (R_xlen_t i = 0; i < n; ++i) {
+        if (Rcpp::CharacterVector::is_na(x[i])) {
+            out[i] = NA_STRING;
+            continue;
+        }
+
+        const punycoder::HostNormalizeResult result =
+            punycoder::host_normalize_one(Rcpp::as<std::string>(x[i]), opts);
+        out[i] = result.valid ? Rcpp::String(result.value) : NA_STRING;
+    }
+
+    out.attr("names") = x.attr("names");
+    return out;
+}
