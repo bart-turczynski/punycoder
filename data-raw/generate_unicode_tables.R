@@ -107,21 +107,44 @@ full_decomp <- lapply(names(canon_decomp), function(k) expand(as.integer(k)))
 names(full_decomp) <- names(canon_decomp)
 
 # ---------------------------------------------------------------------------
-# DerivedNormalizationProps.txt: Full_Composition_Exclusion. A primary
-# canonical decomposition of length 2 yields a composition pair UNLESS the
-# composite is fully-composition-excluded.
+# DerivedNormalizationProps.txt, read for two properties.
+#
+# Full_Composition_Exclusion: a primary canonical decomposition of length 2
+# yields a composition pair UNLESS the composite is fully-composition-excluded.
+#
+# NFC_Quick_Check: the UAX #15 "Detecting Normalization Forms" property, used
+# to skip the whole decompose/reorder/compose pipeline for input that is
+# already in NFC. Only No and Maybe are listed; Yes is the default, and is by
+# far the common case. MAYBE IS A REAL THIRD VALUE -- a character that may
+# compose with what precedes it -- and must fall through to the full pipeline
+# rather than being folded into Yes.
 # ---------------------------------------------------------------------------
 dnp <- strip_comment(fetch("DerivedNormalizationProps.txt", ucd_base))
 dnp <- dnp[nzchar(dnp)]
 fce <- new.env(parent = emptyenv())
+qc_lo <- integer(0)
+qc_hi <- integer(0)
+qc_val <- integer(0)
+# Codes must match the C++ NfcQuickCheck enum emitted below.
+qc_codes <- c(N = 1L, M = 2L)
 for (line in dnp) {
   segs <- trimws(strsplit(line, ";", fixed = TRUE)[[1]])
-  if (length(segs) < 2L || segs[[2]] != "Full_Composition_Exclusion") next
+  if (length(segs) < 2L) next
+  if (segs[[2]] != "Full_Composition_Exclusion" && segs[[2]] != "NFC_QC") next
   rng <- strsplit(segs[[1]], "..", fixed = TRUE)[[1]]
   lo <- hex(rng[[1]])
   hi <- if (length(rng) > 1L) hex(rng[[2]]) else lo
-  for (cp in lo:hi) assign(as.character(cp), TRUE, envir = fce)
+  if (segs[[2]] == "Full_Composition_Exclusion") {
+    for (cp in lo:hi) assign(as.character(cp), TRUE, envir = fce)
+    next
+  }
+  code <- qc_codes[[segs[[3]]]]
+  if (is.null(code)) stop("unmapped NFC_QC value: ", segs[[3]])
+  qc_lo <- c(qc_lo, lo)
+  qc_hi <- c(qc_hi, hi)
+  qc_val <- c(qc_val, code)
 }
+if (!length(qc_lo)) stop("no NFC_QC rows found in DerivedNormalizationProps")
 
 # --- Canonical composition pairs ---
 comp_a <- integer(0)
@@ -559,6 +582,48 @@ if (covers_ascii(comp_b)) {
   ))
 }
 
+# NFC_Quick_Check: the same trie shape, so the per-character check the quick
+# check runs is two loads rather than a search. Yes is the default and covers
+# almost the whole code space, which is exactly the case block dedup collapses.
+qc_trie <- build_trie(
+  "NFC_Quick_Check", value_space(qc_lo, qc_hi, qc_val, 0L), 0L
+)
+
+# The bound in front of the whole quick check. A code point below BOTH tables'
+# first listed entry has combining class 0 and NFC_Quick_Check=Yes, so it can
+# neither be out of canonical order nor fail the check: a run of them is
+# already in NFC, at one compare each and no memory access. That is the whole
+# ASCII case, which is why this bound rather than the two accessors' own guards
+# is what the check tests first -- their guards are behind a function call, and
+# this one is inlined at the call site (the PUNY-mbzhgbta lesson).
+nfc_inert_limit <- min(min(qc_lo), min(ccc_ranges$lo))
+if (nfc_inert_limit <= 0x7FL) {
+  stop(sprintf(
+    paste0(
+      "a code point at U+%04X now has nonzero combining class or ",
+      "NFC_QC != Yes, so nfc_inert() no longer answers ASCII and the quick ",
+      "check would fall into the tables for ordinary host input"
+    ), nfc_inert_limit
+  ))
+}
+
+# Every second element of a composition pair can combine with what precedes it,
+# so NFC_QC must not call it Yes. This cross-checks the parsed property against
+# the pair table derived independently from UnicodeData -- a mis-parsed NFC_QC
+# would otherwise be silent on almost every input, and wrong on exactly the
+# input the quick check exists to skip.
+qc_of <- function(cp) {
+  hit <- which(qc_lo <= cp & cp <= qc_hi)
+  if (length(hit)) qc_val[[hit[[1]]]] else 0L
+}
+bad_b <- unique(comp_b)[vapply(unique(comp_b), qc_of, integer(1)) == 0L]
+if (length(bad_b)) {
+  stop(sprintf(
+    "U+%04X is the second element of a composition pair but NFC_QC says Yes",
+    bad_b[[1]]
+  ))
+}
+
 # ---------------------------------------------------------------------------
 # Emit the C++ header and source.
 # ---------------------------------------------------------------------------
@@ -723,6 +788,20 @@ inline bool composes_as_second(uint32_t b) {
   return b >= %s && b <= %s;
 }
 
+// NFC_Quick_Check (UAX #15). `maybe` means the character MAY compose with
+// what precedes it, so it is not a weaker `no` -- a caller that folds it into
+// `yes` is wrong on exactly the input a quick check exists to detect.
+enum class NfcQuickCheck : uint8_t { yes = 0, no = 1, maybe = 2 };
+NfcQuickCheck nfc_quick_check(uint32_t cp);
+
+// True if cp can play no part in whether a sequence is in NFC: every code
+// point below this bound has combining class 0 and NFC_Quick_Check=Yes, so a
+// run of them is already normalized. Inline because the check that uses it
+// runs once per character and this answers all of ASCII without a call, let
+// alone a table read. The bound is the lower of the two tables' first listed
+// code point, derived like every other constant here (ADR-011).
+inline bool nfc_inert(uint32_t cp) { return cp < %s; }
+
 // UTS-46 status of cp. If the status is mapped, deviation, or
 // disallowed_std3_mapped and a mapping exists, sets map/len to the target
 // sequence (len may be 0 for an empty mapping). Unlisted code points are
@@ -750,7 +829,7 @@ JoiningType joining_type(uint32_t cp);
 
 #endif  // %s
 ", unicode_version, guard, guard, hexlit(comp_b_first), hexlit(comp_b_last),
-  guard
+  hexlit(nfc_inert_limit), guard
 )
 
 writeLines(header, "src/unicode_tables_16_0_0.h")
@@ -902,6 +981,11 @@ src <- c(
   emit_trie("IDNA_TRIE", idna_trie),
   sprintf("const uint32_t IDNA_UNLISTED = %d;", idna_default),
   "",
+  "// --- NFC_Quick_Check (UAX #15, two-stage trie) ---",
+  "// Yes is the default and covers nearly the whole code space, so nearly",
+  "// every block is the same block and dedup does the rest.",
+  emit_trie("NFC_QC_TRIE", qc_trie),
+  "",
   "// --- Bidi_Class (RFC 5893, two-stage trie) ---",
   emit_trie("BIDI_TRIE", bidi_trie),
   "",
@@ -971,6 +1055,14 @@ src <- c(
   "  return static_cast<IdnaStatus>(v.status);",
   "}",
   "",
+  "NfcQuickCheck nfc_quick_check(uint32_t cp) {",
+  sprintf(
+    "  if (%s) return NfcQuickCheck::yes;", trie_guard("NFC_QC_TRIE", qc_trie)
+  ),
+  "  return static_cast<NfcQuickCheck>(",
+  sprintf("      %s);", trie_call("NFC_QC_TRIE")),
+  "}",
+  "",
   "BidiClass bidi_class(uint32_t cp) {",
   sprintf(
     "  if (%s) return BidiClass::L;", trie_guard("BIDI_TRIE", bidi_trie)
@@ -1007,7 +1099,8 @@ message(sprintf(
   length(decomp_keys), length(decomp_data)
 ))
 
-for (t in list(ccc_trie, decomp_trie, idna_trie, bidi_trie, comp_trie)) {
+for (t in list(ccc_trie, decomp_trie, idna_trie, bidi_trie, comp_trie,
+               qc_trie)) {
   message(sprintf(
     "  %-24s trie: block %4d, stage1 %6d x %-8s stage2 %6d x %-8s %6.1f KB",
     t$name, t$block, length(t$stage1), elem_type(t$stage1),

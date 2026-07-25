@@ -207,11 +207,20 @@ is what puts the *reject* on the trie. Its derived `b`-bound is exposed
 `nfc()` **before** the call, because 87% of the compositions `nfc()` attempts
 are answered by that bound alone — see ADR-013.
 
+Above all of them sits a **quick check**: `nfc()` tests whether its input is
+already normalized (UAX #15 `NFC_Quick_Check` plus a combining-class ordering
+test) and returns it unchanged if so, skipping the decompose → reorder →
+compose pipeline entirely. Nearly all real host text is already in NFC, so this
+is the largest single win in the normalizer, and it is largest for ASCII — where
+`nfc_inert()`, inlined from the generated header, answers every character with
+one compare. `Maybe` is a real third value and falls through to the full
+pipeline; see ADR-014.
+
 **Every one of those arrays, constants, element types and block sizes is
 derived in the generator** from the same UCD vectors the accessor reads, and the
 generator verifies each trie against its source ranges for all 1,114,112 code
 points before emitting it. Never hand-write a boundary into the emitted C++ —
-see ADR-011, ADR-012 and ADR-013.
+see ADR-011, ADR-012, ADR-013 and ADR-014.
 
 ## Test taxonomy (`tests/testthat/`)
 

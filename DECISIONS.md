@@ -336,6 +336,7 @@ on `is_idn`/`is_punycode`/`puny_encode`/`puny_decode` over the same corpus.
 
 ---
 
+
 ## ADR-013 — Composition is a trie on the first element, and its bound belongs to the caller
 
 **Status:** Accepted
@@ -395,3 +396,79 @@ and `host_normalize` is byte-identical on 6,403 conformance inputs × 8 flag
 combinations, extended to `is_idn`/`is_punycode`/`puny_encode`/`puny_decode`.
 Every array outside the composition section is byte-identical to what ADR-012
 emitted.
+
+---
+
+## ADR-014 — NFC is quick-checked, not recomputed
+
+**Status:** Accepted
+
+**Context.** ADR-011 through ADR-013 made every Unicode table lookup as cheap as
+it can be. What none of them questioned is *how many* lookups the normalizer
+performs, and the answer was: all of them, always. `host_normalize_one()` called
+`nfc()` unconditionally, so an all-ASCII host ran the full
+decompose → canonical-order → compose pipeline — two vector allocations and
+three passes — to produce a byte-identical copy of its input. Instrumenting the
+composition attempts over a 20k-host corpus made the waste concrete: **295,792
+attempts per pass on all-ASCII input, every one of them pointless**, plus the
+decomposition that allocated the vector they walked.
+
+**Decision.** Implement the UAX #15 "Detecting Normalization Forms" quick check
+and return the input unchanged when it passes. A sequence is already in NFC when
+every character is `NFC_Quick_Check=Yes` and combining classes never decrease
+within a run of non-starters.
+
+- **`NFC_QC` is read from the UCD, not derived.** `DerivedNormalizationProps.txt`
+  is already parsed for `Full_Composition_Exclusion`, so the property costs one
+  more pass over a cached file. It gets the same two-stage trie as its
+  neighbours; `Yes` is the default and covers nearly the whole code space, which
+  is exactly the case block dedup collapses (6.1 KB).
+- **`Maybe` is a real third value** — the character *may* compose with what
+  precedes it — and falls through to the full pipeline alongside `No`. Folding
+  it into `Yes` would be correct on almost every input and wrong on exactly the
+  input the pipeline exists to fix.
+- **The bound in front of the check is inlined**, as `nfc_inert()` in the
+  generated header, and is the lower of the two tables' first listed code point
+  (U+0300). Below it a character has combining class 0 and `NFC_QC=Yes`, so it
+  can neither be out of order nor fail the check. That answers all of ASCII at
+  one compare per character with no table read and, crucially, no call — the
+  ADR-013 lesson applied at the start rather than discovered afterwards.
+- The generator cross-checks the parsed property against the composition pair
+  table derived independently from `UnicodeData.txt`: every second element of a
+  pair must not be `Yes`. A mis-parsed `NFC_QC` would otherwise be silent.
+
+**Consequences.** Measured with both builds installed side by side and
+alternated (min of 9 batched samples, 8 rounds, 20k hosts): **1.22x** all-ASCII,
+1.21x at 20% non-ASCII, 1.22x at 50%, **1.19x** all-non-ASCII — uniform across
+the range, with all 16 paired comparisons favouring the check. This is the
+largest single win since ADR-011, and unlike ADR-012 and ADR-013 it helps the
+all-ASCII case most, because that case was paying the most for nothing.
+
+`nfc()` self time falls from 6.3% to 2.6% and `combining_class` from 3.5% to
+0.45%; `canonical_decomposition` and `canonical_compose` drop below the sampling
+floor entirely, and all table lookups from 12.8% to 6.3%. `__const` grows 6,252
+bytes and `__text` 320; the installed shared object steps 445,264 → 462,096 as
+it crosses a 16 KB page boundary.
+
+The win depends on input already being in NFC, which nearly all real host text
+is. The constructed worst case — the same corpus transformed to NFD, so the
+check *always* fails and its pass is pure overhead — still does not regress:
+1.13x at 20% non-ASCII, 1.07x at 50%, 1.01x at all-non-ASCII, because the check
+abandons at the first offending character rather than scanning to the end.
+
+Verified against the pipeline it skips, not merely alongside it. A harness links
+`nfc()` and a copy with the early return deleted into one binary and tests two
+invariants — that the answers match, and that the *skip decision* matches
+whether the full pipeline was a no-op — over every single code point, all 99,825
+sequences in `NormalizationTest.txt`, 280,887,296 pairs (every code point in
+planes 0–1 against all 2,143 code points that can affect normalization at all),
+and 438,976 triples plus 10,000 mark quadruples. Zero disagreements. The same
+run replays the official UAX #15 conformance corpus through `nfc()`: all 19,965
+rows pass, which is a stronger statement about the NFC implementation than
+anything previously in the suite. `host_normalize` is byte-identical on the
+usual 6,403 conformance inputs × 8 flag combinations.
+
+The two halves of the check are separately guarded by tests that were confirmed
+to fail when the half they guard is removed. The order test needs marks that are
+`NFC_QC=Yes` — with `Maybe` marks the property test fires first and the order
+test is never reached, so the obvious test case silently guards nothing.

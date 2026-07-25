@@ -57,6 +57,29 @@
 
 ## Performance
 
+* `host_normalize()` no longer normalizes input that is already normalized ---
+  **1.22x** on all-ASCII hosts, 1.21x at 20% non-ASCII, 1.22x at 50%, and 1.19x
+  when every host is non-ASCII. Unicode NFC ran unconditionally, so a host that
+  was already in NFC --- which nearly all real host text is --- paid for a full
+  decompose, canonical-reorder and recompose pass to produce a byte-identical
+  copy of itself. An all-ASCII host was making 295,792 pointless composition
+  attempts per 20,000 hosts. `nfc()` now applies the UAX #15 quick check
+  (`NFC_Quick_Check` plus a combining-class ordering test) and returns its input
+  untouched when it passes; below U+0300 that costs one comparison per character
+  and no table read at all.
+
+  This is the largest single normalizer win in this release, and unlike the
+  table work below it helps ASCII input most, because that input was paying the
+  most for nothing. Input that genuinely needs normalizing does not regress: on
+  a corpus transformed to NFD, so the check always fails, throughput is still
+  1.13x/1.07x/1.01x, because the check abandons at the first character that
+  fails rather than scanning to the end. `NFC_Quick_Check=Maybe` is treated as a
+  real third value and falls through to the full pipeline. Output is unchanged
+  on every input in the UTS #46 conformance corpus under all supported flag
+  combinations, and `nfc()` was verified against the pipeline it skips over all
+  19,965 rows of the official UAX #15 normalization corpus, every single code
+  point, and 280 million code-point pairs (PUNY-wfzldcuo).
+
 * `host_normalize()` is faster again on non-ASCII hosts --- **1.05x** when every
   host is non-ASCII, 1.04x at 50%, 1.03x at 20%, unchanged on all-ASCII input
   --- with the last Unicode table still on a binary search converted. Canonical

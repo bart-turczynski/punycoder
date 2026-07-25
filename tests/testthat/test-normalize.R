@@ -55,6 +55,51 @@ test_that("V1 (NFC) holds for U-labels and is enforced on A-label payloads", {
   expect_identical(host_normalize("xn--caf-dma.com"), "xn--caf-dma.com")
 })
 
+test_that("the NFC quick check does not skip input that needs normalizing", {
+  # nfc() short-circuits when UAX #15 NFC_Quick_Check says the input is already
+  # normalized. That is an optimization the conformance corpus cannot localize:
+  # a quick check that skips too much is silently wrong only on the input that
+  # needed the pipeline. One case per way it can be wrong. Escapes rather than
+  # literals throughout -- the spellings would otherwise look identical.
+
+  # NFC_QC = Maybe: U+0301 may compose with what precedes it. Folding Maybe
+  # into Yes would leave "cafe" + acute uncomposed, giving a different A-label
+  # from the precomposed spelling.
+  expect_identical(host_normalize("cafe\u0301.com"), "xn--caf-dma.com")
+  expect_identical(host_normalize("caf\u00e9.com"), "xn--caf-dma.com")
+
+  # NFC_QC = No: U+0340 COMBINING GRAVE TONE MARK is a canonical singleton for
+  # U+0300, so "a" + U+0340 must normalize to U+00E0. Skipping it would encode
+  # the deprecated character instead.
+  expect_identical(host_normalize("a\u0340.com"), "xn--0ca.com")
+  expect_identical(host_normalize("\u00e0.com"), "xn--0ca.com")
+
+  # Canonical ORDER, which is not a property lookup at all. U+0316 (ccc 220)
+  # before U+0334 (ccc 1) is out of canonical order, and BOTH marks are
+  # NFC_QC=Yes -- so the property test passes them and only the combining-class
+  # comparison can catch it. Marks that are NFC_QC=Maybe cannot test this: the
+  # property test bails out first and the order test is never reached.
+  expect_identical(
+    host_normalize("a\u0316\u0334.com"),
+    host_normalize("a\u0334\u0316.com")
+  )
+  expect_identical(host_normalize("a\u0316\u0334.com"), "xn--a-4cb3g.com")
+
+  # The same invariant where both marks are NFC_QC=Maybe (ccc 230 before 220),
+  # which exercises reordering inside the full pipeline rather than the check.
+  expect_identical(
+    host_normalize("a\u0301\u0323.com"),
+    host_normalize("a\u0323\u0301.com")
+  )
+  expect_identical(host_normalize("a\u0301\u0323.com"), "xn--lsa752l.com")
+
+  # Input already in NFC takes the skip and must come back untouched --
+  # including a combining mark that composes with nothing, and a script with no
+  # combining marks at all.
+  expect_identical(host_normalize("x\u0301.com"), "xn--x-xbb.com")
+  expect_identical(host_normalize("\u4e2d\u6587.com"), "xn--fiq228c.com")
+})
+
 test_that("mixed-case A-label payload normalizes via UTS-46 mapping", {
   # dev/normalization-contract.md section 5 lists "xn--MNCHEN-3ya.de" -> NA as
   # a "non-canonical A-label payload" row. That row is inconsistent with the
