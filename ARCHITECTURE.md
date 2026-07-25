@@ -99,7 +99,9 @@ See ADR-009.
 | `punycoder_algorithm.cpp` | RFC 3492 reference encoder/decoder (fallback). |
 | `punycoder_utf8.cpp` | UTF-8 ↔ codepoint conversion + ASCII helpers. |
 | `punycoder_errors.cpp` | `PunycoderError` + the `throw_error(ErrorCode, …)` map. |
-| `unicode_tables_16_0_0.cpp` / `.h` | **Generated** vendored Unicode 16.0.0 data. |
+| `unicode_tables_16_0_0.cpp` / `.h`, `unicode_tables_17_0_0.cpp` / `.h` | **Generated** vendored Unicode data, one self-contained unit per shipped version, each ending in a `struct Tables` facade. |
+| `punycoder_unicode_version.h` / `.cpp` | **Leaf.** `PUNYCODER_UNICODE_VERSIONS(X)`, `UnicodeVersion`, `kDefaultUnicodeVersion`, string↔enum helpers. |
+| `unicode_tables_registry.h` | Resolves the facade column; included only by the two units that instantiate the pipeline. |
 | `init.c`, `RcppExports.cpp` | C entry points / **generated** Rcpp glue. |
 
 ## Request lifecycles
@@ -176,15 +178,35 @@ touching `// [[Rcpp::export]]` attributes, regenerate glue with
 ```
 data-raw/generate_unicode_tables.R      # network access happens ONLY here
    ├─ downloads UCD files (cached under git-ignored data-raw/.ucd-cache/)
-   └─ writes src/unicode_tables_16_0_0.{h,cpp}   ← committed, generated
+   └─ writes src/unicode_tables_<tag>.{h,cpp}    ← committed, generated
 runtime / build                          # NEVER downloads anything
 ```
 
 Normalization depends on this vendored data (combining class, decompositions,
 composition, UTS #46 mapping/status, combining-mark set, `Bidi_Class`,
-`Joining_Type`). It is pinned to **one Unicode version per release** (currently
-16.0.0). Bumping the version is a deliberate, reviewed behavior change — see
-ADR-004 and `dev/normalization-contract.md` §8.
+`Joining_Type`). Every output name — filenames, header guard, C++ namespace —
+derives from the single `unicode_version` string at the top of the generator,
+and the UCD cache is scoped per version.
+
+**Several table sets ship at once (ADR-015).** 16.0.0 and 17.0.0 are both
+compiled in; `PUNYCODER_UNICODE_VERSIONS(X)` in `src/punycoder_unicode_version.h`
+lists them, and the enum, the version strings, the explicit `nfc<T>` /
+`Normalizer<T>` instantiations, and the dispatch switch are all expansions of
+that one list. Adding a version is two adjacent hand edits: one `#include` in
+`src/unicode_tables_registry.h`, one `X(...)` row in the list. The switch in
+`host_normalize_one()` has no `default:` label, so doing only half of that is a
+`-Wswitch` warning plus a link error.
+
+The version is bound at **compile** time — one branch per host, never per code
+point — because the inline table bounds that ADR-013 and ADR-014 depend on
+cannot survive a function-pointer accessor. Trie shapes differ per version and
+are not shared.
+
+The *public* surface still pins one Unicode version per release (currently
+16.0.0, `kDefaultUnicodeVersion`); reaching another table set is possible only
+through internal test hooks (`punycoder:::.host_normalize_version()`). Bumping
+the pinned version is a deliberate, reviewed behavior change — see ADR-004 and
+`dev/normalization-contract.md` §8.
 
 The four accessors that profile hot — combining class, UTS #46 mapping,
 decomposition, `Bidi_Class` — are **two-stage tries**: `STAGE2[(STAGE1[cp >>
@@ -246,6 +268,11 @@ Grouped by concern; add tests to the matching file for any user-visible change:
   after editing the enum (ADR-009).
 - **Backend-specific code** → `punycoder_backend.cpp` only; never sprinkle
   `#ifdef PUNYCODER_USE_LIBIDN2` through domain code (ADR-008).
-- **Unicode version bump** → `data-raw/generate_unicode_tables.R`, regenerate,
-  bump the pinned version in `normalization_profile_info()`, follow
+- **New Unicode table set** → set `unicode_version` in
+  `data-raw/generate_unicode_tables.R`, regenerate, restore the line, then add
+  the `#include` to `src/unicode_tables_registry.h` and the `X(...)` row to
+  `PUNYCODER_UNICODE_VERSIONS` — generation and registration in **one** commit
+  (ADR-015); an unreferenced table object still links in.
+- **Unicode version bump** (which table set is the pinned default) → move
+  `kDefaultUnicodeVersion`; `normalization_profile_info()` reads it. Follow
   `dev/normalization-contract.md` §8.
