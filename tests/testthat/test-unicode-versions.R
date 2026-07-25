@@ -59,8 +59,7 @@ test_that("selecting the default version reproduces host_normalize exactly", {
 
 test_that("names are preserved when a version is selected", {
   x <- c(a = "Example.COM", b = "über.de")
-  expect_identical(names(host_normalize(x, unicode_version = "17.0.0")),
-                   c("a", "b"))
+  expect_named(host_normalize(x, unicode_version = "17.0.0"), c("a", "b"))
 })
 
 test_that("an unshipped Unicode version is an actionable error, not NA", {

@@ -49,7 +49,7 @@
 #' @keywords internal
 #' @noRd
 .resolve_unicode_version <- function(unicode_version) {
-  info <- unicode_versions_cpp()
+  info <- .unicode_version_info()
   if (is.null(unicode_version)) {
     return(info$default)
   }
@@ -158,11 +158,26 @@
   compare_backends_cpp(enc2utf8(x), mode, strict)
 }
 
-# Internal table-set metadata used by tests: the registry strings, the strings
-# the table units report about themselves, and the pinned default. The public
-# unicode_versions() exposes only the first of those.
+# Internal table-set metadata: the registry strings, the strings the table units
+# report about themselves, and the pinned default. The public unicode_versions()
+# exposes only the first of those; the second exists for the facade-wiring test.
+#
+# Memoized because .resolve_unicode_version() consults it on every
+# host_normalize() call, and the answer is fixed at build time -- it is a
+# property of which table units were compiled in, so nothing in a session can
+# change it. Measured at ~0.75us per call, which is ~19% of a single-host
+# host_normalize(); invisible on a vectorized call and not on a loop over
+# scalars. The cache is per session, filled on first use rather than in
+# .onLoad(), so it cannot run before the shared object is loaded.
 # @keywords internal
 # @noRd
+.unicode_version_cache <- new.env(parent = emptyenv())
+
 .unicode_version_info <- function() {
-  unicode_versions_cpp()
+  info <- .unicode_version_cache$info
+  if (is.null(info)) {
+    info <- unicode_versions_cpp()
+    .unicode_version_cache$info <- info
+  }
+  info
 }

@@ -28,6 +28,24 @@
 
 ## New features
 
+* The Unicode table set is now selectable per call.
+  `host_normalize(x, unicode_version = )` and
+  `normalization_profile_info(unicode_version = )` accept any version this
+  build ships, and a new `unicode_versions()` reports what that is (currently
+  `"16.0.0"` and `"17.0.0"`). `NULL`, the default, means the pinned version, so
+  **every existing call behaves exactly as before** --- including the `profile`
+  token, which is byte-identical at the pin. Selecting another version appends
+  `+unicode-<version>` to that token, on the same rule as a relaxed flag, so
+  two normalizations that genuinely differ can never mint `identical()` tokens.
+  Naming a version the build does not ship is an error listing what is
+  available, never a silent fall back to the pin --- a fallback would let a
+  caller record a profile identity describing a normalization that never ran.
+  There is deliberately **no** global option for this: unlike
+  `punycoder.strict`, which is an error-policy preference, the Unicode version
+  is part of profile identity, and making identity ambient would let the same
+  code mint different reproducibility keys in different sessions
+  (PUNY-wjlfpppq; ADR-016).
+
 * `validate_domain()` results are now readable at scale. `print()` opens with a
   count header (`12 domains: 5 valid, 7 invalid (strict = TRUE)`), stops after
   10 per-domain blocks with a `... and N more` footer instead of dumping one
