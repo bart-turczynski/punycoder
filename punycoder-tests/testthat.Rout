@@ -1,0 +1,31 @@
+
+R version 4.6.0 (2026-04-24) -- "Because it was There"
+Copyright (C) 2026 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin23
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library(testthat)
+> library(punycoder)
+> 
+> test_check("punycoder")
+[ FAIL 0 | WARN 0 | SKIP 7 | PASS 473 ]
+
+══ Skipped tests (7) ═══════════════════════════════════════════════════════════
+• On CRAN (7): 'test-osv.R:17:3', 'test-performance.R:120:3',
+  'test-performance.R:132:3', 'test-performance.R:142:3',
+  'test-performance.R:152:3', 'test-performance.R:169:3',
+  'test-security.R:16:3'
+
+[ FAIL 0 | WARN 0 | SKIP 7 | PASS 473 ]
+> 

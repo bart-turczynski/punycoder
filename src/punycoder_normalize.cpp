@@ -6,15 +6,11 @@
 
 #include "punycoder_core.h"
 #include "punycoder_nfc.h"
-#include "unicode_tables_16_0_0.h"
+#include "unicode_tables_registry.h"
 
 namespace punycoder {
 
 namespace {
-
-using u16::BidiClass;
-using u16::IdnaStatus;
-using u16::JoiningType;
 
 constexpr uint32_t kFullStop = 0x2E;  // U+002E FULL STOP, the label separator.
 constexpr uint32_t kHyphen = 0x2D;    // U+002D HYPHEN-MINUS.
@@ -36,229 +32,6 @@ struct LabelWork {
 };
 
 HostNormalizeResult invalid() { return {false, std::string()}; }
-
-// UTS-46 mapping (contract step 3a) over the pinned Unicode 16.0.0 table.
-// Returns false if any code point is disallowed under the profile. With
-// UseSTD3ASCIIRules = true the disallowed_std3_* statuses are treated as
-// disallowed; non-LDH ASCII that the 16.0.0 table marks `valid` is rejected
-// later by the per-label STD3 check. With use_std3 = false the table's
-// disallowed_std3_valid / disallowed_std3_mapped entries are instead treated
-// as valid / mapped (UTS #46 §5), so characters such as "_" survive mapping.
-bool map_codepoints(const std::vector<uint32_t>& in, std::vector<uint32_t>& out,
-                    bool use_std3) {
-    out.clear();
-    out.reserve(in.size());
-    for (uint32_t cp : in) {
-        const uint32_t* map = nullptr;
-        uint32_t len = 0;
-        switch (u16::idna_lookup(cp, map, len)) {
-        case IdnaStatus::valid:
-        case IdnaStatus::deviation:  // non-transitional: keep ß, ς, ZWJ, ZWNJ
-            out.push_back(cp);
-            break;
-        case IdnaStatus::ignored:
-            break;  // dropped
-        case IdnaStatus::mapped:
-            for (uint32_t i = 0; i < len; ++i) out.push_back(map[i]);
-            break;
-        // # nocov start
-        // STD3 handling is behaviorally exercised by the use_std3 flag tests
-        // (test-normalize.R), but the coverage tool does not credit these
-        // switch arms with their early returns.
-        case IdnaStatus::disallowed_std3_valid:
-            if (use_std3) return false;
-            out.push_back(cp);
-            break;
-        case IdnaStatus::disallowed_std3_mapped:
-            if (use_std3) return false;
-            for (uint32_t i = 0; i < len; ++i) out.push_back(map[i]);
-            break;
-        // # nocov end
-        case IdnaStatus::disallowed:
-            return false;
-        }
-    }
-    return true;
-}
-
-// CheckJoiners (UTS-46 §4.1 / RFC 5892 Appendix A): every ZWNJ/ZWJ in the
-// label must satisfy its contextual rule.
-bool check_joiners(const std::vector<uint32_t>& label) {
-    for (std::size_t i = 0; i < label.size(); ++i) {
-        const uint32_t cp = label[i];
-        if (cp != kZwnj && cp != kZwj) continue;
-
-        // Both rules: valid if the preceding character is a Virama.
-        const bool virama_before =
-            i > 0 && u16::combining_class(label[i - 1]) == kVirama;
-
-        if (cp == kZwj) {  // RFC 5892 A.2
-            if (!virama_before) return false;
-            continue;
-        }
-
-        // ZWNJ, RFC 5892 A.1. Virama-before is sufficient; otherwise the
-        // context must match (L|D) T* ZWNJ T* (R|D).
-        if (virama_before) continue;
-
-        bool ok_left = false;
-        for (std::size_t j = i; j-- > 0;) {
-            const JoiningType jt = u16::joining_type(label[j]);
-            if (jt == JoiningType::T) continue;
-            ok_left = jt == JoiningType::L || jt == JoiningType::D;
-            break;
-        }
-        bool ok_right = false;
-        for (std::size_t j = i + 1; j < label.size(); ++j) {
-            const JoiningType jt = u16::joining_type(label[j]);
-            if (jt == JoiningType::T) continue;
-            ok_right = jt == JoiningType::R || jt == JoiningType::D;
-            break;
-        }
-        if (!ok_left || !ok_right) return false;
-    }
-    return true;
-}
-
-// CheckBidi (RFC 5893, "Bidi Rule"). Applied to a label only when the whole
-// domain is a Bidi domain (some label contains an R/AL/AN character).
-bool check_bidi(const std::vector<uint32_t>& label) {
-    if (label.empty()) return false;
-
-    // Rule 1: the first character fixes the label direction.
-    const BidiClass first = u16::bidi_class(label.front());
-    bool rtl;
-    if (first == BidiClass::R || first == BidiClass::AL) {
-        rtl = true;
-    } else if (first == BidiClass::L) {
-        rtl = false;
-    } else {
-        return false;
-    }
-
-    bool has_en = false;
-    bool has_an = false;
-    std::size_t last_strong = 0;  // index of the last non-NSM character
-    for (std::size_t i = 0; i < label.size(); ++i) {
-        const BidiClass c = u16::bidi_class(label[i]);
-        if (rtl) {
-            // Rule 2: allowed characters in an RTL label.
-            switch (c) {
-            case BidiClass::R:
-            case BidiClass::AL:
-            case BidiClass::AN:
-            case BidiClass::EN:
-            case BidiClass::ES:
-            case BidiClass::CS:
-            case BidiClass::ET:
-            case BidiClass::ON:
-            case BidiClass::BN:
-            case BidiClass::NSM:
-                break;
-            default:
-                return false;
-            }
-            if (c == BidiClass::EN) has_en = true;
-            if (c == BidiClass::AN) has_an = true;
-        } else {
-            // Rule 5: allowed characters in an LTR label.
-            switch (c) {
-            case BidiClass::L:
-            case BidiClass::EN:
-            case BidiClass::ES:
-            case BidiClass::CS:
-            case BidiClass::ET:
-            case BidiClass::ON:
-            case BidiClass::BN:
-            case BidiClass::NSM:
-                break;
-            default:
-                return false;
-            }
-        }
-        if (c != BidiClass::NSM) last_strong = i;
-    }
-
-    // Rule 4: an RTL label must not mix EN and AN.
-    if (rtl && has_en && has_an) return false;
-
-    // Rules 3 / 6: the last non-NSM character must be of the allowed ending
-    // type (trailing NSM characters are permitted).
-    const BidiClass end = u16::bidi_class(label[last_strong]);
-    if (rtl) {
-        return end == BidiClass::R || end == BidiClass::AL ||
-               end == BidiClass::EN || end == BidiClass::AN;
-    }
-    return end == BidiClass::L || end == BidiClass::EN;
-}
-
-// Validate one U-label against the profile (contract step 3d, UTS-46 §4.1
-// criteria V1-V6, STD3, and CheckJoiners). `from_alabel` is true when the
-// label is the Punycode-decoded payload of an xn-- label, which additionally
-// requires every code point to have UTS-46 status valid/deviation (a mapped,
-// ignored, or disallowed code point means the A-label was non-canonical).
-// CheckBidi is whole-domain and is applied separately by the caller.
-bool validate_label(const std::vector<uint32_t>& label, bool from_alabel,
-                    const NormalizeOptions& opts) {
-    if (label.empty()) return false;  // empty label (leading/consecutive dots)
-
-    // V1: label must be in NFC.
-    //
-    // Only decoded A-label payloads need checking. host_normalize_one() applies
-    // NFC to the whole string (step 3b) *before* splitting on U+002E, and
-    // U+002E is a safe break: it is a starter (ccc 0) that appears in no
-    // canonical decomposition and in no composition pair, so canonical
-    // ordering never reorders across it and composition never spans it.
-    // NFC(a "." b) is therefore NFC(a) "." NFC(b), and a label taken straight
-    // from that split is already in NFC by construction. Re-normalizing it here
-    // allocated two vectors and walked the Unicode tables per label for a
-    // result that could not differ.
-    //
-    // A Punycode-decoded A-label payload never went through that pass, so for
-    // it this is the operative check.
-    if (from_alabel && nfc(label) != label) return false;
-
-    // V5: must not begin with a combining mark.
-    if (u16::is_combining_mark(label.front())) return false;
-
-    // V2/V3 (CheckHyphens): no "--" in the 3rd/4th positions, and no leading or
-    // trailing hyphen. Gated by check_hyphens; WHATWG beStrict=false drops it.
-    if (opts.check_hyphens) {
-        if (label.size() >= 4 && label[2] == kHyphen && label[3] == kHyphen) {
-            return false;
-        }
-        if (label.front() == kHyphen || label.back() == kHyphen) return false;
-    }
-
-    for (uint32_t cp : label) {
-        if (cp < 0x80) {
-            // STD3 (UseSTD3ASCIIRules): ASCII labels may contain only
-            // letters, digits, and hyphen. Mapping has already case-folded
-            // A-Z to a-z, so only lowercase letters appear here. With
-            // use_std3 = false the LDH restriction is dropped (non-LDH ASCII
-            // that survived mapping is accepted).
-            if (opts.use_std3) {
-                const bool ldh = (cp >= 'a' && cp <= 'z') ||
-                                 (cp >= '0' && cp <= '9') || cp == kHyphen;
-                if (!ldh) return false;
-            }
-        } else if (from_alabel) {
-            // V6: a canonical A-label decodes only to valid/deviation code
-            // points. A mapped/ignored/disallowed code point here means the
-            // A-label was not in canonical form.
-            const uint32_t* map = nullptr;
-            uint32_t len = 0;
-            const IdnaStatus st = u16::idna_lookup(cp, map, len);
-            if (st != IdnaStatus::valid && st != IdnaStatus::deviation) {
-                return false;
-            }
-        }
-        // V4 (no U+002E inside a label) holds by construction: labels are the
-        // pieces between full stops.
-    }
-
-    return check_joiners(label);
-}
 
 // True for an ASCII-only label that carries the lowercase ACE prefix. Mapping
 // has already lowercased the input, so only "xn--" (never "XN--") reaches here.
@@ -289,138 +62,394 @@ bool resolve_label(const std::vector<uint32_t>& piece, LabelWork& work) {
     return true;
 }
 
-// Validate one resolved label and emit its canonical A-label form. `bidi_domain`
-// selects whether CheckBidi applies (contract section 3).
-bool finalize_label(const LabelWork& work, bool bidi_domain,
-                    const NormalizeOptions& opts, std::string& out) {
-    if (!validate_label(work.cps, work.from_alabel, opts)) return false;
-    if (bidi_domain && !check_bidi(work.cps)) return false;
+// The table-dependent half of the pipeline. Same rationale as Nfc<T> in
+// punycoder_nfc.cpp: one class template so the helpers stay unqualified at
+// their call sites, in the unnamed namespace because nothing outside this file
+// instantiates it.
+template <class T>
+struct Normalizer {
+    typedef typename T::BidiClass BidiClass;
+    typedef typename T::IdnaStatus IdnaStatus;
+    typedef typename T::JoiningType JoiningType;
 
-    if (work.from_alabel) {
-        // Require the U-label to re-encode to the identical A-label (RFC 5891
-        // §5.4 canonical form).
-        std::string reencoded;
-        try {
-            reencoded = punycode_encode_label_fallback(codepoints_to_utf8(work.cps));
-        } catch (const PunycoderError&) {  // # nocov
-            return false;  // # nocov (already-validated label cannot fail re-encode)
+    // UTS-46 mapping (contract step 3a) over T's table. Returns false if any
+    // code point is disallowed under the profile. With UseSTD3ASCIIRules = true
+    // the disallowed_std3_* statuses are treated as disallowed; non-LDH ASCII
+    // that the table marks `valid` is rejected later by the per-label STD3
+    // check. With use_std3 = false the table's
+    // disallowed_std3_valid / disallowed_std3_mapped entries are instead treated
+    // as valid / mapped (UTS #46 §5), so characters such as "_" survive mapping.
+    static bool map_codepoints(const std::vector<uint32_t>& in,
+                               std::vector<uint32_t>& out, bool use_std3) {
+        out.clear();
+        out.reserve(in.size());
+        for (uint32_t cp : in) {
+            const uint32_t* map = nullptr;
+            uint32_t len = 0;
+            switch (T::idna_lookup(cp, map, len)) {
+            case IdnaStatus::valid:
+            case IdnaStatus::deviation:  // non-transitional: keep ß, ς, ZWJ, ZWNJ
+                out.push_back(cp);
+                break;
+            case IdnaStatus::ignored:
+                break;  // dropped
+            case IdnaStatus::mapped:
+                for (uint32_t i = 0; i < len; ++i) out.push_back(map[i]);
+                break;
+            // # nocov start
+            // STD3 handling is behaviorally exercised by the use_std3 flag tests
+            // (test-normalize.R), but the coverage tool does not credit these
+            // switch arms with their early returns.
+            case IdnaStatus::disallowed_std3_valid:
+                if (use_std3) return false;
+                out.push_back(cp);
+                break;
+            case IdnaStatus::disallowed_std3_mapped:
+                if (use_std3) return false;
+                for (uint32_t i = 0; i < len; ++i) out.push_back(map[i]);
+                break;
+            // # nocov end
+            case IdnaStatus::disallowed:
+                return false;
+            }
         }
-        if (reencoded != work.alabel) return false;
-        out = work.alabel;
         return true;
     }
 
-    const std::string utf8 = codepoints_to_utf8(work.cps);
-    if (has_non_ascii(utf8)) {
-        try {
-            out = punycode_encode_label_fallback(utf8);
-        } catch (const PunycoderError&) {  // # nocov
-            return false;  // # nocov (already-validated label cannot fail encode)
+    // CheckJoiners (UTS-46 §4.1 / RFC 5892 Appendix A): every ZWNJ/ZWJ in the
+    // label must satisfy its contextual rule.
+    static bool check_joiners(const std::vector<uint32_t>& label) {
+        for (std::size_t i = 0; i < label.size(); ++i) {
+            const uint32_t cp = label[i];
+            if (cp != kZwnj && cp != kZwj) continue;
+
+            // Both rules: valid if the preceding character is a Virama.
+            const bool virama_before =
+                i > 0 && T::combining_class(label[i - 1]) == kVirama;
+
+            if (cp == kZwj) {  // RFC 5892 A.2
+                if (!virama_before) return false;
+                continue;
+            }
+
+            // ZWNJ, RFC 5892 A.1. Virama-before is sufficient; otherwise the
+            // context must match (L|D) T* ZWNJ T* (R|D).
+            if (virama_before) continue;
+
+            bool ok_left = false;
+            for (std::size_t j = i; j-- > 0;) {
+                const JoiningType jt = T::joining_type(label[j]);
+                if (jt == JoiningType::T) continue;
+                ok_left = jt == JoiningType::L || jt == JoiningType::D;
+                break;
+            }
+            bool ok_right = false;
+            for (std::size_t j = i + 1; j < label.size(); ++j) {
+                const JoiningType jt = T::joining_type(label[j]);
+                if (jt == JoiningType::T) continue;
+                ok_right = jt == JoiningType::R || jt == JoiningType::D;
+                break;
+            }
+            if (!ok_left || !ok_right) return false;
         }
-    } else {
-        out = utf8;  // ASCII label, already lowercased by mapping
+        return true;
     }
-    return true;
-}
+
+    // CheckBidi (RFC 5893, "Bidi Rule"). Applied to a label only when the whole
+    // domain is a Bidi domain (some label contains an R/AL/AN character).
+    static bool check_bidi(const std::vector<uint32_t>& label) {
+        if (label.empty()) return false;
+
+        // Rule 1: the first character fixes the label direction.
+        const BidiClass first = T::bidi_class(label.front());
+        bool rtl;
+        if (first == BidiClass::R || first == BidiClass::AL) {
+            rtl = true;
+        } else if (first == BidiClass::L) {
+            rtl = false;
+        } else {
+            return false;
+        }
+
+        bool has_en = false;
+        bool has_an = false;
+        std::size_t last_strong = 0;  // index of the last non-NSM character
+        for (std::size_t i = 0; i < label.size(); ++i) {
+            const BidiClass c = T::bidi_class(label[i]);
+            if (rtl) {
+                // Rule 2: allowed characters in an RTL label.
+                switch (c) {
+                case BidiClass::R:
+                case BidiClass::AL:
+                case BidiClass::AN:
+                case BidiClass::EN:
+                case BidiClass::ES:
+                case BidiClass::CS:
+                case BidiClass::ET:
+                case BidiClass::ON:
+                case BidiClass::BN:
+                case BidiClass::NSM:
+                    break;
+                default:
+                    return false;
+                }
+                if (c == BidiClass::EN) has_en = true;
+                if (c == BidiClass::AN) has_an = true;
+            } else {
+                // Rule 5: allowed characters in an LTR label.
+                switch (c) {
+                case BidiClass::L:
+                case BidiClass::EN:
+                case BidiClass::ES:
+                case BidiClass::CS:
+                case BidiClass::ET:
+                case BidiClass::ON:
+                case BidiClass::BN:
+                case BidiClass::NSM:
+                    break;
+                default:
+                    return false;
+                }
+            }
+            if (c != BidiClass::NSM) last_strong = i;
+        }
+
+        // Rule 4: an RTL label must not mix EN and AN.
+        if (rtl && has_en && has_an) return false;
+
+        // Rules 3 / 6: the last non-NSM character must be of the allowed ending
+        // type (trailing NSM characters are permitted).
+        const BidiClass end = T::bidi_class(label[last_strong]);
+        if (rtl) {
+            return end == BidiClass::R || end == BidiClass::AL ||
+                   end == BidiClass::EN || end == BidiClass::AN;
+        }
+        return end == BidiClass::L || end == BidiClass::EN;
+    }
+
+    // Validate one U-label against the profile (contract step 3d, UTS-46 §4.1
+    // criteria V1-V6, STD3, and CheckJoiners). `from_alabel` is true when the
+    // label is the Punycode-decoded payload of an xn-- label, which additionally
+    // requires every code point to have UTS-46 status valid/deviation (a mapped,
+    // ignored, or disallowed code point means the A-label was non-canonical).
+    // CheckBidi is whole-domain and is applied separately by the caller.
+    static bool validate_label(const std::vector<uint32_t>& label,
+                               bool from_alabel, const NormalizeOptions& opts) {
+        if (label.empty()) return false;  // empty label (leading/consecutive dots)
+
+        // V1: label must be in NFC.
+        //
+        // Only decoded A-label payloads need checking. host_normalize_one() applies
+        // NFC to the whole string (step 3b) *before* splitting on U+002E, and
+        // U+002E is a safe break: it is a starter (ccc 0) that appears in no
+        // canonical decomposition and in no composition pair, so canonical
+        // ordering never reorders across it and composition never spans it.
+        // NFC(a "." b) is therefore NFC(a) "." NFC(b), and a label taken straight
+        // from that split is already in NFC by construction. Re-normalizing it here
+        // allocated two vectors and walked the Unicode tables per label for a
+        // result that could not differ.
+        //
+        // A Punycode-decoded A-label payload never went through that pass, so for
+        // it this is the operative check.
+        if (from_alabel && nfc<T>(label) != label) return false;
+
+        // V5: must not begin with a combining mark.
+        if (T::is_combining_mark(label.front())) return false;
+
+        // V2/V3 (CheckHyphens): no "--" in the 3rd/4th positions, and no leading or
+        // trailing hyphen. Gated by check_hyphens; WHATWG beStrict=false drops it.
+        if (opts.check_hyphens) {
+            if (label.size() >= 4 && label[2] == kHyphen && label[3] == kHyphen) {
+                return false;
+            }
+            if (label.front() == kHyphen || label.back() == kHyphen) return false;
+        }
+
+        for (uint32_t cp : label) {
+            if (cp < 0x80) {
+                // STD3 (UseSTD3ASCIIRules): ASCII labels may contain only
+                // letters, digits, and hyphen. Mapping has already case-folded
+                // A-Z to a-z, so only lowercase letters appear here. With
+                // use_std3 = false the LDH restriction is dropped (non-LDH ASCII
+                // that survived mapping is accepted).
+                if (opts.use_std3) {
+                    const bool ldh = (cp >= 'a' && cp <= 'z') ||
+                                     (cp >= '0' && cp <= '9') || cp == kHyphen;
+                    if (!ldh) return false;
+                }
+            } else if (from_alabel) {
+                // V6: a canonical A-label decodes only to valid/deviation code
+                // points. A mapped/ignored/disallowed code point here means the
+                // A-label was not in canonical form.
+                const uint32_t* map = nullptr;
+                uint32_t len = 0;
+                const IdnaStatus st = T::idna_lookup(cp, map, len);
+                if (st != IdnaStatus::valid && st != IdnaStatus::deviation) {
+                    return false;
+                }
+            }
+            // V4 (no U+002E inside a label) holds by construction: labels are the
+            // pieces between full stops.
+        }
+
+        return check_joiners(label);
+    }
+
+    // Validate one resolved label and emit its canonical A-label form. `bidi_domain`
+    // selects whether CheckBidi applies (contract section 3).
+    static bool finalize_label(const LabelWork& work, bool bidi_domain,
+                               const NormalizeOptions& opts, std::string& out) {
+        if (!validate_label(work.cps, work.from_alabel, opts)) return false;
+        if (bidi_domain && !check_bidi(work.cps)) return false;
+
+        if (work.from_alabel) {
+            // Require the U-label to re-encode to the identical A-label (RFC 5891
+            // §5.4 canonical form).
+            std::string reencoded;
+            try {
+                reencoded = punycode_encode_label_fallback(codepoints_to_utf8(work.cps));
+            } catch (const PunycoderError&) {  // # nocov
+                return false;  // # nocov (already-validated label cannot fail re-encode)
+            }
+            if (reencoded != work.alabel) return false;
+            out = work.alabel;
+            return true;
+        }
+
+        const std::string utf8 = codepoints_to_utf8(work.cps);
+        if (has_non_ascii(utf8)) {
+            try {
+                out = punycode_encode_label_fallback(utf8);
+            } catch (const PunycoderError&) {  // # nocov
+                return false;  // # nocov (already-validated label cannot fail encode)
+            }
+        } else {
+            out = utf8;  // ASCII label, already lowercased by mapping
+        }
+        return true;
+    }
+
+    static HostNormalizeResult run(const std::string& input,
+                                   const NormalizeOptions& opts) {
+        // Step 1: reject ill-formed / non-UTF-8 input.
+        std::vector<uint32_t> cps;
+        try {
+            cps = utf8_to_codepoints(input);
+        } catch (const PunycoderError&) {
+            return invalid();
+        }
+
+        // Step 2: terminal-dot capture. Strip exactly one trailing root dot;
+        // reject "." alone, two-or-more trailing dots, and empty remainder.
+        bool had_root = false;
+        if (!cps.empty() && cps.back() == kFullStop) {
+            if (cps.size() == 1) return invalid();                   // "." only
+            if (cps[cps.size() - 2] == kFullStop) return invalid();  // ">=2 dots"
+            had_root = true;
+            cps.pop_back();
+        }
+        if (cps.empty()) return invalid();
+
+        // Step 3a: UTS-46 map. Step 3b: NFC.
+        std::vector<uint32_t> mapped;
+        if (!map_codepoints(cps, mapped, opts.use_std3)) return invalid();
+        const std::vector<uint32_t> normalized = nfc<T>(mapped);
+
+        // Step 3c: split into labels on U+002E and resolve each to its U-label form
+        // (decoding xn-- labels) so CheckBidi can examine the whole domain.
+        // The label count is exactly the separator count plus one, so the vector can
+        // be sized once. Growing it instead move-constructs a vector and a string
+        // per LabelWork at every reallocation.
+        std::vector<LabelWork> labels;
+        labels.reserve(static_cast<std::size_t>(
+            std::count(normalized.begin(), normalized.end(), kFullStop) + 1
+        ));
+        std::vector<uint32_t> piece;
+        piece.reserve(normalized.size());
+        for (std::size_t i = 0; i <= normalized.size(); ++i) {
+            if (i == normalized.size() || normalized[i] == kFullStop) {
+                LabelWork work;
+                if (!resolve_label(piece, work)) return invalid();
+                labels.push_back(std::move(work));
+                piece.clear();
+            } else {
+                piece.push_back(normalized[i]);
+            }
+        }
+
+        // CheckBidi prerequisite: the domain is a Bidi domain if any label contains
+        // a character with Bidi property R, AL, or AN (RFC 5893 §1.4).
+        bool bidi_domain = false;
+        for (const LabelWork& work : labels) {
+            for (uint32_t cp : work.cps) {
+                const BidiClass c = T::bidi_class(cp);
+                if (c == BidiClass::R || c == BidiClass::AL || c == BidiClass::AN) {
+                    bidi_domain = true;
+                    break;
+                }
+            }
+            if (bidi_domain) break;
+        }
+
+        // Steps 3d + 4: validate each label and build its canonical A-label.
+        std::vector<std::string> out_labels;
+        out_labels.reserve(labels.size());
+        for (const LabelWork& work : labels) {
+            std::string encoded;
+            if (!finalize_label(work, bidi_domain, opts, encoded)) return invalid();
+            out_labels.push_back(std::move(encoded));
+        }
+
+        // Step 5: VerifyDnsLength. Each A-label 1-63 octets; total joined (the
+        // labels plus the separating dots, excluding the optional root dot) <= 253.
+        // Empty labels are a structural error (rejected in validate_label above)
+        // and stay rejected regardless of the flag; only the length *limits* are
+        // gated by verify_dns_length.
+        std::size_t total = out_labels.empty() ? 0 : out_labels.size() - 1;
+        for (const std::string& l : out_labels) {
+            if (l.empty()) return invalid();
+            if (opts.verify_dns_length && l.size() > kMaxLabelOctets) {
+                return invalid();
+            }
+            total += l.size();
+        }
+        if (opts.verify_dns_length && total > kMaxHostOctets) return invalid();
+
+        // Step 6: reassemble with dots; re-append the single root dot if present.
+        std::string result;
+        result.reserve(total + (had_root ? 1 : 0));
+        for (std::size_t i = 0; i < out_labels.size(); ++i) {
+            if (i != 0) result.push_back('.');
+            result += out_labels[i];
+        }
+        if (had_root) result.push_back('.');
+
+        return {true, result};
+    }
+};
 
 }  // namespace
 
+// The single runtime hop in the whole design: one branch per HOST, never per
+// code point. Everything past it is bound at compile time to one table set,
+// which is what keeps ADR-013 and ADR-014 intact -- composes_as_second() and
+// nfc_inert() still inline to a compare inside each instantiation.
+//
+// No `default:` label, deliberately. The switch is exhaustive over the enum, so
+// adding a version to PUNYCODER_UNICODE_VERSIONS without instantiating the
+// pipeline for it is a -Wswitch warning here and a link error in
+// punycoder_nfc.cpp -- not a silent fall-through to the default tables. The
+// trailing return is unreachable and exists only for -Wreturn-type.
 HostNormalizeResult host_normalize_one(const std::string& input,
                                        const NormalizeOptions& opts) {
-    // Step 1: reject ill-formed / non-UTF-8 input.
-    std::vector<uint32_t> cps;
-    try {
-        cps = utf8_to_codepoints(input);
-    } catch (const PunycoderError&) {
-        return invalid();
+    switch (opts.unicode_version) {
+#define PUNYCODER_NORMALIZE_CASE(name, str, facade) \
+    case UnicodeVersion::name:                      \
+        return Normalizer<facade>::run(input, opts);
+        PUNYCODER_UNICODE_VERSIONS(PUNYCODER_NORMALIZE_CASE)
+#undef PUNYCODER_NORMALIZE_CASE
     }
-
-    // Step 2: terminal-dot capture. Strip exactly one trailing root dot;
-    // reject "." alone, two-or-more trailing dots, and empty remainder.
-    bool had_root = false;
-    if (!cps.empty() && cps.back() == kFullStop) {
-        if (cps.size() == 1) return invalid();                   // "." only
-        if (cps[cps.size() - 2] == kFullStop) return invalid();  // ">=2 dots"
-        had_root = true;
-        cps.pop_back();
-    }
-    if (cps.empty()) return invalid();
-
-    // Step 3a: UTS-46 map. Step 3b: NFC.
-    std::vector<uint32_t> mapped;
-    if (!map_codepoints(cps, mapped, opts.use_std3)) return invalid();
-    const std::vector<uint32_t> normalized = nfc(mapped);
-
-    // Step 3c: split into labels on U+002E and resolve each to its U-label form
-    // (decoding xn-- labels) so CheckBidi can examine the whole domain.
-    // The label count is exactly the separator count plus one, so the vector can
-    // be sized once. Growing it instead move-constructs a vector and a string
-    // per LabelWork at every reallocation.
-    std::vector<LabelWork> labels;
-    labels.reserve(static_cast<std::size_t>(
-        std::count(normalized.begin(), normalized.end(), kFullStop) + 1
-    ));
-    std::vector<uint32_t> piece;
-    piece.reserve(normalized.size());
-    for (std::size_t i = 0; i <= normalized.size(); ++i) {
-        if (i == normalized.size() || normalized[i] == kFullStop) {
-            LabelWork work;
-            if (!resolve_label(piece, work)) return invalid();
-            labels.push_back(std::move(work));
-            piece.clear();
-        } else {
-            piece.push_back(normalized[i]);
-        }
-    }
-
-    // CheckBidi prerequisite: the domain is a Bidi domain if any label contains
-    // a character with Bidi property R, AL, or AN (RFC 5893 §1.4).
-    bool bidi_domain = false;
-    for (const LabelWork& work : labels) {
-        for (uint32_t cp : work.cps) {
-            const BidiClass c = u16::bidi_class(cp);
-            if (c == BidiClass::R || c == BidiClass::AL || c == BidiClass::AN) {
-                bidi_domain = true;
-                break;
-            }
-        }
-        if (bidi_domain) break;
-    }
-
-    // Steps 3d + 4: validate each label and build its canonical A-label.
-    std::vector<std::string> out_labels;
-    out_labels.reserve(labels.size());
-    for (const LabelWork& work : labels) {
-        std::string encoded;
-        if (!finalize_label(work, bidi_domain, opts, encoded)) return invalid();
-        out_labels.push_back(std::move(encoded));
-    }
-
-    // Step 5: VerifyDnsLength. Each A-label 1-63 octets; total joined (the
-    // labels plus the separating dots, excluding the optional root dot) <= 253.
-    // Empty labels are a structural error (rejected in validate_label above)
-    // and stay rejected regardless of the flag; only the length *limits* are
-    // gated by verify_dns_length.
-    std::size_t total = out_labels.empty() ? 0 : out_labels.size() - 1;
-    for (const std::string& l : out_labels) {
-        if (l.empty()) return invalid();
-        if (opts.verify_dns_length && l.size() > kMaxLabelOctets) {
-            return invalid();
-        }
-        total += l.size();
-    }
-    if (opts.verify_dns_length && total > kMaxHostOctets) return invalid();
-
-    // Step 6: reassemble with dots; re-append the single root dot if present.
-    std::string result;
-    result.reserve(total + (had_root ? 1 : 0));
-    for (std::size_t i = 0; i < out_labels.size(); ++i) {
-        if (i != 0) result.push_back('.');
-        result += out_labels[i];
-    }
-    if (had_root) result.push_back('.');
-
-    return {true, result};
+    return invalid();  // # nocov (unreachable; satisfies -Wreturn-type)
 }
 
 }  // namespace punycoder
