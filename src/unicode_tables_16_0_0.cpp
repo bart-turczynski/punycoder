@@ -2,8 +2,6 @@
 // Unicode 16.0.0.
 #include "unicode_tables_16_0_0.h"
 
-#include <algorithm>
-
 namespace punycoder {
 namespace u16 {
 
@@ -11,8 +9,45 @@ const char *const UNICODE_VERSION = "16.0.0";
 
 namespace {
 
+// One binary search over a sorted, non-overlapping [lo, hi] range table,
+// shared by every range-keyed property below. The accessors differ only in
+// the table searched and the value an unlisted code point falls back to.
+template <typename Range>
+inline const Range *range_lookup(const Range *ranges, size_t n,
+                                 uint32_t cp) {
+  size_t lo = 0, hi = n;
+  while (lo < hi) {
+    const size_t mid = (lo + hi) / 2;
+    if (cp < ranges[mid].lo) hi = mid;
+    else if (cp > ranges[mid].hi) lo = mid + 1;
+    else return &ranges[mid];
+  }
+  return nullptr;
+}
+
+// The same search over a table keyed by a single code point rather than a
+// span (canonical decomposition: adjacent code points share nothing, so
+// there is no range to compress).
+template <typename Entry>
+inline const Entry *key_lookup(const Entry *entries, size_t n,
+                               uint32_t cp) {
+  size_t lo = 0, hi = n;
+  while (lo < hi) {
+    const size_t mid = (lo + hi) / 2;
+    if (cp < entries[mid].cp) hi = mid;
+    else if (cp > entries[mid].cp) lo = mid + 1;
+    else return &entries[mid];
+  }
+  return nullptr;
+}
+
+// Where a table lists nothing below U+0080 it carries the derived bounds
+// of its own data instead of an ASCII index: a code point outside
+// [FIRST, LAST] is in no range, so returning the default there is exactly
+// what the search would have concluded -- just without the probes.
+
 // --- Canonical combining class ranges (sorted by lo) ---
-struct CccRange { uint32_t lo, hi; uint8_t ccc; };
+struct CccRange { uint32_t lo, hi; uint8_t value; };
 const CccRange CCC_RANGES[] = {
   {0x300, 0x314, 230}, {0x315, 0x315, 232}, {0x316, 0x319, 220}, {0x31A, 0x31A, 232},
   {0x31B, 0x31B, 216}, {0x31C, 0x320, 220}, {0x321, 0x322, 202}, {0x323, 0x326, 220},
@@ -115,6 +150,7 @@ const CccRange CCC_RANGES[] = {
   {0x1E94A, 0x1E94A, 7}
 };
 const size_t CCC_N = 393;
+const uint32_t CCC_FIRST = 0x300, CCC_LAST = 0x1E94A;
 
 // --- Combining-mark ranges (Mn/Mc/Me, sorted by lo) ---
 struct MarkRange { uint32_t lo, hi; };
@@ -175,6 +211,7 @@ const MarkRange MARK_RANGES[] = {
   {0x1E8D0, 0x1E8D6}, {0x1E944, 0x1E94A}, {0xE0100, 0xE01EF}
 };
 const size_t MARK_N = 321;
+const uint32_t MARK_FIRST = 0x300, MARK_LAST = 0xE01EF;
 
 // --- Canonical decomposition (index sorted by cp + flat data) ---
 struct DecompEntry { uint32_t cp; uint32_t off; uint32_t len; };
@@ -702,6 +739,7 @@ const DecompEntry DECOMP_INDEX[] = {
   {0x2FA1D, 3449, 1}
 };
 const size_t DECOMP_N = 2081;
+const uint32_t DECOMP_FIRST = 0xC0, DECOMP_LAST = 0x2FA1D;
 const uint32_t DECOMP_DATA[] = {
   0x41, 0x300, 0x41, 0x301, 0x41, 0x302, 0x41, 0x303,
   0x41, 0x308, 0x41, 0x30A, 0x43, 0x327, 0x45, 0x300,
@@ -1463,6 +1501,10 @@ const CompEntry COMP_TABLE[] = {
   {0x16D69, 0x16D67, 0x16D6A}
 };
 const size_t COMP_N = 961;
+// Bounds of the SECOND element only: b is always a combining character,
+// while a can be ASCII (the smallest is U+003C), so only a b-bound keeps
+// ASCII text out of the pair search.
+const uint32_t COMP_B_FIRST = 0x300, COMP_B_LAST = 0x16D67;
 
 // --- UTS-46 mapping table (ranges sorted by lo + flat mapping data) ---
 struct IdnaRange { uint32_t lo, hi; uint8_t status; uint32_t off, len; };
@@ -5524,6 +5566,22 @@ const uint32_t IDNA_MAP_DATA[] = {
   0x9EBB, 0x4D56, 0x9EF9, 0x9EFE, 0x9F05, 0x9F0F, 0x9F16, 0x9F3B,
   0x2A600
 };
+// This table covers ASCII, so no bounds test can skip it. Index of the
+// covering range for each ASCII code point instead -- the accessor then
+// reads the same IdnaRange the search would have found.
+const uint16_t IDNA_ASCII[128] = {
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2,
+  3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4,
+  4, 4, 4, 4, 4, 5, 6, 7, 8, 9, 10, 11,
+  12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+  24, 25, 26, 27, 28, 29, 30, 31, 31, 31, 31, 31,
+  31, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
+  32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
+  32, 32, 32, 33, 33, 33, 33, 33
+};
 
 // --- Bidi_Class ranges (RFC 5893, sorted by lo) ---
 struct BidiRange { uint32_t lo, hi; uint8_t value; };
@@ -5927,6 +5985,17 @@ const BidiRange BIDI_RANGES[] = {
   {0xFFFFE, 0xFFFFF, 9}, {0x100000, 0x10FFFD, 0}, {0x10FFFE, 0x10FFFF, 9}
 };
 const size_t BIDI_N = 1587;
+// Bidi_Class covers ASCII too; its values are small enough to inline.
+const uint8_t BIDI_ASCII[128] = {
+  9, 9, 9, 9, 9, 9, 9, 9, 9, 11, 10, 11, 12, 10, 9, 9,
+  9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 10, 10, 10, 11,
+  12, 13, 13, 6, 6, 6, 13, 13, 13, 13, 13, 5, 7, 5, 7, 7,
+  4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 7, 13, 13, 13, 13, 13,
+  13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 13, 13, 13, 13,
+  13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 13, 13, 13, 9
+};
 
 // --- Joining_Type ranges (IDNA2008 ContextJ, sorted by lo) ---
 struct JoiningRange { uint32_t lo, hi; uint8_t value; };
@@ -6063,47 +6132,38 @@ const JoiningRange JOINING_RANGES[] = {
   {0xE0001, 0xE0001, 5}, {0xE0020, 0xE007F, 5}, {0xE0100, 0xE01EF, 5}
 };
 const size_t JOINING_N = 519;
+const uint32_t JOINING_FIRST = 0xAD, JOINING_LAST = 0xE01EF;
 
 }  // namespace
 
 uint8_t combining_class(uint32_t cp) {
-  size_t lo = 0, hi = CCC_N;
-  while (lo < hi) {
-    size_t mid = (lo + hi) / 2;
-    if (cp < CCC_RANGES[mid].lo) hi = mid;
-    else if (cp > CCC_RANGES[mid].hi) lo = mid + 1;
-    else return CCC_RANGES[mid].ccc;
-  }
-  return 0;
+  if (cp < CCC_FIRST || cp > CCC_LAST) return 0;
+  const CccRange *r = range_lookup(CCC_RANGES, CCC_N, cp);
+  return r ? r->value : 0;
 }
 
 bool is_combining_mark(uint32_t cp) {
-  size_t lo = 0, hi = MARK_N;
-  while (lo < hi) {
-    size_t mid = (lo + hi) / 2;
-    if (cp < MARK_RANGES[mid].lo) hi = mid;
-    else if (cp > MARK_RANGES[mid].hi) lo = mid + 1;
-    else return true;
-  }
-  return false;
+  if (cp < MARK_FIRST || cp > MARK_LAST) return false;
+  return range_lookup(MARK_RANGES, MARK_N, cp) != nullptr;
 }
 
 const uint32_t *canonical_decomposition(uint32_t cp, uint32_t &len) {
-  size_t lo = 0, hi = DECOMP_N;
-  while (lo < hi) {
-    size_t mid = (lo + hi) / 2;
-    if (cp < DECOMP_INDEX[mid].cp) hi = mid;
-    else if (cp > DECOMP_INDEX[mid].cp) lo = mid + 1;
-    else { len = DECOMP_INDEX[mid].len; return &DECOMP_DATA[DECOMP_INDEX[mid].off]; }
+  const DecompEntry *e = (cp < DECOMP_FIRST || cp > DECOMP_LAST)
+                             ? nullptr
+                             : key_lookup(DECOMP_INDEX, DECOMP_N, cp);
+  if (e == nullptr) {
+    len = 0;
+    return nullptr;
   }
-  len = 0;
-  return nullptr;
+  len = e->len;
+  return &DECOMP_DATA[e->off];
 }
 
 uint32_t canonical_compose(uint32_t a, uint32_t b) {
+  if (b < COMP_B_FIRST || b > COMP_B_LAST) return 0;
   size_t lo = 0, hi = COMP_N;
   while (lo < hi) {
-    size_t mid = (lo + hi) / 2;
+    const size_t mid = (lo + hi) / 2;
     const CompEntry &e = COMP_TABLE[mid];
     if (a < e.a || (a == e.a && b < e.b)) hi = mid;
     else if (a > e.a || (a == e.a && b > e.b)) lo = mid + 1;
@@ -6113,43 +6173,29 @@ uint32_t canonical_compose(uint32_t a, uint32_t b) {
 }
 
 IdnaStatus idna_lookup(uint32_t cp, const uint32_t *&map, uint32_t &len) {
-  size_t lo = 0, hi = IDNA_N;
-  while (lo < hi) {
-    size_t mid = (lo + hi) / 2;
-    const IdnaRange &r = IDNA_RANGES[mid];
-    if (cp < r.lo) hi = mid;
-    else if (cp > r.hi) lo = mid + 1;
-    else {
-      len = r.len;
-      map = r.len ? &IDNA_MAP_DATA[r.off] : nullptr;
-      return static_cast<IdnaStatus>(r.status);
-    }
+  const IdnaRange *r = cp < 0x80
+                           ? &IDNA_RANGES[IDNA_ASCII[cp]]
+                           : range_lookup(IDNA_RANGES, IDNA_N, cp);
+  if (r == nullptr) {
+    map = nullptr;
+    len = 0;
+    return IdnaStatus::disallowed;
   }
-  map = nullptr;
-  len = 0;
-  return IdnaStatus::disallowed;
+  len = r->len;
+  map = r->len ? &IDNA_MAP_DATA[r->off] : nullptr;
+  return static_cast<IdnaStatus>(r->status);
 }
 
 BidiClass bidi_class(uint32_t cp) {
-  size_t lo = 0, hi = BIDI_N;
-  while (lo < hi) {
-    size_t mid = (lo + hi) / 2;
-    if (cp < BIDI_RANGES[mid].lo) hi = mid;
-    else if (cp > BIDI_RANGES[mid].hi) lo = mid + 1;
-    else return static_cast<BidiClass>(BIDI_RANGES[mid].value);
-  }
-  return BidiClass::L;
+  if (cp < 0x80) return static_cast<BidiClass>(BIDI_ASCII[cp]);
+  const BidiRange *r = range_lookup(BIDI_RANGES, BIDI_N, cp);
+  return r ? static_cast<BidiClass>(r->value) : BidiClass::L;
 }
 
 JoiningType joining_type(uint32_t cp) {
-  size_t lo = 0, hi = JOINING_N;
-  while (lo < hi) {
-    size_t mid = (lo + hi) / 2;
-    if (cp < JOINING_RANGES[mid].lo) hi = mid;
-    else if (cp > JOINING_RANGES[mid].hi) lo = mid + 1;
-    else return static_cast<JoiningType>(JOINING_RANGES[mid].value);
-  }
-  return JoiningType::U;
+  if (cp < JOINING_FIRST || cp > JOINING_LAST) return JoiningType::U;
+  const JoiningRange *r = range_lookup(JOINING_RANGES, JOINING_N, cp);
+  return r ? static_cast<JoiningType>(r->value) : JoiningType::U;
 }
 
 }  // namespace u16

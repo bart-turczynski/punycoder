@@ -57,6 +57,19 @@
 
 ## Performance
 
+* `host_normalize()` is substantially faster again --- **1.75x** on all-ASCII
+  hosts, 1.36x on a mixed corpus at 20% non-ASCII, and 1.12x even when every
+  host is non-ASCII. Lookups into the vendored Unicode tables were 56% of
+  process time: seven near-identical binary searches, ~14 branch-mispredicting
+  probes per code point for the 9,185-range UTS #46 table alone. They now share
+  one search, and each answers ASCII --- the dominant input --- without
+  searching at all, via a 128-entry direct index for the two tables that cover
+  ASCII and a bounds test for the rest. Every boundary is derived in
+  `data-raw/generate_unicode_tables.R` from the UCD data itself, so it cannot
+  drift from the table it guards and a Unicode version bump moves it
+  automatically. Output is unchanged on every input in the UTS #46 conformance
+  corpus under all supported flag combinations (PUNY-zgaqusnu).
+
 * `host_normalize()` is roughly 25-30% faster. Label validation no longer
   re-runs Unicode NFC on labels taken straight from the label split: NFC is
   applied to the whole host before splitting, and U+002E is a safe break point
