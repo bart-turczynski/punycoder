@@ -16,11 +16,15 @@ Contact: bartek+punycoder@turczynski.pl
 
 ## Unicode Character Database
 
-- The canonical-host normalization tables in `src/unicode_tables_16_0_0.cpp`
-  are mechanically derived from the Unicode Character Database (UCD), version
-  16.0.0, by `data-raw/generate_unicode_tables.R` (UnicodeData.txt,
-  DerivedNormalizationProps.txt, and IdnaMappingTable.txt for UTS #46).
-  - Homepage: https://www.unicode.org/Public/16.0.0/
+- The canonical-host normalization tables in `src/unicode_tables_<version>.cpp`
+  are mechanically derived from the Unicode Character Database (UCD) by
+  `data-raw/generate_unicode_tables.R` (UnicodeData.txt,
+  DerivedNormalizationProps.txt, and IdnaMappingTable.txt for UTS #46). One
+  self-contained table unit is generated and compiled in per shipped version.
+  - `src/unicode_tables_16_0_0.cpp`, from UCD version 16.0.0
+    - Homepage: https://www.unicode.org/Public/16.0.0/
+  - `src/unicode_tables_17_0_0.cpp`, from UCD version 17.0.0
+    - Homepage: https://www.unicode.org/Public/17.0.0/
   - License: Unicode License v3 (https://www.unicode.org/license.txt)
 - `inst/testdata/IdnaTestV2-<version>.txt` are the official UTS #46 conformance
   corpora, one per shipped Unicode version, vendored verbatim from the Unicode
