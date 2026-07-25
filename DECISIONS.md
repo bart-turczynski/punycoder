@@ -472,3 +472,84 @@ The two halves of the check are separately guarded by tests that were confirmed
 to fail when the half they guard is removed. The order test needs marks that are
 `NFC_QC=Yes` — with `Maybe` marks the property test fires first and the order
 test is never reached, so the obvious test case silently guards nothing.
+
+## ADR-015 — Several Unicode table sets ship at once, and the version is bound at compile time
+
+**Status:** Accepted
+
+**Context.** The package pins one Unicode version, and every table access named
+it: `u16::combining_class`, `u16::Tables`, `u16::BidiClass`. Supporting a second
+version meant giving the pipeline some way to reach a *chosen* table set. The
+obvious mechanism — a struct of function pointers, or a virtual accessor
+interface, selected once and passed down — would have quietly undone the two
+preceding ADRs. `composes_as_second()` and `nfc_inert()` are `inline` in the
+generated header and applied *at the call site* precisely because the call was
+the whole cost: a trace showed **87%** of attempted compositions are answered by
+one of those bounds before any table is read. A function pointer cannot be
+inlined into a compare, so a runtime accessor would have paid ADR-013 and
+ADR-014 back in full, on every code point, forever.
+
+**Decision.** Dispatch on the version **once per host**, at the entry to
+`host_normalize_one()`, and bind everything past that branch at compile time.
+
+- Each generated table unit emits a `struct Tables` **facade** — typedefs for
+  its four enums, `inline` forwarders for its ten accessors. It is the only
+  thing the pipeline names, so the pipeline never spells a version.
+- `nfc()` became `nfc<T>()` and the table-dependent normalize helpers became
+  `Normalizer<T>`, explicitly instantiated once per shipped version. Each
+  instantiation compiles against one table set, so the inline bounds survive
+  intact — verified in the disassembly, not assumed.
+- `PUNYCODER_UNICODE_VERSIONS(X)` in `src/punycoder_unicode_version.h` is the
+  single source of truth: the enum, the version strings, every explicit
+  instantiation, and the dispatch switch are all expansions of that one list.
+  The switch has **no `default:` label**, so adding a row without instantiating
+  the pipeline for it is a `-Wswitch` warning and a link error rather than a
+  silent fall-through to the wrong tables.
+- The facade column stays unexpanded tokens in that header, which is therefore a
+  leaf that includes no table header. Only the two units that instantiate the
+  pipeline expand it, via `src/unicode_tables_registry.h`. That is what keeps a
+  version bump from recompiling `exports.cpp`.
+- Enums stay **per version**. `u16::BidiClass` and `u17::BidiClass` are
+  unrelated types and no table enum may appear in `punycoder_core.h`,
+  `punycoder_normalize.h`, or any struct crossing the dispatch boundary.
+- Adding a version is two adjacent hand edits — one `#include`, one `X(...)`
+  row. `#include` cannot be macro-generated portably, so those stay manual; both
+  halves fail loudly if you do only one.
+
+**Consequences.** The mechanism is free. Clean `-O2` builds, min of 15 × 3 runs
+at n=400,000, A/B/A in both build orders: two table sets give
+0.194–0.199 / 0.195–0.202 / 0.198–0.199 s (ascii/unicode/mixed) against
+0.190–0.191 / 0.198–0.199 / 0.198–0.200 for one. Unicode and mixed are flat;
+ascii sits within ~2% at the min, and mixed — 70% ASCII — shows nothing at all,
+so that residue is code layout rather than a per-call cost. The disassembly is
+the real check and it is unchanged: `nfc_inert()` is still `cmp w22, #0x300`
+inline in `is_nfc()` and `composes_as_second()` still the inline
+`sub w9, w1, #0x300` range test in `compose_pair()`, once per instantiation.
+
+What it costs is size, and the cost is per shipped version, not one-off: the
+second table set takes the installed shared object 463,216 → 715,008 bytes and
+`__text` 82,132 → 89,876 (the duplicated pipeline). Generation and registration
+therefore land in **one commit** — an unreferenced table object still links in,
+because R builds pass no `--gc-sections`, so a split would pay the ~250 KB for
+nothing. How many versions to ship, and which is default, is a policy question
+deliberately left out of this ADR.
+
+Trie shapes legitimately differ between versions and must not be assumed
+shared: the UTS-46 mapping trie is block 64 with a `uint16_t` stage 1 at 16.0.0
+(77.9 KB) and block 128 with a `uint8_t` stage 1 at 17.0.0 (70.8 KB). Every one
+of those constants is derived by the generator (ADR-011, ADR-012), so this
+needed no edit to the emitted C++.
+
+Two failure modes are worth naming because neither announces itself. A facade
+forwarder body must stay **fully qualified**: inside the struct the member name
+hides the namespace-scope one, so an unqualified body is infinite recursion, and
+`-Winfinite-recursion` is GCC 12+ and misses the indirect case. And `nfc<T>`
+must have **external linkage** — an explicit instantiation of an
+internal-linkage template produces a symbol no other translation unit can name.
+The test that each table set reports its own registry version through the facade
+covers the first of those; it stack-overflows immediately if the forwarders ever
+lose their qualification.
+
+Correctness gate, run against a one-version build of the same tree: element-wise
+`host_normalize` over 7,891 conformance inputs × 8 flag combinations, **0
+differences in 63,128 comparisons**.

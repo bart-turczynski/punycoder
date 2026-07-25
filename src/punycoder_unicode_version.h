@@ -21,8 +21,9 @@
 namespace punycoder {
 
 //        X(enumerator, version string, facade type)
-#define PUNYCODER_UNICODE_VERSIONS(X)               \
-    X(v16_0_0, "16.0.0", ::punycoder::u16::Tables)
+#define PUNYCODER_UNICODE_VERSIONS(X)                \
+    X(v16_0_0, "16.0.0", ::punycoder::u16::Tables)   \
+    X(v17_0_0, "17.0.0", ::punycoder::u17::Tables)
 
 enum class UnicodeVersion {
 #define PUNYCODER_UV_ENUMERATOR(name, str, facade) name,

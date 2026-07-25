@@ -452,4 +452,22 @@ HostNormalizeResult host_normalize_one(const std::string& input,
     return invalid();  // # nocov (unreachable; satisfies -Wreturn-type)
 }
 
+// The version string each table unit reports about ITSELF, read through the
+// facade rather than from the registry. Two things that could silently drift
+// apart are only equal if the wiring is right: pair v with the wrong facade in
+// PUNYCODER_UNICODE_VERSIONS and this disagrees with
+// unicode_version_string(v). It lives in this file, not exports.cpp, because
+// resolving the facade column needs the table headers and exports.cpp must
+// stay free of them -- adding a table set does not recompile the Rcpp boundary.
+const char* table_reported_version(UnicodeVersion v) noexcept {
+    switch (v) {
+#define PUNYCODER_TABLE_VERSION_CASE(name, str, facade) \
+    case UnicodeVersion::name:                          \
+        return facade::version();
+        PUNYCODER_UNICODE_VERSIONS(PUNYCODER_TABLE_VERSION_CASE)
+#undef PUNYCODER_TABLE_VERSION_CASE
+    }
+    return "";  // # nocov (unreachable; satisfies -Wreturn-type)
+}
+
 }  // namespace punycoder

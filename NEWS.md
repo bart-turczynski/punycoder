@@ -153,6 +153,16 @@ Maintenance release over the 1.2.0 development tag; the public API is unchanged.
 
 * Added OSV and OSS Index dependency vulnerability audits, a `goodpractice`-aligned `.lintr`, pre-commit and community-health configuration, and Dependabot for GitHub Actions; no package code or user-facing change (#57, #58, #61, #63).
 
+* More than one generated Unicode table set can now be compiled into the
+  package at once, and Unicode 17.0.0 ships alongside 16.0.0. The version is
+  bound at **compile** time --- one branch per host at the entry to the
+  normalizer, never per code point --- so the inline table bounds the
+  normalization pipeline depends on are untouched; benchmarks are flat and the
+  conformance output is byte-identical. Normalization behavior is **unchanged**:
+  the pinned profile still uses Unicode 16.0.0, and reaching another table set
+  is possible only through internal test hooks. The second table set does grow
+  the installed shared object by roughly 250 KB (#84, #85, #87; ADR-015).
+
 # punycoder 1.2.0
 
 ## Breaking changes

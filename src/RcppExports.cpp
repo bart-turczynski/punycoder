@@ -93,3 +93,28 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// unicode_versions_cpp
+Rcpp::List unicode_versions_cpp();
+RcppExport SEXP _punycoder_unicode_versions_cpp() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(unicode_versions_cpp());
+    return rcpp_result_gen;
+END_RCPP
+}
+// host_normalize_version_cpp
+Rcpp::CharacterVector host_normalize_version_cpp(Rcpp::CharacterVector x, std::string version, bool check_hyphens, bool use_std3, bool verify_dns_length);
+RcppExport SEXP _punycoder_host_normalize_version_cpp(SEXP xSEXP, SEXP versionSEXP, SEXP check_hyphensSEXP, SEXP use_std3SEXP, SEXP verify_dns_lengthSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< std::string >::type version(versionSEXP);
+    Rcpp::traits::input_parameter< bool >::type check_hyphens(check_hyphensSEXP);
+    Rcpp::traits::input_parameter< bool >::type use_std3(use_std3SEXP);
+    Rcpp::traits::input_parameter< bool >::type verify_dns_length(verify_dns_lengthSEXP);
+    rcpp_result_gen = Rcpp::wrap(host_normalize_version_cpp(x, version, check_hyphens, use_std3, verify_dns_length));
+    return rcpp_result_gen;
+END_RCPP
+}

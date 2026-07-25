@@ -52,6 +52,12 @@ struct NormalizeOptions {
 HostNormalizeResult host_normalize_one(const std::string& input,
                                        const NormalizeOptions& opts);
 
+// The version string the table set for `v` reports about itself. Equal to
+// unicode_version_string(v) for every shipped version; a mismatch means an
+// X(...) row names the wrong facade. Exists so that check can be made from a
+// translation unit that has no table headers.
+const char* table_reported_version(UnicodeVersion v) noexcept;
+
 }  // namespace punycoder
 
 #endif  // PUNYCODER_NORMALIZE_H
