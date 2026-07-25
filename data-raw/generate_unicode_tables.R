@@ -27,8 +27,8 @@ unicode_version <- "16.0.0"
 # the same derived-not-hand-written spirit as ADR-011/ADR-012: a version bump is
 # this line and nothing else, and two versions can be emitted side by side
 # without colliding.
-version_tag <- gsub(".", "_", unicode_version, fixed = TRUE)   # 16.0.0 -> 16_0_0
-version_major <- sub("\\..*$", "", unicode_version)            # 16.0.0 -> 16
+version_tag <- gsub(".", "_", unicode_version, fixed = TRUE)  # 16.0.0 -> 16_0_0
+version_major <- sub("\\..*$", "", unicode_version)           # 16.0.0 -> 16
 table_stem <- sprintf("unicode_tables_%s", version_tag)
 table_ns <- sprintf("u%s", version_major)
 guard <- sprintf("PUNYCODER_%s_H", toupper(table_stem))
@@ -66,8 +66,7 @@ fetch <- function(name, base) {
       unlink(dest)
     }
     if (!ok) {
-      stop(sprintf("could not fetch %s from any of: %s",
-                   name, paste(base, collapse = ", ")))
+      stop(sprintf("could not fetch %s from any of: %s", name, toString(base)))
     }
   }
   readLines(dest, encoding = "UTF-8", warn = FALSE)
