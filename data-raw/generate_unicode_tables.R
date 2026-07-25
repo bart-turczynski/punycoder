@@ -857,7 +857,7 @@ BidiClass bidi_class(uint32_t cp);
 // return U (Non_Joining), the property default.
 enum class JoiningType : uint8_t { U = 0, C, D, L, R, T };
 JoiningType joining_type(uint32_t cp);
-
+@FACADE@
 }  // namespace %s
 }  // namespace punycoder
 
@@ -865,6 +865,74 @@ JoiningType joining_type(uint32_t cp);
 ", unicode_version, guard, guard, table_ns, hexlit(comp_b_first),
   hexlit(comp_b_last), hexlit(nfc_inert_limit), table_ns, guard
 )
+
+# The version-agnostic handle on this table set. Every member is a typedef or an
+# inline forwarder, so a pipeline templated on `T` compiles to exactly what it
+# would have written by hand: composes_as_second() and nfc_inert() still inline
+# all the way to their compare (ADR-013, ADR-014), and the eight accessors to
+# the same direct call as before. Emitted per version rather than hoisted to a
+# shared header so each generated unit stays self-contained.
+#
+# Two things in here are load-bearing and easy to "tidy" into bugs:
+#
+#   1. Every body is FULLY QUALIFIED. Inside the struct the member name hides
+#      the namespace-scope one, so `return combining_class(cp);` is infinite
+#      recursion -- and -Winfinite-recursion is GCC 12+ only and misses the
+#      indirect case, so nothing would tell you.
+#   2. The typedefs come FIRST. A name used in a class body must mean the same
+#      thing throughout that body, so the aliases have to be declared before any
+#      member whose signature spells them.
+#
+# Inserted by substitution rather than as another %s: the sprintf above is
+# already order-sensitive across nine positional arguments.
+facade <- gsub("@NS@", table_ns, '
+// A version-agnostic handle on this table set, for pipeline code templated on
+// the table unit. Members forward to the accessors above and alias this
+// namespace\'s enums; all are implicitly inline, so the indirection is a
+// compile-time one only.
+struct Tables {
+  typedef ::punycoder::@NS@::IdnaStatus IdnaStatus;
+  typedef ::punycoder::@NS@::NfcQuickCheck NfcQuickCheck;
+  typedef ::punycoder::@NS@::BidiClass BidiClass;
+  typedef ::punycoder::@NS@::JoiningType JoiningType;
+
+  static const char *version() { return ::punycoder::@NS@::UNICODE_VERSION; }
+
+  static uint8_t combining_class(uint32_t cp) {
+    return ::punycoder::@NS@::combining_class(cp);
+  }
+  static const uint32_t *canonical_decomposition(uint32_t cp, uint32_t &len) {
+    return ::punycoder::@NS@::canonical_decomposition(cp, len);
+  }
+  static uint32_t canonical_compose(uint32_t a, uint32_t b) {
+    return ::punycoder::@NS@::canonical_compose(a, b);
+  }
+  static bool composes_as_second(uint32_t b) {
+    return ::punycoder::@NS@::composes_as_second(b);
+  }
+  static NfcQuickCheck nfc_quick_check(uint32_t cp) {
+    return ::punycoder::@NS@::nfc_quick_check(cp);
+  }
+  static bool nfc_inert(uint32_t cp) {
+    return ::punycoder::@NS@::nfc_inert(cp);
+  }
+  static IdnaStatus idna_lookup(uint32_t cp, const uint32_t *&map,
+                                uint32_t &len) {
+    return ::punycoder::@NS@::idna_lookup(cp, map, len);
+  }
+  static bool is_combining_mark(uint32_t cp) {
+    return ::punycoder::@NS@::is_combining_mark(cp);
+  }
+  static BidiClass bidi_class(uint32_t cp) {
+    return ::punycoder::@NS@::bidi_class(cp);
+  }
+  static JoiningType joining_type(uint32_t cp) {
+    return ::punycoder::@NS@::joining_type(cp);
+  }
+};
+', fixed = TRUE)
+
+header <- sub("@FACADE@", facade, header, fixed = TRUE)
 
 writeLines(header, sprintf("src/%s.h", table_stem))
 

@@ -77,6 +77,51 @@ BidiClass bidi_class(uint32_t cp);
 enum class JoiningType : uint8_t { U = 0, C, D, L, R, T };
 JoiningType joining_type(uint32_t cp);
 
+// A version-agnostic handle on this table set, for pipeline code templated on
+// the table unit. Members forward to the accessors above and alias this
+// namespace's enums; all are implicitly inline, so the indirection is a
+// compile-time one only.
+struct Tables {
+  typedef ::punycoder::u16::IdnaStatus IdnaStatus;
+  typedef ::punycoder::u16::NfcQuickCheck NfcQuickCheck;
+  typedef ::punycoder::u16::BidiClass BidiClass;
+  typedef ::punycoder::u16::JoiningType JoiningType;
+
+  static const char *version() { return ::punycoder::u16::UNICODE_VERSION; }
+
+  static uint8_t combining_class(uint32_t cp) {
+    return ::punycoder::u16::combining_class(cp);
+  }
+  static const uint32_t *canonical_decomposition(uint32_t cp, uint32_t &len) {
+    return ::punycoder::u16::canonical_decomposition(cp, len);
+  }
+  static uint32_t canonical_compose(uint32_t a, uint32_t b) {
+    return ::punycoder::u16::canonical_compose(a, b);
+  }
+  static bool composes_as_second(uint32_t b) {
+    return ::punycoder::u16::composes_as_second(b);
+  }
+  static NfcQuickCheck nfc_quick_check(uint32_t cp) {
+    return ::punycoder::u16::nfc_quick_check(cp);
+  }
+  static bool nfc_inert(uint32_t cp) {
+    return ::punycoder::u16::nfc_inert(cp);
+  }
+  static IdnaStatus idna_lookup(uint32_t cp, const uint32_t *&map,
+                                uint32_t &len) {
+    return ::punycoder::u16::idna_lookup(cp, map, len);
+  }
+  static bool is_combining_mark(uint32_t cp) {
+    return ::punycoder::u16::is_combining_mark(cp);
+  }
+  static BidiClass bidi_class(uint32_t cp) {
+    return ::punycoder::u16::bidi_class(cp);
+  }
+  static JoiningType joining_type(uint32_t cp) {
+    return ::punycoder::u16::joining_type(cp);
+  }
+};
+
 }  // namespace u16
 }  // namespace punycoder
 
