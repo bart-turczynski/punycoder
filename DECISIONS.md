@@ -264,3 +264,72 @@ all-non-ASCII input — the last because such hosts still carry ASCII TLDs, dots
 and digits, and because the bounds tests skip the search for most of the BMP,
 not just ASCII. No input class regressed. Verified byte-identical on 6,403
 conformance inputs × 8 flag combinations.
+
+---
+
+## ADR-012 — The hot Unicode accessors are two-stage tries, chosen and verified by the generator
+
+**Status:** Accepted
+
+**Context.** ADR-011 made ASCII free but left the non-ASCII path untouched: a
+code point outside the fast path still binary-searched, ~11–14 data-dependent,
+branch-mispredicting probes for the 9,185-range UTS #46 table. Re-profiling
+`host_normalize` over an all-non-ASCII corpus put table lookups at **33% of
+self time** — `combining_class` 10.3%, `idna_lookup` 5.7%,
+`canonical_decomposition` 5.7%, `bidi_class` 5.6%, `canonical_compose` 4.1%,
+`is_combining_mark` 1.7%, `joining_type` below the sampling floor. The worst
+case is not an exotic character but a common one the table does not list: every
+CJK ideograph walks the whole combining-class table only to conclude 0.
+
+**Decision.** Convert the four accessors that profile hot to two-stage tries —
+`STAGE2[(STAGE1[cp >> SHIFT] << SHIFT) | (cp & MASK)]`, two loads and no
+branches, O(1) for every code point. Leave the rest alone, and say why:
+
+- `is_combining_mark` and `joining_type` are consulted once per **label**, not
+  once per code point. A trie would add 15–20 KB of permanently cold table to
+  shorten a search that barely registers, so they keep `range_lookup` and their
+  bounds test.
+- `canonical_compose` is keyed on a **pair** of code points and does not fit the
+  shape at all. It keeps its own search and its `b`-bound (PUNY-mbzhgbta).
+
+Three design points carry the result:
+
+- **Stage 1 stores a block number, not a byte offset.** That is what keeps it in
+  `uint8_t` for three of the four tables, and stage 1 is the array every lookup
+  touches; its width matters more than the shift the CPU pays to undo the
+  encoding.
+- **The UTS #46 trie is keyed on distinct (status, mapping) values, not on
+  ranges.** Every range carrying no mapping differs only in status, so thousands
+  of disallowed unassigned ranges collapse onto one value — and their blocks
+  deduplicate with each other as a result. This is why the structure is *smaller*
+  than the range table it replaced.
+- **The derived low bound survives in front of the trie.** Where a table lists
+  nothing below its first code point (U+0300 for combining class, U+00C0 for
+  decomposition) a compare answers all of ASCII with no memory access, which
+  beats the trie's two loads. Dropping it measured 3% slower on all-ASCII input,
+  the dominant case in real host data. Tables that cover ASCII have no such
+  bound and go straight to the trie, which is what lets it *subsume* their
+  128-entry ASCII arrays rather than sit beside them.
+
+**Every array, element type and block size is derived in
+`data-raw/generate_unicode_tables.R`,** extending ADR-011 rather than qualifying
+it. The block size in particular is not a tuning constant: the generator builds
+each trie at every shift from 4 to 10 and keeps the smallest, so a Unicode
+version bump re-runs that choice on its own. The generator then **verifies each
+trie against the ranges it was derived from for all 1,114,112 code points**
+before emitting it — a stronger check than any conformance corpus can be, and
+the reason a structural rewrite of a generated file is reviewable at all.
+
+**Consequences.** Measured on a clean `-O2` build over a 20k-host corpus,
+best-of-7 per sample, A/B/A/B in both build orders: **1.25x** all-non-ASCII,
+**1.16x** at 50%, **1.08x** at 20%, **1.00x** all-ASCII (neutral, by design —
+that case was already optimal). Table lookups fell from 33% to 17% of self time.
+The installed shared object went from 510,768 to 445,040 bytes, **64 KB
+smaller** — the size question this work opened with resolved in the opposite
+direction from what was feared. All surviving payload arrays (`MARK_RANGES`,
+`COMP_TABLE`, `JOINING_RANGES`, `IDNA_MAP_DATA`, `DECOMP_DATA`) are byte
+identical; `CCC_RANGES`, `BIDI_RANGES`, `IDNA_RANGES`, `IDNA_ASCII` and
+`BIDI_ASCII` are gone, and `DECOMP_INDEX` lost its now-redundant key field.
+`src/unicode_tables_16_0_0.h` is untouched, so the native API is unchanged.
+Verified byte-identical on 6,403 conformance inputs × 8 flag combinations, and
+on `is_idn`/`is_punycode`/`puny_encode`/`puny_decode` over the same corpus.

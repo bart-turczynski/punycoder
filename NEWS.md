@@ -57,6 +57,25 @@
 
 ## Performance
 
+* `host_normalize()` is faster on non-ASCII hosts --- **1.25x** when every host
+  is non-ASCII, 1.16x at 50%, 1.08x at 20%, and unchanged on all-ASCII input
+  --- and the installed shared object is **64 KB smaller**. The four Unicode
+  accessors that profiled hot (combining class, UTS #46 mapping, canonical
+  decomposition, `Bidi_Class`) no longer binary-search: each is a two-stage
+  trie, two loads and no branches, O(1) for every code point rather than only
+  for ASCII. The previous release made ASCII free but left every non-ASCII code
+  point paying 11-14 branch-mispredicting probes --- and the worst case was not
+  an exotic character but a common one the table does not list, since every CJK
+  ideograph walked the whole combining-class table only to conclude 0. Table
+  lookups fell from 33% of self time to 17% on an all-non-ASCII corpus. Storing
+  identical blocks once, and keying the UTS #46 trie on distinct
+  (status, mapping) values rather than on ranges, is what makes the structure
+  smaller than the range tables it replaced. Every array, element type and
+  block size is derived in `data-raw/generate_unicode_tables.R`, which now also
+  verifies each trie against its source ranges for all 1,114,112 code points
+  before emitting it. Output is unchanged on every input in the UTS #46
+  conformance corpus under all supported flag combinations (PUNY-iqduezqt).
+
 * `host_normalize()` is substantially faster again --- **1.75x** on all-ASCII
   hosts, 1.36x on a mixed corpus at 20% non-ASCII, and 1.12x even when every
   host is non-ASCII. Lookups into the vendored Unicode tables were 56% of
