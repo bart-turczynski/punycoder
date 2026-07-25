@@ -31,6 +31,7 @@ reference:
     contents:
       - host_normalize
       - normalization_profile_info
+      - unicode_versions
 
   - title: "Punycode Codec"
     desc: >

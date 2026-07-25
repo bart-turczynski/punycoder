@@ -202,11 +202,14 @@ point — because the inline table bounds that ADR-013 and ADR-014 depend on
 cannot survive a function-pointer accessor. Trie shapes differ per version and
 are not shared.
 
-The *public* surface still pins one Unicode version per release (currently
-16.0.0, `kDefaultUnicodeVersion`); reaching another table set is possible only
-through internal test hooks (`punycoder:::.host_normalize_version()`). Bumping
-the pinned version is a deliberate, reviewed behavior change — see ADR-004 and
-`dev/normalization-contract.md` §8.
+The public surface **defaults** to one pinned version per release (currently
+16.0.0, `kDefaultUnicodeVersion`) and selects another per call with
+`host_normalize(unicode_version = )`, listing what is available via
+`unicode_versions()` (ADR-016). `NULL` means the pin; an unshipped version is an
+error, never a fall back. A non-default selection appends `+unicode-<version>`
+to the `profile` token, so a call at the pin keeps the historical token
+byte-for-byte. Moving the pin itself is a deliberate, reviewed behavior change —
+see ADR-004 and `dev/normalization-contract.md` §8.
 
 The four accessors that profile hot — combining class, UTS #46 mapping,
 decomposition, `Bidi_Class` — are **two-stage tries**: `STAGE2[(STAGE1[cp >>

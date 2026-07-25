@@ -23,9 +23,12 @@ are normative; changing any of them follows section 8 versioning.
    architecture that makes behavior provably backend-independent, because the
    in-tree fallback today performs *no* normalization. See section 6.
 3. **One pinned Unicode version per release: Unicode 16.0.0.** The vendored
-   UTS-46 + NFC data fixes `unicode_version = "16.0.0"`. Changing it is a
-   behavior change requiring a punycoder release and a `pslr` compatibility
-   review. See sections 4 and 7.
+   UTS-46 + NFC data fixes the default `unicode_version = "16.0.0"`. Moving the
+   *pin* is a behavior change requiring a punycoder release and a `pslr`
+   compatibility review. A build may additionally ship other table sets, which
+   a caller can select per call (`host_normalize(unicode_version = )`); that
+   never moves the pin and never changes a default-path result. See sections 4
+   and 7.
 
 ## 1. Purpose and scope
 
@@ -115,6 +118,13 @@ The profile is **UTS-46** with these parameters, fixed for v1:
 profile revision: any change to the parameters above, or to the accept/reject or
 output of the algorithm in section 4, increments it.
 
+Selecting a non-default Unicode table set does **not** increment `-vN`: the
+parameters above are unchanged and the `unicode_version` column carries the
+difference. It appends `+unicode-<version>` to the token instead, on the same
+rule as a relaxed flag, so a token minted under one table set can never
+`identical()`-match one minted under another. A call at the pinned default
+yields the historical token byte-for-byte.
+
 ## 4. Algorithm (normative, per element)
 
 For each non-`NA` element of `x`:
@@ -203,7 +213,7 @@ Returns a one-row base `data.frame` (stable column names and types):
 | Column | Type | Meaning |
 |---|---|---|
 | `profile` | character | `"uts46-nontransitional-std3-v1"` |
-| `unicode_version` | character | pinned data version: `"16.0.0"` |
+| `unicode_version` | character | the data version this call used; the pinned default is `"16.0.0"` |
 | `idna` | character | `"uts46"` |
 | `transitional` | logical | `FALSE` |
 | `use_std3` | logical | `TRUE` |
@@ -218,8 +228,16 @@ Returns a one-row base `data.frame` (stable column names and types):
 reproducibility key or a cache key.
 
 The pinned `unicode_version` is `"16.0.0"`, fixed at build time from the
-vendored UTS-46 + normalization data. There is exactly one such version per
-punycoder release.
+vendored UTS-46 + normalization data. There is exactly one *pinned* version per
+punycoder release, and it is what a no-argument call reports.
+
+A build may compile in further table sets; `unicode_versions()` lists them and
+`host_normalize(unicode_version = )` selects one. Passing the same value to
+`normalization_profile_info()` reports the identity of that exact call, so the
+version is reportable for the normalization that actually ran rather than only
+for defaults. Naming a version the build does not ship is an error listing what
+is available -- never a silent fall back to the pin, which would make a
+recorded key describe a normalization that never happened.
 
 ## 8. Versioning
 
@@ -228,6 +246,9 @@ punycoder release.
   the punycoder version, record old/new `unicode_version` in `NEWS.md`, and
   trigger a `pslr` compatibility review before `pslr` raises its accepted
   punycoder version.
+- **Adding** a table set to a build is not that change: the pin does not move,
+  no default-path result changes, and the existing `profile` token is unaffected.
+  It is additive surface, reported by `unicode_versions()`.
 - The relaxed flags (`check_hyphens`, `use_std3`, `verify_dns_length`) are
   monotone: relaxing any of them must never change a result the full profile
   already accepts, only ever turn rejections into acceptances. Verified across

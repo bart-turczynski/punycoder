@@ -553,3 +553,66 @@ lose their qualification.
 Correctness gate, run against a one-version build of the same tree: element-wise
 `host_normalize` over 7,891 conformance inputs × 8 flag combinations, **0
 differences in 63,128 comparisons**.
+
+## ADR-016 — Version selection is an argument, not an option, and tags the profile token
+
+**Status:** Accepted
+
+**Context.** ADR-015 made two Unicode table sets coexist but left them
+unreachable: the choice existed in C++ and nowhere in the API. Two questions had
+to be answered together, because they are the same question asked twice — how a
+caller *selects* a version, and how a caller *records* which one ran.
+
+Selection had three candidate shapes: a per-call argument, a
+`getOption("punycoder.unicode_version")` global with a `.onLoad` default, or
+both. The option form has real precedent here — `punycoder.strict` works exactly
+that way, and every `puny_*` function reads it.
+
+**Decision.** A per-call argument, `unicode_version`, on `host_normalize()` and
+`normalization_profile_info()`, plus an exported `unicode_versions()` listing
+what the build ships. **No option.**
+
+The `punycoder.strict` precedent does not transfer, and the reason is the
+distinction the contract already draws. `strict` is an error-**policy**
+preference: it changes what happens to input the package has already judged
+invalid, never what the answer is. The Unicode version is profile **identity** —
+UTS #46 phrases all three of its conformance clauses as *"Given a version of
+Unicode..."*, and section 7 of the contract makes `unicode_version` a reported
+column that `pslr` keys reproducibility on. Making identity ambient would let
+the same source mint different keys in two sessions depending on options set
+elsewhere, which is precisely what a reproducibility key exists to rule out.
+`host_normalize()` is also deliberately off the strict/non-strict switch
+already, so there was no consistency argument pulling the other way. The option
+form is therefore *absent by decision*, not merely unimplemented.
+
+`NULL` means the pinned default and is the only implicit answer. It does not
+mean "newest": a caller who has not thought about versions must keep getting the
+same answers when a later release compiles in another table set, and "newest"
+would silently change behavior underneath them.
+
+An unshipped version is an error naming what is available, never a fall back to
+the pin. A silent fallback is worse than a wrong answer here — it would let a
+caller record a profile identity describing a normalization that never ran, the
+failure PUNY-nblrvplp was raised to prevent.
+
+**Consequences.** The `profile` token appends `+unicode-<version>` for a
+non-default table set, in fixed order after the flag tags, rather than
+incrementing the `-vN` revision. Three constraints meet at that choice and only
+this one satisfies all of them: existing cache keys must not move (a call at the
+pin yields the historical token byte-for-byte), the token's one promise is that
+two genuinely different normalizations can never mint `identical()` tokens (so
+the version cannot be omitted), and `-vN` denotes a change to the *profile* —
+non-transitional, STD3, the section 3 parameters — which selecting a table set
+does not touch. The tag is the same mechanism a relaxed flag already uses, so
+downstream parsing logic needs no new case.
+
+Adding a table set to a build stays additive: the pin does not move, no
+default-path result changes, and no existing token is affected. Moving the pin
+remains a reviewed behavior change under contract section 8 — a separate
+decision from making the pin selectable, and one that still requires a `pslr`
+compatibility review.
+
+The C++ `host_normalize_version_cpp` introduced in ADR-015 is gone; the version
+folded into `host_normalize_cpp` instead. A parallel entry point reachable only
+from tests can drift from the one users actually reach, and the whole point of
+the argument is that there is now a single path.

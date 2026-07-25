@@ -7,12 +7,18 @@
 normalization_profile_info(
   check_hyphens = TRUE,
   use_std3 = TRUE,
-  verify_dns_length = TRUE
+  verify_dns_length = TRUE,
+  unicode_version = NULL
 )
 }
 \arguments{
 \item{check_hyphens, use_std3, verify_dns_length}{Logical scalars selecting the
 flag set to report. Each defaults to \code{TRUE} (the strict profile).}
+
+\item{unicode_version}{Character scalar naming a Unicode table set this build
+ships, or \code{NULL} (the default) for the pinned one — pass the same value
+given to \code{\link[=host_normalize]{host_normalize()}}. The \code{unicode_version} column reports the
+resolved version, so calling with no arguments still reports the pin.}
 }
 \value{
 A one-row \code{data.frame} with columns \code{profile}, \code{unicode_version},
@@ -40,5 +46,5 @@ normalization_profile_info()
 normalization_profile_info(use_std3 = FALSE)
 }
 \seealso{
-\code{\link[=host_normalize]{host_normalize()}}.
+\code{\link[=host_normalize]{host_normalize()}}, \code{\link[=unicode_versions]{unicode_versions()}}.
 }

@@ -217,8 +217,18 @@ Rcpp::List compare_backends_cpp(
 // NA-on-invalid signal). The result is always lowercase ASCII, so no element
 // encoding needs to be set. Names are preserved.
 //
+// `unicode_version` selects the table set and is always an explicit string: R
+// resolves its own NULL-means-the-pin default before calling, so no version
+// argument is ever absent by the time it reaches here. An unshipped version
+// stops rather than returning NA -- that is a caller error, not invalid host
+// data, and silently falling back to the default would make a reproducibility
+// key describe a normalization that never happened (PUNY-nblrvplp). R checks
+// first and produces the actionable message; this check is the backstop for
+// the internal callers that bypass it.
+//
 // [[Rcpp::export]]
 Rcpp::CharacterVector host_normalize_cpp(Rcpp::CharacterVector x,
+                                         std::string unicode_version,
                                          bool check_hyphens = true,
                                          bool use_std3 = true,
                                          bool verify_dns_length = true) {
@@ -229,6 +239,10 @@ Rcpp::CharacterVector host_normalize_cpp(Rcpp::CharacterVector x,
     opts.check_hyphens = check_hyphens;
     opts.use_std3 = use_std3;
     opts.verify_dns_length = verify_dns_length;
+    if (!punycoder::unicode_version_from_string(unicode_version.c_str(),
+                                                opts.unicode_version)) {
+        Rcpp::stop("Unsupported Unicode version: " + unicode_version);
+    }
 
     for (R_xlen_t i = 0; i < n; ++i) {
         if (Rcpp::CharacterVector::is_na(x[i])) {
@@ -256,13 +270,11 @@ std::string normalization_unicode_version_cpp() {
         punycoder::unicode_version_string(punycoder::kDefaultUnicodeVersion));
 }
 
-// Internal (punycoder:::), like compare_backends_cpp/backend_info_cpp: test
-// hooks, not API. The public R surface pins one Unicode version; choosing one
-// per call is PUNY-wjlfpppq. Without these the non-default table sets are
-// unreachable from R and R CMD check could not exercise them at all.
-//
-// Each shipped version, with the string the registry gives it and the string
-// its own table unit reports. See table_reported_version().
+// Every shipped table set: the string the registry gives it, the string its own
+// table unit reports (see table_reported_version(), which is how a facade
+// paired with the wrong version is caught), and which one is the pinned
+// default. Backs the exported unicode_versions() and the actionable
+// "shipped versions are ..." half of an unsupported-version error.
 //
 // [[Rcpp::export]]
 Rcpp::List unicode_versions_cpp() {
@@ -284,40 +296,3 @@ Rcpp::List unicode_versions_cpp() {
     );
 }
 
-// host_normalize_cpp() against an explicitly chosen table set. Unlike the
-// public path this DOES stop on bad input: an unshipped version is a caller
-// error, not invalid host data, so it is not part of the NA-on-invalid
-// contract.
-//
-// [[Rcpp::export]]
-Rcpp::CharacterVector host_normalize_version_cpp(Rcpp::CharacterVector x,
-                                                 std::string version,
-                                                 bool check_hyphens = true,
-                                                 bool use_std3 = true,
-                                                 bool verify_dns_length = true) {
-    punycoder::NormalizeOptions opts;
-    opts.check_hyphens = check_hyphens;
-    opts.use_std3 = use_std3;
-    opts.verify_dns_length = verify_dns_length;
-    if (!punycoder::unicode_version_from_string(version.c_str(),
-                                                opts.unicode_version)) {
-        Rcpp::stop("Unsupported Unicode version: " + version);
-    }
-
-    R_xlen_t n = x.size();
-    Rcpp::CharacterVector out(n);
-
-    for (R_xlen_t i = 0; i < n; ++i) {
-        if (Rcpp::CharacterVector::is_na(x[i])) {
-            out[i] = NA_STRING;
-            continue;
-        }
-
-        const punycoder::HostNormalizeResult result =
-            punycoder::host_normalize_one(Rcpp::as<std::string>(x[i]), opts);
-        out[i] = result.valid ? Rcpp::String(result.value) : NA_STRING;
-    }
-
-    out.attr("names") = x.attr("names");
-    return out;
-}

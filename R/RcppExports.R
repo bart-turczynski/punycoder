@@ -21,8 +21,8 @@ compare_backends_cpp <- function(input, mode, strict = TRUE) {
     .Call(`_punycoder_compare_backends_cpp`, input, mode, strict)
 }
 
-host_normalize_cpp <- function(x, check_hyphens = TRUE, use_std3 = TRUE, verify_dns_length = TRUE) {
-    .Call(`_punycoder_host_normalize_cpp`, x, check_hyphens, use_std3, verify_dns_length)
+host_normalize_cpp <- function(x, unicode_version, check_hyphens = TRUE, use_std3 = TRUE, verify_dns_length = TRUE) {
+    .Call(`_punycoder_host_normalize_cpp`, x, unicode_version, check_hyphens, use_std3, verify_dns_length)
 }
 
 normalization_unicode_version_cpp <- function() {
@@ -31,9 +31,5 @@ normalization_unicode_version_cpp <- function() {
 
 unicode_versions_cpp <- function() {
     .Call(`_punycoder_unicode_versions_cpp`)
-}
-
-host_normalize_version_cpp <- function(x, version, check_hyphens = TRUE, use_std3 = TRUE, verify_dns_length = TRUE) {
-    .Call(`_punycoder_host_normalize_version_cpp`, x, version, check_hyphens, use_std3, verify_dns_length)
 }
 
