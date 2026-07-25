@@ -15,5 +15,6 @@
 
 #include "punycoder_unicode_version.h"
 #include "unicode_tables_16_0_0.h"
+#include "unicode_tables_17_0_0.h"
 
 #endif  // PUNYCODER_UNICODE_TABLES_REGISTRY_H
