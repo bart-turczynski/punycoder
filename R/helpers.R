@@ -35,6 +35,44 @@
   .assert_flag(verify_dns_length, "verify_dns_length")
 }
 
+#' Lexical predicate matching restricted to well-formed UTF-8
+#'
+#' Shared engine for `is_punycode()` and `is_idn()`, which promise a strictly
+#' logical answer: an element that is not valid UTF-8 cannot be a match, so it
+#' reports `FALSE` rather than `NA`, a warning, or an error.
+#'
+#' Matching runs only over the valid subset, which keeps ill-formed bytes away
+#' from the regex engines entirely. That is what makes the two predicates
+#' agree. Handed the same ill-formed bytes, R's engines answer differently ---
+#' the default TRE engine matches bytewise and reports `TRUE`, while PCRE
+#' (`perl = TRUE`) warns and reports `FALSE` --- and that divergence, not a
+#' deliberate design choice, is why the predicates used to disagree.
+#'
+#' Both steps are load-bearing, and neither works alone. `enc2utf8()` is a
+#' no-op on bytes already *marked* UTF-8, so it cannot detect ill-formed input;
+#' `validUTF8()` inspects raw bytes, so on its own it would reject a perfectly
+#' good string merely *marked* `latin1` (whose bytes are not UTF-8 but which R
+#' transcodes before matching). Transcoding first and testing the result gets
+#' both: `latin1` input is judged on what it means, UTF-8-marked garbage on
+#' what it is. This also matches the boundary discipline of
+#' `.call_with_validation()`, which likewise transcodes before dispatching.
+#'
+#' `NA_character_` is well-formed as far as `validUTF8()` is concerned, so it
+#' reaches `grepl()` and yields `FALSE`, unchanged from previous releases.
+#' @param x Character vector to test
+#' @param pattern Regular expression passed to `grepl()`
+#' @param ... Further arguments passed to `grepl()`, e.g. `perl` or
+#'   `ignore.case`
+#' @keywords internal
+#' @noRd
+.detect_valid_utf8 <- function(x, pattern, ...) {
+  x <- enc2utf8(x)
+  out <- logical(length(x))
+  ok <- validUTF8(x)
+  out[ok] <- grepl(pattern, x[ok], ...)
+  out
+}
+
 #' Warn if input contains NA values
 #' @param x Value to check
 #' @keywords internal

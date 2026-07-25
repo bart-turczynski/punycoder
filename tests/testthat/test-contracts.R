@@ -93,3 +93,59 @@ test_that("oversized labels are bounded in both strict and non-strict mode", {
   oversized_unicode <- paste0(strrep("é", 5e5), ".com")
   expect_true(is.na(puny_encode(oversized_unicode, strict = FALSE)))
 })
+
+test_that("predicates answer FALSE for ill-formed UTF-8 (PUNY-cewysjxi)", {
+  # The predicates promise a strictly logical answer, so malformed input is
+  # FALSE -- not NA (which would break `if (is_punycode(x))`), not an error.
+  # This deliberately differs from host_normalize()'s NA contract: that returns
+  # a *value*, where NA is a natural "absent", while a third truth value from a
+  # predicate has no precedent in base R, in stringi, or in any other language's
+  # IDNA library. Both predicates must agree; they previously did not, purely
+  # because is_punycode() used TRE and is_idn() used PCRE.
+  ill_formed <- raw_utf8(0x78, 0x6E, 0x2D, 0x2D, 0x61, 0xED, 0xA0, 0x80)
+  expect_false(validUTF8(ill_formed))
+
+  # The regression: this used to report TRUE, steering callers into puny_decode
+  # for input the rest of the package refuses to process.
+  expect_false(is_punycode(ill_formed))
+  expect_false(is_idn(ill_formed))
+
+  # ...and neither predicate warns any more. is_idn() used to, because PCRE saw
+  # the bytes; it no longer does.
+  expect_silent(is_punycode(ill_formed))
+  expect_silent(is_idn(ill_formed))
+
+  # The third row of the issue's table: bytes with no encoding mark at all. In a
+  # UTF-8 locale enc2utf8() cannot repair these either, so they are FALSE too.
+  unmarked <- rawToChar(as.raw(c(0x63, 0x61, 0x66, 0xE9)))
+  expect_false(is_punycode(unmarked))
+  expect_false(is_idn(unmarked))
+  expect_silent(is_idn(unmarked))
+})
+
+test_that("predicate UTF-8 gating leaves well-formed input untouched", {
+  # Gating on validUTF8() must not disturb the answers that were already
+  # correct, including the marked-latin1 case the predicates always handled via
+  # R's transcoding, and NA/zero-length, which stay exactly as they were.
+  latin1_cafe <- latin1_bytes(0x63, 0x61, 0x66, 0xE9, 0x2E, 0x63, 0x6F, 0x6D)
+  expect_false(is_punycode(latin1_cafe))
+  expect_true(is_idn(latin1_cafe))
+
+  expect_identical(
+    is_punycode(c("xn--caf-dma.com", "example.com", "a.xn--p1ai")),
+    c(TRUE, FALSE, TRUE)
+  )
+  expect_identical(is_idn(c("café.com", "example.com")), c(TRUE, FALSE))
+
+  # expect_false() rather than expect_identical(x, FALSE) per lintr, and it
+  # still distinguishes FALSE from NA, which is the point of the assertion.
+  expect_false(is_punycode(NA_character_))
+  expect_false(is_idn(NA_character_))
+  expect_identical(is_punycode(character(0)), logical(0))
+  expect_identical(is_idn(character(0)), logical(0))
+
+  # Mixed vectors: a bad element must not perturb its neighbours' answers.
+  mixed <- c("xn--caf-dma.com", raw_utf8(0xED, 0xA0, 0x80), "café.com")
+  expect_identical(is_punycode(mixed), c(TRUE, FALSE, FALSE))
+  expect_identical(is_idn(mixed), c(FALSE, FALSE, TRUE))
+})
