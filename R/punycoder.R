@@ -24,7 +24,6 @@
 #' @seealso \code{\link{puny_decode}} for the reverse operation,
 #'   \code{\link{host_normalize}} for IDNA/UTS-46 host normalization.
 #' @examples
-#' \donttest{
 #' # Basic encoding
 #' puny_encode("caf\u00E9.com")
 #' puny_encode("\u043C\u043E\u0441\u043A\u0432\u0430.\u0440\u0444")
@@ -36,7 +35,6 @@
 #'   "\u5317\u4EAC.\u4E2D\u56FD"
 #' )
 #' puny_encode(domains)
-#' }
 #' @export
 puny_encode <- function(x, strict = getOption("punycoder.strict", TRUE)) {
   .call_with_validation(x, strict, puny_encode_cpp)
@@ -63,7 +61,6 @@ puny_encode <- function(x, strict = getOption("punycoder.strict", TRUE)) {
 #' @seealso \code{\link{puny_encode}} for the reverse operation,
 #'   \code{\link{host_normalize}} for IDNA/UTS-46 host normalization.
 #' @examples
-#' \donttest{
 #' # Basic decoding
 #' puny_decode("xn--caf-dma.com")
 #' puny_decode("xn--80adxhks.xn--p1ai")
@@ -71,7 +68,6 @@ puny_encode <- function(x, strict = getOption("punycoder.strict", TRUE)) {
 #' # Vectorized decoding
 #' ascii_domains <- c("xn--caf-dma.com", "xn--80adxhks.xn--p1ai")
 #' puny_decode(ascii_domains)
-#' }
 #' @export
 puny_decode <- function(x, strict = getOption("punycoder.strict", TRUE)) {
   .call_with_validation(x, strict, puny_decode_cpp)

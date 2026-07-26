@@ -13,11 +13,9 @@
 #' @seealso \code{\link{is_idn}} for detecting Unicode domains,
 #'   \code{\link{puny_decode}} for decoding punycode domains.
 #' @examples
-#' \donttest{
 #' is_punycode("xn--example") # TRUE
 #' is_punycode("example.com") # FALSE
 #' is_punycode(c("xn--caf-dma.com", "regular.com")) # c(TRUE, FALSE)
-#' }
 #' @export
 is_punycode <- function(x) {
   .assert_character(x)
@@ -46,7 +44,6 @@ is_punycode <- function(x) {
 #' @seealso \code{\link{is_punycode}} for detecting punycode domains,
 #'   \code{\link{puny_encode}} for encoding Unicode domains.
 #' @examples
-#' \donttest{
 #' is_idn("caf\u00E9.com") # TRUE
 #' is_idn("example.com") # FALSE
 #' is_idn(c(
@@ -54,7 +51,6 @@ is_punycode <- function(x) {
 #'   "\u043C\u043E\u0441\u043A\u0432\u0430.\u0440\u0444",
 #'   "test.com"
 #' )) # c(TRUE, TRUE, FALSE)
-#' }
 #' @export
 is_idn <- function(x) {
   .assert_character(x)
@@ -87,12 +83,10 @@ is_idn <- function(x) {
 #'   }
 #' @seealso \code{\link{puny_encode}} for encoding validated domains.
 #' @examples
-#' \donttest{
 #' validate_domain("example.com")
 #' validate_domain("caf\u00E9.example.com")
 #' long_label <- paste(rep("x", 250), collapse = "")
 #' validate_domain(c("valid.com", "invalid..com", long_label))
-#' }
 #' @export
 validate_domain <- function(x, strict = getOption("punycoder.strict", TRUE)) {
   .assert_character(x)

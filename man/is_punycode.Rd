@@ -22,11 +22,9 @@ Determines whether a given string or domain name is already encoded
 in punycode format (starts with xn-- prefix).
 }
 \examples{
-\donttest{
 is_punycode("xn--example") # TRUE
 is_punycode("example.com") # FALSE
 is_punycode(c("xn--caf-dma.com", "regular.com")) # c(TRUE, FALSE)
-}
 }
 \seealso{
 \code{\link{is_idn}} for detecting Unicode domains,
