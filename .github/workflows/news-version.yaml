@@ -34,3 +34,41 @@ jobs:
             echo "::error::Top NEWS.md heading ('$heading') is neither '(development version)' nor the DESCRIPTION Version ('$version'). Update NEWS.md before release."
             exit 1
           fi
+
+      # Release paperwork that no generator keeps current: .zenodo.json feeds
+      # the Zenodo archive of each release (the version field is citation
+      # metadata -- omitting it would make Zenodo fall back to the tag, i.e.
+      # 'v1.2.1' rather than '1.2.1'), and _pkgdown.yml links the release on the
+      # news page. Both silently went stale at 1.2.0 while 1.2.1 shipped
+      # (PUNY-aaheyvva). Checked only on a RELEASE version: during development
+      # DESCRIPTION carries a .9000 suffix and these two correctly still name
+      # the last actual release.
+      - name: Check release paperwork matches DESCRIPTION version
+        run: |
+          set -euo pipefail
+          version="$(grep -E '^Version:' DESCRIPTION | head -n1 | sed -E 's/^Version:[[:space:]]*//')"
+          case "$version" in
+            *.9000)
+              echo "Development version ('$version'); release paperwork not checked."
+              exit 0
+              ;;
+          esac
+
+          status=0
+
+          zenodo="$(grep -E '"version"' .zenodo.json | head -n1 | sed -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/')"
+          if [ "$zenodo" = "$version" ]; then
+            echo "OK: .zenodo.json version is '$zenodo'."
+          else
+            echo "::error file=.zenodo.json::.zenodo.json version ('$zenodo') does not match the DESCRIPTION Version ('$version')."
+            status=1
+          fi
+
+          if grep -q "releases/tag/v$version\$" _pkgdown.yml; then
+            echo "OK: _pkgdown.yml links the v$version release."
+          else
+            echo "::error file=_pkgdown.yml::_pkgdown.yml does not link the v$version release tag. Update the news.releases entry."
+            status=1
+          fi
+
+          exit "$status"
