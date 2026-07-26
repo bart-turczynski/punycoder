@@ -217,8 +217,11 @@ test_that("normalization_profile_info reports the ratified profile identity", {
     "check_hyphens", "check_bidi", "check_joiners", "verify_dns_length",
     "backend"
   ))
-  expect_identical(info$profile, "uts46-nontransitional-std3-v1")
-  expect_identical(info$unicode_version, "16.0.0")
+  expect_identical(info$profile, "uts46-nontransitional-std3-v2")
+  # Hardcoded on purpose: the pin is profile identity, so moving it must be a
+  # deliberate edit here and in dev/normalization-contract.md, never something a
+  # newly compiled-in table set can do on its own (ADR-016, ADR-017).
+  expect_identical(info$unicode_version, "17.0.0")
   expect_identical(info$idna, "uts46")
   expect_false(info$transitional)
   expect_true(info$use_std3)
@@ -245,32 +248,34 @@ test_that("normalization_profile_info reports identity for a flag set", {
   expect_true(relaxed$check_joiners)
 })
 
-test_that("profile token is byte-stable for defaults, distinct per flag set", {
-  # The default call is byte-identical to the historical token, so a zero-arg
-  # downstream reader (e.g. pslr) sees no change.
+test_that("profile token is stable for defaults, distinct per flag set", {
+  # The default call yields the bare token at the current profile revision. It
+  # went -v1 -> -v2 when the pin moved to 17.0.0 (ADR-017): the bare token is
+  # default-relative, so leaving it at -v1 would have let one string denote two
+  # different normalizations across that release.
   expect_identical(
-    normalization_profile_info()$profile, "uts46-nontransitional-std3-v1"
+    normalization_profile_info()$profile, "uts46-nontransitional-std3-v2"
   )
 
   # Any deviation appends a deterministic, fixed-order tag.
   expect_identical(
     normalization_profile_info(check_hyphens = FALSE)$profile,
-    "uts46-nontransitional-std3-v1+no-check-hyphens"
+    "uts46-nontransitional-std3-v2+no-check-hyphens"
   )
   expect_identical(
     normalization_profile_info(use_std3 = FALSE)$profile,
-    "uts46-nontransitional-std3-v1+no-std3"
+    "uts46-nontransitional-std3-v2+no-std3"
   )
   expect_identical(
     normalization_profile_info(verify_dns_length = FALSE)$profile,
-    "uts46-nontransitional-std3-v1+no-verify-dns-length"
+    "uts46-nontransitional-std3-v2+no-verify-dns-length"
   )
   expect_identical(
     normalization_profile_info(
       check_hyphens = FALSE, use_std3 = FALSE, verify_dns_length = FALSE
     )$profile,
     paste0(
-      "uts46-nontransitional-std3-v1",
+      "uts46-nontransitional-std3-v2",
       "+no-check-hyphens+no-std3+no-verify-dns-length"
     )
   )

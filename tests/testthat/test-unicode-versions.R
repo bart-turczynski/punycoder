@@ -95,20 +95,21 @@ test_that("the profile token distinguishes a non-default table set", {
   other <- setdiff(info$version, info$default)
   skip_if(length(other) == 0L, "build ships only one table set")
 
-  # The pinned default keeps the historical token byte-for-byte: existing cache
-  # keys must not move just because a second table set is now compiled in.
+  # The pinned default leaves the token bare, at the current profile revision.
+  # Compiling in a further table set must never move it; only moving the pin
+  # itself does, and then by incrementing -vN (ADR-017).
   expect_identical(normalization_profile_info()$profile,
-                   "uts46-nontransitional-std3-v1")
+                   "uts46-nontransitional-std3-v2")
   expect_identical(
     normalization_profile_info(unicode_version = info$default)$profile,
-    "uts46-nontransitional-std3-v1"
+    "uts46-nontransitional-std3-v2"
   )
 
   # Anything else appends a tag, on the same rule as a relaxed flag, so two
   # genuinely different normalizations can never mint identical() tokens.
   alt <- normalization_profile_info(unicode_version = other[[1L]])
   expect_identical(alt$profile,
-                   paste0("uts46-nontransitional-std3-v1+unicode-",
+                   paste0("uts46-nontransitional-std3-v2+unicode-",
                           other[[1L]]))
   expect_identical(alt$unicode_version, other[[1L]])
   expect_false(identical(alt$profile, normalization_profile_info()$profile))
@@ -117,7 +118,7 @@ test_that("the profile token distinguishes a non-default table set", {
   expect_identical(
     normalization_profile_info(use_std3 = FALSE,
                                unicode_version = other[[1L]])$profile,
-    paste0("uts46-nontransitional-std3-v1+no-std3+unicode-", other[[1L]])
+    paste0("uts46-nontransitional-std3-v2+no-std3+unicode-", other[[1L]])
   )
 })
 

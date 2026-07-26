@@ -203,13 +203,14 @@ cannot survive a function-pointer accessor. Trie shapes differ per version and
 are not shared.
 
 The public surface **defaults** to one pinned version per release (currently
-16.0.0, `kDefaultUnicodeVersion`) and selects another per call with
+17.0.0, `kDefaultUnicodeVersion`) and selects another per call with
 `host_normalize(unicode_version = )`, listing what is available via
 `unicode_versions()` (ADR-016). `NULL` means the pin; an unshipped version is an
 error, never a fall back. A non-default selection appends `+unicode-<version>`
-to the `profile` token, so a call at the pin keeps the historical token
-byte-for-byte. Moving the pin itself is a deliberate, reviewed behavior change —
-see ADR-004 and `dev/normalization-contract.md` §8.
+to the `profile` token, so a call at the pin yields the bare token. Moving the
+pin itself is a deliberate, reviewed behavior change that also increments the
+token's `-vN` revision, because the bare token is default-relative — see
+ADR-004, ADR-017, and `dev/normalization-contract.md` §3 and §8.
 
 The four accessors that profile hot — combining class, UTS #46 mapping,
 decomposition, `Bidi_Class` — are **two-stage tries**: `STAGE2[(STAGE1[cp >>

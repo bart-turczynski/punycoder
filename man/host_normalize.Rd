@@ -71,7 +71,7 @@ Bidi rule via \code{CheckBidi}, and STD 3 (RFC 952 + RFC 1123) host-name rules v
 \code{UseSTD3ASCIIRules}. IDNA2003 / Nameprep (RFC 3490/3491/3454) is not used.
 
 The default applies the full strict UTS #46 profile
-(\code{uts46-nontransitional-std3-v1}). The \code{check_hyphens}, \code{use_std3}, and
+(\code{uts46-nontransitional-std3-v2}). The \code{check_hyphens}, \code{use_std3}, and
 \code{verify_dns_length} arguments are UTS #46 processing flags that can each be
 relaxed independently; pass the \emph{same} values to
 \code{\link[=normalization_profile_info]{normalization_profile_info()}} to obtain the identity of the resulting

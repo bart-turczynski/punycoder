@@ -2,6 +2,32 @@
 
 ## Breaking changes
 
+* **The pinned Unicode version moved from 16.0.0 to 17.0.0, and the profile
+  token is now `uts46-nontransitional-std3-v2`.** A call that names no
+  `unicode_version` now normalizes against Unicode 17.0.0 data. The change is
+  accept-only in practice: across both vendored IdnaTestV2 corpora and all 8
+  flag combinations, the new default matches an explicit `"17.0.0"` in all
+  102,448 comparisons and differs from `"16.0.0"` on 3 rows (16.0.0 corpus) and
+  5 rows (17.0.0 corpus) --- every one of them `NA` becoming a value, with zero
+  changed values. Nothing that normalized before stops normalizing.
+
+  The `-v1` → `-v2` bump is deliberate and is the part to act on. The bare token
+  means "whatever the pin is", so without the bump one string would have denoted
+  16.0.0 before this release and 17.0.0 after. Anything using the token as a
+  cache or reproducibility key must re-key: a stale key now misses loudly
+  instead of colliding silently. Callers who want the old data can pass
+  `unicode_version = "16.0.0"`, which is still shipped and returns identical
+  results to 1.2.1 --- their token becomes
+  `uts46-nontransitional-std3-v2+unicode-16.0.0`. `pslr` detects the move on its
+  own (it compares both `normalization_profile` and `unicode_version`, and
+  rebuilds its index on either mismatch), so the effect there is a one-time
+  rebuild on load until it reships, not a stale answer.
+
+  This release also fixes the shipped-versions policy: punycoder ships the
+  **current and the previous** Unicode version, and a version is deprecated for
+  one release cycle --- announced here, still shipped and selectable --- before
+  it is dropped (PUNY-lirlisix, ADR-017).
+
 * The deprecated URL surface --- `url_encode()`, `url_decode()`, and
   `parse_url()` --- has been **removed**, one release after the `.Deprecated()`
   warning cycle introduced in 1.2.0. These were always best-effort host
@@ -32,9 +58,10 @@
   `host_normalize(x, unicode_version = )` and
   `normalization_profile_info(unicode_version = )` accept any version this
   build ships, and a new `unicode_versions()` reports what that is (currently
-  `"16.0.0"` and `"17.0.0"`). `NULL`, the default, means the pinned version, so
-  **every existing call behaves exactly as before** --- including the `profile`
-  token, which is byte-identical at the pin. Selecting another version appends
+  `"16.0.0"` and `"17.0.0"`). `NULL`, the default, means the pinned version ---
+  which this release moves to 17.0.0, see Breaking changes above; `NULL` never
+  means "newest", so a later release compiling in another table set will not
+  change results underneath a caller. Selecting another version appends
   `+unicode-<version>` to that token, on the same rule as a relaxed flag, so
   two normalizations that genuinely differ can never mint `identical()` tokens.
   Naming a version the build does not ship is an error listing what is
