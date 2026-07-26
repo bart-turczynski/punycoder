@@ -26,7 +26,7 @@
   This release also fixes the shipped-versions policy: punycoder ships the
   **current and the previous** Unicode version, and a version is deprecated for
   one release cycle --- announced here, still shipped and selectable --- before
-  it is dropped (PUNY-lirlisix, ADR-017).
+  it is dropped (ADR-017).
 
 * The deprecated URL surface --- `url_encode()`, `url_decode()`, and
   `parse_url()` --- has been **removed**, one release after the `.Deprecated()`
@@ -37,7 +37,7 @@
   needs. `puny_encode()` / `puny_decode()` continue to reject URL-shaped input
   with an actionable error pointing at `rurl::get_host()`. The internal URL
   parser (`punycoder_url.cpp`) and the `punycoder_parsed_url` print method are
-  gone with the surface (PUNY-rumdaymk).
+  gone with the surface.
 
 * `is_punycode()` and `is_idn()` now agree on input that is not well-formed
   UTF-8, and both report `FALSE` for it. Previously `is_punycode()` reported
@@ -50,7 +50,7 @@
   remain total and strictly logical --- never `NA`, never an error --- so
   `if (is_punycode(x))` is always safe; call `validUTF8(x)` to distinguish "not
   punycode" from "not well-formed text". Answers for well-formed input,
-  including strings marked `latin1`, are unchanged (PUNY-cewysjxi).
+  including strings marked `latin1`, are unchanged.
 
 ## New features
 
@@ -71,7 +71,7 @@
   `punycoder.strict`, which is an error-policy preference, the Unicode version
   is part of profile identity, and making identity ambient would let the same
   code mint different reproducibility keys in different sessions
-  (PUNY-wjlfpppq; ADR-016).
+  (ADR-016).
 
 * `validate_domain()` results are now readable at scale. `print()` opens with a
   count header (`12 domains: 5 valid, 7 invalid (strict = TRUE)`), stops after
@@ -80,7 +80,7 @@
   message. A new `summary()` method condenses the whole vector into a data
   frame of `error_code` / `n` sorted by count descending, carrying `n`,
   `n_valid`, `n_invalid`, and `strict` as attributes, so failures across a
-  large batch can be tallied programmatically (PUNY-wqmwuvtt).
+  large batch can be tallied programmatically.
 
 ## Bug fixes
 
@@ -90,15 +90,14 @@
   `xn--(o)-...`) and echoed an empty Bootstring payload (`xn---`) back unchanged,
   where libidn2 rejected both. It now applies the documented LDH check to decode
   input and reports these as an error under `strict = TRUE` / `NA` under
-  `strict = FALSE`, so the two backends agree on every input (PUNY-ypjwnagl,
-  PUNY-rxvwqsou).
+  `strict = FALSE`, so the two backends agree on every input.
 
 * `puny_encode()`, `puny_decode()`, and `validate_domain()` now transcode
   character input to UTF-8 before dispatching to native code, and Unicode
   output is explicitly marked as UTF-8. Previously only `host_normalize()`
   transcoded, so a Latin-1-marked (or non-UTF-8 native) host reached the UTF-8
   decoder as ill-formed bytes and the same string produced different answers
-  depending on how R happened to mark it (PUNY-egaqhtnc, #67).
+  depending on how R happened to mark it (#67).
 
 ## Performance
 
@@ -123,7 +122,7 @@
   on every input in the UTS #46 conformance corpus under all supported flag
   combinations, and `nfc()` was verified against the pipeline it skips over all
   19,965 rows of the official UAX #15 normalization corpus, every single code
-  point, and 280 million code-point pairs (PUNY-wfzldcuo).
+  point, and 280 million code-point pairs.
 
 * `host_normalize()` is faster again on non-ASCII hosts --- **1.05x** when every
   host is non-ASCII, 1.04x at 50%, 1.03x at 20%, unchanged on all-ASCII input
@@ -146,8 +145,7 @@
   exposed `inline` from the generated header and applied *before* the call
   rather than inside it, which is what makes the ASCII-heavy end of the range
   faster rather than merely unchanged. Output is unchanged on every input in the
-  UTS #46 conformance corpus under all supported flag combinations
-  (PUNY-mbzhgbta).
+  UTS #46 conformance corpus under all supported flag combinations.
 
 * `host_normalize()` is faster on non-ASCII hosts --- **1.25x** when every host
   is non-ASCII, 1.16x at 50%, 1.08x at 20%, and unchanged on all-ASCII input
@@ -166,7 +164,7 @@
   block size is derived in `data-raw/generate_unicode_tables.R`, which now also
   verifies each trie against its source ranges for all 1,114,112 code points
   before emitting it. Output is unchanged on every input in the UTS #46
-  conformance corpus under all supported flag combinations (PUNY-iqduezqt).
+  conformance corpus under all supported flag combinations.
 
 * `host_normalize()` is substantially faster again --- **1.75x** on all-ASCII
   hosts, 1.36x on a mixed corpus at 20% non-ASCII, and 1.12x even when every
@@ -179,7 +177,7 @@
   `data-raw/generate_unicode_tables.R` from the UCD data itself, so it cannot
   drift from the table it guards and a Unicode version bump moves it
   automatically. Output is unchanged on every input in the UTS #46 conformance
-  corpus under all supported flag combinations (PUNY-zgaqusnu).
+  corpus under all supported flag combinations.
 
 * `host_normalize()` is roughly 25-30% faster. Label validation no longer
   re-runs Unicode NFC on labels taken straight from the label split: NFC is
@@ -188,7 +186,7 @@
   labels are already in NFC by construction. Punycode-decoded A-label payloads,
   which never go through that pass, are still checked. Output is unchanged on
   every input in the UTS #46 conformance corpus, under all supported flag
-  combinations (PUNY-thyalpud).
+  combinations.
 
 ## Internal
 
@@ -213,7 +211,7 @@
   actually rests on, which no fixed delta count can express: a newer table set
   may newly *accept* a host, but must never reject one an older set accepted,
   nor return a different value for one both accept. No package code changed and
-  no result moved (PUNY-qfautzhz).
+  no result moved.
 
 # punycoder 1.2.1
 
