@@ -125,7 +125,7 @@
     "SystemRequirements": "GNU libidn2 (optional, for native punycode backend)"
   },
   "keywords": ["punycode", "punycodeencode", "punycodedecode", "IDNA", "IDN", "internationalizeddomainnames", "UTS-46", "RFC3492", "Unicode", "hostnormalization", "hostname", "domainnames", "TLD", "r", "r-lang", "r-library", "r-package", "r-programming", "rstats", "domain-names", "domains", "tld", "unicode", "unicode-converter", "punycode-decode", "punycode-encode", "idn", "idna", "uts46", "rfc3492", "internationalized-domain-names"],
-  "fileSize": "1471.356KB",
+  "fileSize": "3076.152KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
