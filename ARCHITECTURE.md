@@ -185,8 +185,8 @@ runtime / build                          # NEVER downloads anything
 Normalization depends on this vendored data (combining class, decompositions,
 composition, UTS #46 mapping/status, combining-mark set, `Bidi_Class`,
 `Joining_Type`). Every output name — filenames, header guard, C++ namespace —
-derives from the single `unicode_version` string at the top of the generator,
-and the UCD cache is scoped per version.
+derives from the single version string the generator takes as its required
+command-line argument, and the UCD cache is scoped per version.
 
 **Several table sets ship at once (ADR-015).** 16.0.0 and 17.0.0 are both
 compiled in; `PUNYCODER_UNICODE_VERSIONS(X)` in `src/punycoder_unicode_version.h`
@@ -272,9 +272,10 @@ Grouped by concern; add tests to the matching file for any user-visible change:
   after editing the enum (ADR-009).
 - **Backend-specific code** → `punycoder_backend.cpp` only; never sprinkle
   `#ifdef PUNYCODER_USE_LIBIDN2` through domain code (ADR-008).
-- **New Unicode table set** → set `unicode_version` in
-  `data-raw/generate_unicode_tables.R`, regenerate, restore the line, then add
-  the `#include` to `src/unicode_tables_registry.h` and the `X(...)` row to
+- **New Unicode table set** → run `Rscript data-raw/generate_unicode_tables.R
+  <version>` (the version is a required argument, not a line to edit), re-run it
+  per already-shipped version to confirm `git diff src/` stays empty for those,
+  then add the `#include` to `src/unicode_tables_registry.h` and the `X(...)` row to
   `PUNYCODER_UNICODE_VERSIONS` — generation and registration in **one** commit
   (ADR-015); an unreferenced table object still links in.
 - **Unicode version bump** (which table set is the pinned default) → move
