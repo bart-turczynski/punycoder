@@ -48,7 +48,8 @@
 #'   trailing hyphens. `FALSE` drops that check.
 #' @param use_std3 Logical scalar. When `TRUE` (the default) `UseSTD3ASCIIRules`
 #'   restricts ASCII to letters, digits, and hyphen. `FALSE` admits other ASCII
-#'   (e.g. `"_"`) that the pinned table marks STD3-disallowed-but-valid.
+#'   (e.g. `"_"`) that the selected Unicode table set marks
+#'   STD3-disallowed-but-valid.
 #' @param verify_dns_length Logical scalar. When `TRUE` (the default) each
 #'   A-label must be 1-63 octets and the whole host <= 253. `FALSE` drops the
 #'   length limits (empty labels are still rejected as structural errors).
