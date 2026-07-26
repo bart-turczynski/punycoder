@@ -32,7 +32,7 @@
 #' `UseSTD3ASCIIRules`. IDNA2003 / Nameprep (RFC 3490/3491/3454) is not used.
 #'
 #' The default applies the full strict UTS #46 profile
-#' (`uts46-nontransitional-std3-v1`). The `check_hyphens`, `use_std3`, and
+#' (`uts46-nontransitional-std3-v2`). The `check_hyphens`, `use_std3`, and
 #' `verify_dns_length` arguments are UTS #46 processing flags that can each be
 #' relaxed independently; pass the *same* values to
 #' [normalization_profile_info()] to obtain the identity of the resulting
@@ -113,18 +113,25 @@ unicode_versions <- function() {
 .normalization_profile_token <- function(check_hyphens, use_std3,
                                          verify_dns_length, unicode_version,
                                          default_version) {
-  base <- "uts46-nontransitional-std3-v1"
+  base <- "uts46-nontransitional-std3-v2"
   deviations <- c(
     if (!check_hyphens) "no-check-hyphens",
     if (!use_std3) "no-std3",
     if (!verify_dns_length) "no-verify-dns-length",
     # The Unicode version is a parameter of UTS #46 conformance, so it obeys the
-    # same rule as the flags: the pinned default keeps the historical token
-    # byte-for-byte, and anything else appends a tag. It is NOT a -vN revision
-    # bump -- the profile (non-transitional, STD3, same flags) is unchanged and
-    # the unicode_version column carries the precise value. Without the tag two
-    # normalizations that genuinely differ would mint `identical()` tokens,
-    # which is the one thing the token promises cannot happen.
+    # same rule as the flags: the pinned default leaves the token bare and
+    # anything else appends a tag. Without the tag two normalizations that
+    # genuinely differ would mint `identical()` tokens, which is the one thing
+    # the token promises cannot happen.
+    #
+    # SELECTING a non-default table set is not a -vN bump -- the profile
+    # (non-transitional, STD3, same flags) is unchanged and the unicode_version
+    # column carries the precise value. MOVING the pin is, and that is why the
+    # base above reads -v2 (ADR-017). Because the bare token is default-
+    # relative, the same string would otherwise have denoted 16.0.0 before the
+    # move and 17.0.0 after; the revision bump is what makes a stale key miss
+    # loudly instead of colliding silently. If the pin ever moves again, bump
+    # -vN again, in the same commit as kDefaultUnicodeVersion.
     if (!identical(unicode_version, default_version)) {
       paste0("unicode-", unicode_version)
     }

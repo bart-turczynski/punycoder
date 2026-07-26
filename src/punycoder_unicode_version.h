@@ -34,7 +34,10 @@ enum class UnicodeVersion {
 // The version used when a caller does not choose one. Named explicitly rather
 // than derived from the ends of the list: the newest shipped table set is not
 // automatically the default, and promoting one is a deliberate edit here.
-constexpr UnicodeVersion kDefaultUnicodeVersion = UnicodeVersion::v16_0_0;
+// Moving this pin is a reviewed behavior change under section 8 of
+// dev/normalization-contract.md -- it also increments the -vN profile revision
+// in .normalization_profile_token() (ADR-017). The two must move together.
+constexpr UnicodeVersion kDefaultUnicodeVersion = UnicodeVersion::v17_0_0;
 
 // Version string ("16.0.0") for v, or "" if v is not a shipped version.
 const char* unicode_version_string(UnicodeVersion v) noexcept;

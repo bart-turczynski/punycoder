@@ -3,7 +3,7 @@
 # against the corpus Unicode published with that version -- pairing the 17.0.0
 # engine with the 16.0.0 expectations would silently under-test both. We compare
 # the non-transitional ToASCII column toAsciiN, which matches punycoder's pinned
-# profile uts46-nontransitional-std3-v1. The parser and the per-version fixture
+# profile uts46-nontransitional-std3-v2. The parser and the per-version fixture
 # path live in helper-idna.R; this file is ASCII-clean and all Unicode inputs
 # come from the fixture.
 #

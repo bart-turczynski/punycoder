@@ -48,7 +48,7 @@ struct NormalizeOptions {
 // catching internal PunycoderError exceptions, so embedders must compile this
 // code with C++ exception handling enabled. The input is a well-formed
 // (possibly empty) UTF-8 std::string. With the default `opts` (all flags true)
-// this is the strict uts46-nontransitional-std3-v1 profile.
+// this is the strict uts46-nontransitional-std3-v2 profile.
 HostNormalizeResult host_normalize_one(const std::string& input,
                                        const NormalizeOptions& opts);
 

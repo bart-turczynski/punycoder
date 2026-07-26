@@ -266,7 +266,7 @@ situates it against representative libraries.
 | Engine | `libidn2` + in-tree fallback | GNU `libidn` | pure Dart | Go `x/net/idna` |
 | IDNA standard | 2008 / UTS&nbsp;#46 (non-transitional) | 2003 (nameprep) | RFC 3492 + IDNA helpers | UTS&nbsp;#46 (via `x/net`) |
 | Unicode NFC | explicit (UAX&nbsp;#15) | implicit in nameprep | not documented | via `x/net` |
-| Pinned Unicode version | yes — 16.0.0, regenerable | no (frozen at build) | no | tracks Go release |
+| Pinned Unicode version | yes — 17.0.0, regenerable; 16.0.0 also selectable | no (frozen at build) | no | tracks Go release |
 | CheckBidi / CheckJoiners | always on | not surfaced | not documented | partial |
 | UTS&nbsp;#46 conformance corpus (`IdnaTestV2`) | yes — one per shipped Unicode version | no | no | — |
 | Strict / `NA` per-element policy | yes | undocumented | `validate` flag | n/a (CLI) |
