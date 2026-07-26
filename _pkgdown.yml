@@ -27,7 +27,9 @@ reference:
   - title: "Host Normalization"
     desc: >
       Entry point for UTS#46 IDNA host normalization — maps a hostname to
-      a canonical lowercase ASCII comparison form.
+      a canonical lowercase ASCII comparison form. Companions report the
+      profile identity behind that mapping and the set of Unicode versions
+      the build ships, any of which a caller can select per call.
     contents:
       - host_normalize
       - normalization_profile_info

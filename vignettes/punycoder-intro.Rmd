@@ -78,6 +78,63 @@ result <- validate_domain(c("café.com", "invalid..domain", "valid.org"))
 print(result)
 ```
 
+## Host Normalization
+
+`puny_encode()` is the raw RFC 3492 transform: it Punycode-encodes the labels you hand it, and nothing more. `host_normalize()` is the higher-level operation. It applies the UTS #46 canonical-host pipeline — character mapping, case folding, NFC normalization, label validation — and *then* encodes, so it answers "what is the canonical ASCII form of this host?" rather than "what is the Punycode of this string?".
+
+```{r normalize}
+library(punycoder)
+
+# Mapped, case-folded, validated, then encoded
+host_normalize("Café.Example.COM")
+
+# The codec transforms what it is given, and leaves case alone
+puny_encode("Café.Example.COM")
+```
+
+### Invalid Input Returns NA
+
+`host_normalize()` does not follow the strict/non-strict switch described above. It is a separate contract: a host that fails UTS #46 validation is reported as `NA` and never raises an error, so callers can layer their own policy on top.
+
+```{r normalize-na}
+host_normalize(c("valid.example", "example..com", "-bad-.example"))
+```
+
+### Profile Identity
+
+Normalization is pinned to a named profile. `normalization_profile_info()` returns that identity as a one-row data frame, which is what you record alongside results you intend to reproduce later:
+
+```{r normalize-profile}
+normalization_profile_info()
+```
+
+### Unicode Version Selection
+
+A build of `punycoder` ships a set of vendored Unicode table versions, one of which is the pinned default:
+
+```{r unicode-versions}
+unicode_versions()
+```
+
+Any shipped version can be selected per call. The difference between versions is confined to code points assigned in the newer one — a character that does not exist yet in the older tables is disallowed there, so the host is invalid:
+
+```{r unicode-version-select}
+host <- paste0(intToUtf8(0xA7CF), ".example")
+
+host_normalize(host, unicode_version = "16.0.0")
+host_normalize(host, unicode_version = "17.0.0")
+```
+
+Selecting a non-default version is reflected in the profile token, so the identity you record always describes the normalization that actually ran:
+
+```{r unicode-version-profile}
+normalization_profile_info(unicode_version = "16.0.0")$profile
+```
+
+The argument defaults to `NULL`, which means the pinned version — deliberately not "the newest available", so adding a table set in a later release cannot silently change results under existing code. Naming a version the build does not ship is an error listing what is available, never a quiet fall back to the pin.
+
+See `?host_normalize` for the relaxable validation flags and the full profile parameters.
+
 ## Data Analysis Workflows
 
 ### Bulk Domain Processing

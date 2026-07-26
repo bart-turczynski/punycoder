@@ -22,7 +22,8 @@ trailing hyphens. \code{FALSE} drops that check.}
 
 \item{use_std3}{Logical scalar. When \code{TRUE} (the default) \code{UseSTD3ASCIIRules}
 restricts ASCII to letters, digits, and hyphen. \code{FALSE} admits other ASCII
-(e.g. \code{"_"}) that the pinned table marks STD3-disallowed-but-valid.}
+(e.g. \code{"_"}) that the selected Unicode table set marks
+STD3-disallowed-but-valid.}
 
 \item{verify_dns_length}{Logical scalar. When \code{TRUE} (the default) each
 A-label must be 1-63 octets and the whole host <= 253. \code{FALSE} drops the

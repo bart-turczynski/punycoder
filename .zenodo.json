@@ -5,7 +5,7 @@
   "language": "eng",
   "access_right": "open",
   "license": "MIT",
-  "description": "<p>High-performance Unicode and Punycode processing for internationalized domain names in R. The <code>puny_encode()</code> / <code>puny_decode()</code> helpers are a low-level, RFC 3492 compliant Punycode codec for domain labels (the <code>xn--</code> ASCII-Compatible Encoding of RFC 5890/5891). <code>host_normalize()</code> is the Unicode Technical Standard #46 host-normalization entry point, mapping a host name to a canonical lowercase ASCII comparison form (non-transitional profile, pinned Unicode version). Used as the Punycode and IDNA engine by the <code>pslr</code> and <code>rurl</code> packages.</p>",
+  "description": "<p>High-performance Unicode and Punycode processing for internationalized domain names in R. The <code>puny_encode()</code> / <code>puny_decode()</code> helpers are a low-level, RFC 3492 compliant Punycode codec for domain labels (the <code>xn--</code> ASCII-Compatible Encoding of RFC 5890/5891). <code>host_normalize()</code> is the Unicode Technical Standard #46 host-normalization entry point, mapping a host name to a canonical lowercase ASCII comparison form (non-transitional profile, pinned default Unicode version, selectable per call from the set the build ships). Used as the Punycode and IDNA engine by the <code>pslr</code> and <code>rurl</code> packages.</p>",
   "creators": [
     {
       "name": "Turczynski, Bart",
