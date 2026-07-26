@@ -1,10 +1,25 @@
 #!/usr/bin/env Rscript
 #
 # Generate the vendored Unicode data tables that punycoder's in-tree
-# canonical-host normalization depends on (NFC + UTS-46), pinned to one Unicode
+# canonical-host normalization depends on (NFC + UTS-46), for ONE Unicode
 # version. See dev/normalization-contract.md (section 0, decision 3).
 #
-# Run from the package root:  Rscript data-raw/generate_unicode_tables.R
+# Run from the package root, naming the version explicitly:
+#
+#   Rscript data-raw/generate_unicode_tables.R 17.0.0
+#
+# The version is a REQUIRED argument and this script holds no default. It used
+# to rest at a hardcoded value, which meant a maintainer who ran it without
+# first editing that line silently regenerated whatever the last person had
+# restored -- by the time the pin moved to 17.0.0 that was the OLD table set
+# (PUNY-ktgyxlqd). A required argument has no resting value to go stale.
+#
+# This script emits ONE version per run, unlike data-raw/fetch_idna_fixtures.R,
+# which loops over the shipped set. That asymmetry is deliberate rather than an
+# oversight: this file emits C++ from multi-line string templates whose leading
+# whitespace is part of the generated output, so a loop wrapping the body would
+# re-indent those templates and change what is emitted. Regenerating every
+# shipped set is therefore one invocation per version -- see AGENTS.md.
 #
 # Network access happens HERE, at generation time only. The generated C++
 # (src/unicode_tables_<version>.{h,cpp}) is committed; the package never
@@ -21,12 +36,41 @@
 # combining mark" rule), and the Bidi_Class + Joining_Type properties (for
 # RFC 5893 CheckBidi and IDNA2008 ContextJ CheckJoiners).
 
-unicode_version <- "16.0.0"
+# The Unicode versions this repo ships a table set for, kept in sync with
+# PUNYCODER_UNICODE_VERSIONS in src/punycoder_unicode_version.h -- i.e. with
+# what unicode_versions() reports -- exactly as data-raw/fetch_idna_fixtures.R
+# is. This list is NOT a filter: any well-formed version can be generated, which
+# is how a set gets ADDED. It only drives the usage message, so the maintainer
+# is told what the repo currently ships without having to go read the header.
+shipped_versions <- c("16.0.0", "17.0.0")
+
+args <- commandArgs(trailingOnly = TRUE)
+if (length(args) != 1L) {
+  stop(sprintf(paste0(
+    "exactly one Unicode version is required, got %d.\n",
+    "  usage: Rscript data-raw/generate_unicode_tables.R <unicode-version>\n",
+    "  currently shipped: %s\n",
+    "  regenerate every shipped set with one invocation each, then confirm\n",
+    "  `git diff src/` is empty for the sets you did not intend to change."),
+    length(args), toString(shipped_versions)), call. = FALSE)
+}
+
+unicode_version <- args[[1L]]
+
+# A typo here would otherwise be caught only by a 404 partway through the
+# downloads, after the cache directory for the bogus version had been created.
+if (!grepl("^[0-9]+\\.[0-9]+\\.[0-9]+$", unicode_version)) {
+  stop(sprintf("'%s' is not a Unicode version of the form MAJOR.MINOR.PATCH",
+               unicode_version), call. = FALSE)
+}
+
+message(sprintf("generating Unicode %s table set%s", unicode_version,
+                if (unicode_version %in% shipped_versions) "" else " (NEW)"))
 
 # Everything the emitted C++ is NAMED after is derived from that one string, in
-# the same derived-not-hand-written spirit as ADR-011/ADR-012: a version bump is
-# this line and nothing else, and two versions can be emitted side by side
-# without colliding.
+# the same derived-not-hand-written spirit as ADR-011/ADR-012: the version comes
+# in from the command line and nothing else changes, and two versions can be
+# emitted side by side without colliding.
 version_tag <- gsub(".", "_", unicode_version, fixed = TRUE)  # 16.0.0 -> 16_0_0
 version_major <- sub("\\..*$", "", unicode_version)           # 16.0.0 -> 16
 table_stem <- sprintf("unicode_tables_%s", version_tag)
