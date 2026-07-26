@@ -30,6 +30,8 @@ The `punycoder` package provides fast, standards-based conversion between Unicod
 
 `host_normalize()` is a **UTS \#46 profile, not IDNA2008 conformance** — UTS \#46 is compatibility processing and deliberately accepts labels IDNA2008 would reject (e.g. `☕.example` → `xn--53h.example`). See `?host_normalize` and `normalization_profile_info()` for the normative profile and full standards references (RFC 3492/5890/5891/5892/5893, UTS \#46, UAX \#15/#44, STD 3, RFC 8753).
 
+Normalization runs against vendored Unicode data, and a build ships a *set* of Unicode versions with one pinned as the default (currently 17.0.0, with 16.0.0 also shipped). `unicode_versions()` reports what the installed build carries, and `host_normalize(x, unicode_version = "16.0.0")` selects another one for a single call — which `normalization_profile_info()` reflects by appending `+unicode-<version>` to the reported profile token.
+
 ## Dependencies
 
 `punycoder` has a small dependency footprint:
@@ -217,7 +219,7 @@ validate_domain(c("valid.com", "invalid..domain"))
 `punycoder` currently provides:
 
 - Low-level Punycode codec: `puny_encode()`, `puny_decode()`
-- IDNA/UTS-46 host normalization: `host_normalize()`, `normalization_profile_info()`
+- IDNA/UTS-46 host normalization: `host_normalize()`, `normalization_profile_info()`, `unicode_versions()`
 - Domain validation utilities: `is_punycode()`, `is_idn()`, `validate_domain()`
 - Vectorized operations and strict/non-strict handling for malformed input
 - Build-time backend selection (`libidn2` when present, built-in fallback otherwise)
