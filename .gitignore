@@ -20,6 +20,11 @@ data-raw/.idna-cache/
 
 # R CMD check results
 *.Rcheck/
+
+# revdepcheck::revdep_check() working tree: a SQLite db, a cloned library, and a
+# full build of every reverse dependency. Regenerated on demand, hundreds of MB.
+# The revdep/*.md reports it emits are summaries of a run, not source.
+revdep/
 # Stray top-level copy of tests/ that R CMD check can leave behind. Not source:
 # it is byte-identical to tests/, and at top level it trips the CRAN
 # "Non-standard file/directory found at top level" NOTE.
