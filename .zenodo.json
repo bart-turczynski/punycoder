@@ -1,7 +1,7 @@
 {
   "upload_type": "software",
   "title": "punycoder: Unicode and Punycode Domain Name Processing",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "language": "eng",
   "access_right": "open",
   "license": "MIT",
