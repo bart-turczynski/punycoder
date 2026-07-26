@@ -31,12 +31,10 @@ proper format, length restrictions, and character requirements.
 Supports both Unicode and ASCII domain names.
 }
 \examples{
-\donttest{
 validate_domain("example.com")
 validate_domain("caf\u00E9.example.com")
 long_label <- paste(rep("x", 250), collapse = "")
 validate_domain(c("valid.com", "invalid..com", long_label))
-}
 }
 \seealso{
 \code{\link{puny_encode}} for encoding validated domains.

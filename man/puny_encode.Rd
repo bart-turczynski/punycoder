@@ -35,7 +35,6 @@ canonical comparison form under a UTS #46 profile (the IDNA surface of this
 package), use \code{\link[=host_normalize]{host_normalize()}}.
 }
 \examples{
-\donttest{
 # Basic encoding
 puny_encode("caf\u00E9.com")
 puny_encode("\u043C\u043E\u0441\u043A\u0432\u0430.\u0440\u0444")
@@ -47,7 +46,6 @@ domains <- c(
   "\u5317\u4EAC.\u4E2D\u56FD"
 )
 puny_encode(domains)
-}
 }
 \seealso{
 \code{\link{puny_decode}} for the reverse operation,
