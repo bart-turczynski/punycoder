@@ -96,3 +96,10 @@ _scratch/
 # Fiberplane local issue tracking
 .fp/
 FP_CLAUDE.md
+
+# pkgdown site (generated). _pkgdown.yml sets no `destination:`, so a local
+# build_site() writes the whole site here. Nothing needs it in git:
+# .github/workflows/pkgdown.yaml publishes to the gh-pages branch instead.
+# .Rbuildignore already keeps it out of the tarball (^docs$, ^docs/.*); this
+# closes the other half, so a site build cannot be committed wholesale.
+/docs/
