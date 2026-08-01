@@ -115,3 +115,17 @@ Before any of them runs, `nfc()` **quick-checks** its input (PUNY-wfzldcuo, ADR-
 
 - `dev/` holds off-CRAN planning and development notes (e.g. `dev/user_story.md`). It's excluded from the package build via `.Rbuildignore`; put any new dev-only docs here rather than at repo root.
 - `AGENTS.md`, `CLAUDE.md`, `FP_CLAUDE.md`, `CONTRIBUTING.md`, `THIRD_PARTY_NOTICES.md`, `README.Rmd`, `_pkgdown.yml`, and generated artifacts (`*.Rcheck`, `*.tar.gz`, `*coverage.html`, `lib/`, `README.html`) are all `.Rbuildignore`d — never commit a coverage HTML or a built `.tar.gz`.
+
+### The tracker is not in git unless it is snapshotted
+
+`.fp/` is gitignored, so the issue tracker is a local database that no commit, no clone and no bundle has ever contained — while `DECISIONS.md`, this file and the test suite all cite `PUNY-*` ids as the reasoning behind what they assert. Regenerate the one copy that is in git with:
+
+```bash
+sh data-raw/snapshot-tracker.sh
+```
+
+It writes `dev/tracker-snapshot.md`, per the `dev/` convention above. Not `docs/`: that path is the generated pkgdown site and is gitignored, so a snapshot written there would reach no commit and be deleted by the next clean `build_site()`.
+
+`fp` stays authoritative — nothing reads the snapshot back, `fp context <id>` is still the way to read an issue, and **every run overwrites the file wholesale**, so hand-edits to it are lost.
+
+**Refresh it before taking any copy you intend to keep** — a mirror push to the `backup` remote at `~/Projects/_backups/punycoder.git`, or a `git bundle create <path> --all`. Both exist for this repository as of 2026-08-01. A bundle taken without refreshing carries a stale copy of the only tracker reasoning in git, and a snapshot that is never regenerated is worse than none, because it looks current. Push to `backup` with `--no-verify`: a mirror must capture whatever state exists, including a red one.
