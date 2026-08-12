@@ -1,4 +1,4 @@
-# Powers GitHub's "Cite this repository" and r-universe.
+# Powers the forge's "Cite this repository" affordance and r-universe.
 # `version`/`date-released` track the latest CRAN release; bump on release.
 cff-version: 1.2.0
 message: "If you use this software, please cite it using these metadata."
@@ -11,8 +11,8 @@ authors:
   - family-names: Turczynski
     given-names: Bart
     orcid: "https://orcid.org/0000-0002-8788-7980"
-repository-code: "https://github.com/bart-turczynski/punycoder"
-url: "https://bart-turczynski.github.io/punycoder/"
+repository-code: "https://gitlab.com/bart-turczynski/punycoder"
+url: "https://gitlab.com/bart-turczynski/punycoder"
 repository: "https://CRAN.R-project.org/package=punycoder"
 license: MIT
 version: 1.2.0

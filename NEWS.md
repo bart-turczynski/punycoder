@@ -190,6 +190,26 @@
 
 ## Internal
 
+* **The package's public identity moved from GitHub to GitLab.** The GitHub
+  account that hosted `punycoder` is suspended, so every URL naming it now 404s
+  --- including the two `DESCRIPTION` fields CRAN reads, `URL:` and
+  `BugReports:`, and the pkgdown site they pointed at. `URL:` is now
+  <https://gitlab.com/bart-turczynski/punycoder> plus the CRAN page, and
+  `BugReports:` is the GitLab tracker. The same repoint was applied to
+  `CITATION.cff`, `codemeta.json`, `_pkgdown.yml`, the README and the
+  introduction vignette; in-repo document links became repository-relative so
+  they survive the next move.
+
+  Three URLs were **dropped rather than replaced**, because no live equivalent
+  exists: the `bart-turczynski.github.io/punycoder/` pkgdown site (no publisher
+  --- the workflow that built it cannot run, and GitLab Pages for this project
+  has never deployed), the GitHub Actions and Codecov badges, and the
+  r-universe entry. r-universe still serves a build of 1.2.1.9000, but it
+  tracks the suspended GitHub repository as its source and so can never update;
+  restoring it means re-registering the universe against GitLab. `_pkgdown.yml`
+  carries no `url:` key until a documentation site is published somewhere
+  reachable, and `DESCRIPTION` must name the same site when one is.
+
 * The UTS #46 conformance suite now runs once per shipped Unicode version,
   against the corpus Unicode published with that version. There was a single
   `inst/testdata/IdnaTestV2.txt` of 16.0.0 vintage and one hardcoded expectation
@@ -343,4 +363,4 @@ First CRAN release.
 * Integration with GNU libidn2 for production punycode implementation
 * Performance optimizations
 * Additional URL manipulation utilities
-* Integration examples with popular R packages 
+* Integration examples with popular R packages

@@ -237,7 +237,7 @@ domains_df <- data.frame(
 
 - Explore the function documentation: `help(package = "punycoder")`
 - Check out the test suite for more examples
-- Report issues at: https://github.com/bart-turczynski/punycoder/issues
+- Report issues at: https://gitlab.com/bart-turczynski/punycoder/-/issues
 
 ## Technical Details
 
@@ -247,8 +247,8 @@ The package uses a C++ backend with Rcpp for performance, and follows RFC 3492 s
 
 `punycoder` is used as the Punycode and IDNA engine by two sibling packages:
 
-- **[pslr](https://bart-turczynski.github.io/pslr/)** — Public Suffix List engine. Uses `punycoder` for host canonicalization before PSL matching. Reach for it when you need eTLD or registrable-domain queries.
-- **[rurl](https://bart-turczynski.github.io/rurl/)** — Full URL parsing, normalization, cleaning, and joining toolkit. Builds on both `punycoder` and `pslr` to handle the complete URL processing pipeline.
+- **[pslr](https://CRAN.R-project.org/package=pslr)** — Public Suffix List engine. Uses `punycoder` for host canonicalization before PSL matching. Reach for it when you need eTLD or registrable-domain queries.
+- **[rurl](https://CRAN.R-project.org/package=rurl)** — Full URL parsing, normalization, cleaning, and joining toolkit. Builds on both `punycoder` and `pslr` to handle the complete URL processing pipeline.
 
 ## Acknowledgments
 
@@ -261,4 +261,4 @@ an optional GNU libidn2 backend.
 
 The full list of credits — prior art, dependencies, the standards this code
 implements, and the data sources it serves — is in
-[`ACKNOWLEDGMENTS.md`](https://github.com/bart-turczynski/punycoder/blob/main/ACKNOWLEDGMENTS.md).
+[`ACKNOWLEDGMENTS.md`](https://gitlab.com/bart-turczynski/punycoder/-/blob/main/ACKNOWLEDGMENTS.md).
