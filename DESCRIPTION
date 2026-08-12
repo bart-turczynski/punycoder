@@ -22,11 +22,9 @@ Imports: Rcpp (>= 1.0.0)
 LinkingTo: Rcpp
 SystemRequirements: GNU libidn2 (optional, for native punycode backend)
 License: MIT + file LICENSE
-URL: https://bart-turczynski.github.io/punycoder/,
-    https://github.com/bart-turczynski/punycoder,
-    https://bart-turczynski.r-universe.dev/punycoder,
+URL: https://gitlab.com/bart-turczynski/punycoder,
     https://CRAN.R-project.org/package=punycoder
-BugReports: https://github.com/bart-turczynski/punycoder/issues
+BugReports: https://gitlab.com/bart-turczynski/punycoder/-/issues
 Encoding: UTF-8
 Language: en-US
 Suggests: testthat (>= 3.0.0), knitr, rmarkdown, oysteR, rosv

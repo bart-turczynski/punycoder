@@ -39,12 +39,6 @@
       "scheme": "url"
     },
     {
-      "identifier": "https://bart-turczynski.github.io/punycoder/",
-      "relation": "isDocumentedBy",
-      "resource_type": "publication-softwaredocumentation",
-      "scheme": "url"
-    },
-    {
       "identifier": "https://CRAN.R-project.org/package=rurl",
       "relation": "isRequiredBy",
       "resource_type": "software",
