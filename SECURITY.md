@@ -13,17 +13,24 @@ reporting.
 
 ## Reporting a vulnerability
 
-**Please do not report security vulnerabilities through public GitHub issues.**
+**Please do not report security vulnerabilities through public issues.**
 
-Preferred channel — **GitHub private vulnerability reporting**:
+Preferred channel — **email the maintainer** at **bartek@turczynski.pl**.
+Include the affected version, a reproducer if you have one, and how you would
+like to be credited.
 
-1. Go to the repository's **Security** tab.
-2. Click **Report a vulnerability**.
+If you would rather use the tracker, open a **confidential issue** on GitLab:
 
-This opens a private security advisory visible only to the maintainers.
+1. Go to <https://gitlab.com/bart-turczynski/punycoder/-/issues/new>.
+2. Tick **This issue is confidential** before submitting.
 
-If you cannot use that channel, email the maintainer at
-**bartek@turczynski.pl** instead.
+A confidential issue is visible only to the project maintainers, not to other
+users or to the public.
+
+> This project moved off GitHub, so GitHub's private vulnerability reporting
+> (private security advisories) is no longer a channel for it. GitLab's own
+> private-vulnerability-reporting feature is not available on this project's
+> plan; confidential issues are the equivalent confidential channel here.
 
 ## What to expect
 

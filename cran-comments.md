@@ -37,13 +37,15 @@ API introduced in 1.1.0. (The 1.2.0 development tag was never submitted to CRAN;
 
 ## Platform
 
-Tested locally and on GitHub Actions:
+Tested locally (macOS aarch64, R release) and on GitLab CI:
 
-* macOS (aarch64), R release
 * Ubuntu, R devel / release / oldrel-1
-* Windows, R release
-* Both the libidn2 backend (Linux + macOS) and the fallback C++ backend
-  (Windows) are exercised, including fallback-vs-libidn2 parity tests.
+* Both the libidn2 backend (Linux + macOS) and the fallback C++ backend are
+  exercised, including fallback-vs-libidn2 parity tests.
+
+Windows and macOS coverage for this submission comes from win-builder and the
+macOS builder rather than from CI; the project's CI is Linux-only since it
+moved off GitHub Actions.
 
 ## Reverse dependencies
 

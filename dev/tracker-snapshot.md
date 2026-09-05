@@ -14,9 +14,9 @@ authoritative and `fp context <id>` remains the way to read an issue.
 
 ```
 
-PUNY-mbyvbzxj [todo] [high] reticulate code-injection survey: IP2Location embargo lapses 2026-10-22, 6 packages still uncontacted
+PUNY-beydmanp [in-progress] [high] Go GitLab-only: port CI off GitHub Actions, rehost docs, and purge our own github.com references
 
-PUNY-beydmanp [todo] [high] Go GitLab-only: port CI off GitHub Actions, rehost docs, and purge our own github.com references
+PUNY-mbyvbzxj [todo] [high] reticulate code-injection survey: IP2Location embargo lapses 2026-10-22, 6 packages still uncontacted
 
 PUNY-dopcsyjw [todo] [low] Port rurl's verify-on-push mirror predicate: the archival push is guarded by an AGENTS.md sentence instead of by the hook
 
@@ -254,7 +254,7 @@ PR #49 squash-merged. Private vulnerability reporting enabled. Remaining: regist
 
 ## PUNY-beydmanp: Go GitLab-only: port CI off GitHub Actions, rehost docs, and purge our own github.com references
 
-**Status:** todo
+**Status:** in-progress
 
 ### Description
 
@@ -359,6 +359,36 @@ The options are: use `b.turczynski@tidio.net`, which is what GitLab will actuall
 profile; or use `bartek@turczynski.pl`, the personal address that owns the fp workspace, which
 is arguably the right one for a personal open-source package but will not link to the GitLab
 profile unless it is added as a secondary email on that account (which is the way to get both).
+
+
+### Comments
+
+#### 2026-09-05 — bartek@turczynski.pl
+
+Commit-identity decision RESOLVED (maintainer, 2026-09-05): use a GitLab noreply address, not a personal one.
+
+Address: `27694267-bart-turczynski@users.noreply.gitlab.com`
+
+Derived from GitLab source rather than memory, because the docs page on profile settings explains how to enable a private commit email but never states its template:
+- `lib/gitlab/private_commit_email.rb` -> `for_user` builds "#{user.id}-#{user.username}@#{hostname}"
+- `app/models/application_setting_implementation.rb:400` -> `default_commit_email_hostname` is "users.noreply.#{Gitlab.config.gitlab.host}", i.e. users.noreply.gitlab.com on gitlab.com
+- `glab api user` -> id 27694267, username bart-turczynski
+
+Worth noting from the same source: the matching regex captures ONLY the numeric id (`\A(?<id>([0-9]+))\-([^@]+)@hostname\z`), so attribution survives a username change. The username half of the address is cosmetic.
+
+Set repo-locally: `git config user.email`. Applied.
+
+Correction to this issue's original framing, which said bartek@turczynski.pl 'will not link to the GitLab profile unless it is added as a secondary email'. It is ALREADY on the account -- `glab api user/emails` lists it, confirmed 2026-08-01. What is true is narrower: it is not the account's PRIMARY email and not its `commit_email`; both of those are still b.turczynski@tidio.net. Moot now that a noreply address is the chosen answer.
+
+### Two gaps this does NOT close
+
+1. **Merge commits are still authored b.turczynski@tidio.net.** They are created by GitLab, not locally, so they use the account's profile `commit_email` and ignore local git config. Confirmed against history: every merge commit (e3825de, 39686a8, f2bcfea, bde587d) carries the tidio address while every local commit carries the git-config one. Fixing it is a web-UI step -- Edit profile -> Commit email -> 'Use a private email' -- because GitLab's REST API exposes user modification to admins only. Until then this repo keeps publishing that address on every merge.
+
+2. **Global git config is still the GitHub noreply** (142225707+bart-turczynski@users.noreply.github.com), so every OTHER repo on this machine keeps authoring commits to a suspended GitHub account's address. Deliberately left alone -- out of scope for punycoder and it would change attribution in pslr, rurl and the rest. Flagged for a maintainer decision, not filed as work here.
+
+#### 2026-09-05 — bartek@turczynski.pl
+
+Starting implementation. Plan: (1) port 8 GH Actions workflows to .gitlab-ci.yml, (2) GitLab Pages for pkgdown, (3) rewrite .bestpractices.json URLs + SECURITY.md, (4) move .github/ templates to .gitlab/ and delete .github/, (5) stray refs in NEWS.md/.gitignore/.Rbuildignore.
 
 
 
