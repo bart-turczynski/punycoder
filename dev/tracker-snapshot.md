@@ -14,8 +14,6 @@ authoritative and `fp context <id>` remains the way to read an issue.
 
 ```
 
-PUNY-eqttmcuc [in-progress] [low] Retire the Claude auto-memory store: promote what is durable, delete the rest
-
 PUNY-mbyvbzxj [todo] [high] reticulate code-injection survey: IP2Location embargo lapses 2026-10-22, 6 packages still uncontacted
 
 PUNY-dopcsyjw [todo] [low] Port rurl's verify-on-push mirror predicate: the archival push is guarded by an AGENTS.md sentence instead of by the hook
@@ -109,6 +107,8 @@ PUNY-aaheyvva [done] [low] Refresh stale release-version references in _pkgdown.
 PUNY-zumspyzy [done] [low] Unwrap the \donttest{} on the five core help pages so CRAN actually runs the primary examples
 
 PUNY-tacfinef [done] [low] The trailing-whitespace hook rewrites knitted console output in README.md, so knit and hook fight
+
+PUNY-eqttmcuc [done] [low] Retire the Claude auto-memory store: promote what is durable, delete the rest
 
 PUNY-jzxomoqq [done] [low] Take the fixers' whitespace change on the three authored files, without regressing THIRD_PARTY_NOTICES.md's hard line breaks
 
@@ -1159,7 +1159,7 @@ Superseded by PSLR-hrpalwzo in ../pslr. The new dependency-aware DAG uses packag
 
 ## PUNY-eqttmcuc: Retire the Claude auto-memory store: promote what is durable, delete the rest
 
-**Status:** in-progress
+**Status:** done
 
 ### Description
 
@@ -1238,6 +1238,54 @@ tar -czf ~/Projects/_backups/claude-memory/punycoder-memory-$(date +%F).tar.gz \
 #### 2026-09-05 — bartek@turczynski.pl
 
 Starting: triaging the 12-file auto-memory store.
+
+#### 2026-09-05 — bartek@turczynski.pl
+
+Done. Merged as f377096 (MR !6).
+
+Store measured 13 files / 52 KB (the issue said 12 / 22 KB — MEMORY.md plus growth
+since it was filed). Archived to
+~/Projects/_backups/claude-memory/punycoder-memory-2026-09-05.tar.gz, then deleted.
+
+Triage: 7 deleted as dead/ephemeral, 5 promoted into 3 places, 1 filed as its own issue.
+
+Deleted — each already owned by something in git or by ~/.claude/fp-cli-notes.md:
+cran-ff-main-to-tag (CONTRIBUTING CRAN checklist steps 6 and 9), punycoder-url-surface-removal
+(ADR-006; R/urls.R, src/punycoder_url.cpp, test-urls.R all confirmed absent),
+punycoder-header-dep-rebuild (AGENTS.md "Stale objects", which is strictly better — it has
+the fish unmatched-glob caveat the memory lacked), release-train-2026-06 (train shipped),
+unicode-epic-orchestration-plan (PUNY-czleeqwz and unit D PUNY-qfautzhz both done),
+punycoder-scope-principle (ADR-001/002/006 + README Non-goals), fp-cli-gotchas.
+
+Two were false on arrival, which is the point of verifying rather than transcribing:
+the scope memory quoted the profile token as `-v1` where R/normalize.R:117 says `-v2`,
+and fp-cli-gotchas claimed `--depends` "records nothing in this project" — PUNY-czleeqwz
+renders dependency edges today.
+
+Promoted:
+- dev/perf-measurement.md (new, 118 lines) — the measurement protocol from
+  punycoder-perf-measurement-method + punycoder-lto-not-configured. This was the only
+  substantial item with no home in a tracked doc; AGENTS.md had the clean-rebuild
+  prerequisite and nothing else. All five cited issue ids checked to resolve. The LTO
+  claim was re-derived rather than trusted: Makeconf lines 99-104 still show empty LTO/
+  LTO_OPT and `R CMD config LTO_OPT` still errors, so --use-LTO is still a no-op here.
+- CONTRIBUTING.md — "Doc-only changes skip the heavy gate" (CI job names checked against
+  verify.yml: readme, coverage; plus news-version.yaml), "Dependency and license scanning"
+  (FOSSA free-plan constraint + ignore-with-note-except-AGPL; FOSSA is already cited
+  publicly in .bestpractices.json), and two CRAN-checklist additions — the cadence lesson
+  and the verify-the-revdep-actually-calls-it rule, with PUNY-cewysjxi as the
+  counter-example.
+- AGENTS.md — points at the new note from the existing perf corollary.
+
+Filed PUNY-mbyvbzxj (high): the reticulate code-injection survey in the git-ignored
+_scratch/injection-survey/ has an IP2Location disclosure embargo lapsing 2026-10-22 —
+47 days out — with six independent maintainers still uncontacted since 2026-07-24. Not
+punycoder work, but the deleted memory file was its only pointer, so it needed a home
+before the delete.
+
+Doc-only, so it took the doc-only gate this MR itself documents. Snapshot refreshed per
+the AGENTS.md close-an-issue trigger; the usual one-run lag means this comment and the
+status flip land in the next refresh.
 
 
 
