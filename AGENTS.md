@@ -37,6 +37,8 @@ Leftover `src/*.o` files silently corrupt builds in two different ways. Before b
 
 Corollary for performance work: **any timing taken without a clean rebuild is meaningless**, and so is any timing taken under `devtools::test()` (which always runs `-O0`). Benchmark against a clean `R CMD INSTALL`, and confirm the compile lines actually show the flags you expect. `tests/testthat/test-performance.R` is deliberately a loose smoke check for this reason — see the note at the top of that file.
 
+The clean rebuild is only the prerequisite. The rest of the protocol — batch the timings, install both builds into separate library trees and alternate rather than rebuilding between samples, report min and the paired win count, sweep the ASCII fraction, instrument a hot function's call mix before optimizing it, and mutation-test any test added to guard an optimization — is in [dev/perf-measurement.md](dev/perf-measurement.md). That note also records why `--use-LTO` is a silent no-op on this machine, so no result here may be credited to LTO.
+
 ## Architecture
 
 ### R surface → C++ core
