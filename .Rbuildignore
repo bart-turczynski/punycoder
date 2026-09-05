@@ -29,8 +29,9 @@
 ^.*\.tar\.gz$
 ^lib$
 ^lib/.*
-^\.github$
-^\.github/.*
+^\.gitlab$
+^\.gitlab/.*
+^\.gitlab-ci\.yml$
 ^\.claude$
 ^\.claude/.*
 ^CLAUDE\.md$

@@ -98,8 +98,15 @@ _scratch/
 FP_CLAUDE.md
 
 # pkgdown site (generated). _pkgdown.yml sets no `destination:`, so a local
-# build_site() writes the whole site here. Nothing needs it in git:
-# .github/workflows/pkgdown.yaml publishes to the gh-pages branch instead.
+# build_site() writes the whole site here. Nothing needs it in git: the `pages`
+# job in .gitlab-ci.yml rebuilds the site in CI and hands the result to GitLab
+# Pages as a `public/` artifact, so no branch ever carries it (the GitHub
+# workflow this replaced pushed it to a gh-pages branch, which is why that
+# branch existed).
 # .Rbuildignore already keeps it out of the tarball (^docs$, ^docs/.*); this
 # closes the other half, so a site build cannot be committed wholesale.
 /docs/
+
+# GitLab Pages artifact directory, produced by `mv docs public` in CI and by
+# anyone reproducing the pages job locally.
+/public/
