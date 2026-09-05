@@ -1,10 +1,6 @@
----
-name: Bug report
-about: Report incorrect or unexpected behavior
-title: ''
-labels: bug
-assignees: ''
----
+<!-- GitLab renders this template's body as-is; unlike the GitHub template it
+     replaced, it carries no YAML front matter (GitLab would show it verbatim).
+     Set the ~bug label from the sidebar. -->
 
 ## Describe the bug
 
@@ -33,3 +29,5 @@ What you expected to happen.
 ```
 
 </details>
+
+/label ~bug
