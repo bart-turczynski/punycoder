@@ -1,7 +1,7 @@
 # Third-Party Notices and Acknowledgments
 
-Project: punycoder  
-Copyright (c) 2026 Bart Turczynski  
+Project: punycoder\
+Copyright (c) 2026 Bart Turczynski\
 Contact: bartek+punycoder@turczynski.pl
 
 ## Third-party libraries
