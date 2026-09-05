@@ -190,6 +190,58 @@
 
 ## Internal
 
+* **CI, community-health templates and the documentation host followed the move
+  to GitLab.** The eight GitHub Actions workflows in `.github/` could not run at
+  all --- the account that executed them is suspended --- so `.github/` is gone
+  and a single `.gitlab-ci.yml` replaces it. The merge gate keeps its shape and
+  its job names (`lint`, `readme`, `news-version`, `check`, `coverage`), so
+  CONTRIBUTING.md's doc-only-gate rule still names real jobs. `pkgdown.yaml`
+  became a `pages` job publishing to GitLab Pages; `osv-audit` and
+  `security-audit` became a weekly pipeline schedule; the issue and
+  pull-request templates became `.gitlab/issue_templates/` and
+  `.gitlab/merge_request_templates/`.
+
+  Three things changed rather than moved, and are worth knowing about:
+
+  - **Cross-platform checking.** R-hub v2 is GitHub-Actions-native, so
+    `rhub.yaml` had no port. But R-hub publishes its check environments as
+    ordinary container images, so the ASAN/UBSAN and valgrind runs that
+    actually mattered survive as a manual `sanitizers` job pulling
+    `ghcr.io/r-hub/containers/{clang-asan,valgrind}` directly. What genuinely
+    did not survive is the **macOS and Windows** legs of `full-check.yml`;
+    `full-check` is now an R-version matrix (devel / release / oldrel-1) on
+    Linux, and pre-release cross-platform coverage comes from R's own
+    forge-independent services --- win-builder and the macOS builder --- which
+    the CRAN release checklist now names explicitly.
+  - **Coverage reporting.** The Codecov project was bound to the GitHub
+    repository and cannot follow. Coverage now goes to GitLab's built-in
+    reporting (pipeline badge, merge-request coverage diff, per-file Cobertura
+    annotations) --- no external account, no token.
+  - **Dependabot.** Removed rather than replaced. Its only ecosystem was
+    `github-actions`, and with the workflows gone there is nothing left for it
+    to bump: GitLab CI pins images by floating tag on purpose, and the one
+    remaining pinned external ref lives in `.pre-commit-config.yaml`, which
+    `pre-commit autoupdate` handles.
+
+  `SECURITY.md` was rewritten for the same reason: GitHub private vulnerability
+  reporting is no longer a channel for this project, so the confidential routes
+  are now maintainer email and a confidential GitLab issue.
+  `.bestpractices.json` --- the OpenSSF Best Practices submission --- had about
+  forty URLs pointing at the suspended account and at the dead pkgdown site;
+  all of them were repointed. Note that the file is only half of that fix: the
+  published submission at bestpractices.dev must be updated from it separately,
+  or the badge keeps citing URLs that no longer resolve.
+
+  The pkgdown site itself is **not yet republished**: `_pkgdown.yml` now names
+  the GitLab Pages URL, but `DESCRIPTION`'s `URL:` deliberately still does not,
+  because the project's Pages access level has to be made public and a first
+  deployment has to land before a CRAN URL check would find anything there.
+
+  Historical release notes below were left as written. They cite
+  `bart-turczynski.github.io/punycoder/` and GitHub Actions because that is
+  what was true when those versions shipped; silently rewriting a published
+  changelog would be worse than a dead link in it.
+
 * **The package's public identity moved from GitHub to GitLab.** The GitHub
   account that hosted `punycoder` is suspended, so every URL naming it now 404s
   --- including the two `DESCRIPTION` fields CRAN reads, `URL:` and

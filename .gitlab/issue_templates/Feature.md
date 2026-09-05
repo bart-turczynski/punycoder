@@ -1,10 +1,6 @@
----
-name: Feature request
-about: Suggest an idea or enhancement
-title: ''
-labels: enhancement
-assignees: ''
----
+<!-- GitLab renders this template's body as-is; unlike the GitHub template it
+     replaced, it carries no YAML front matter (GitLab would show it verbatim).
+     Set the ~enhancement label from the sidebar. -->
 
 ## Problem
 
@@ -23,3 +19,5 @@ Any alternative solutions or workarounds you have considered.
 ## Additional context
 
 Add any other context, references, or examples here.
+
+/label ~enhancement

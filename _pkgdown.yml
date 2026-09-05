@@ -1,9 +1,15 @@
-# No `url:` until a docs site is actually published somewhere reachable.
-# The previous value (bart-turczynski.github.io/punycoder) 404s and has no
-# publisher: it was built by .github/workflows, and the account that ran it is
-# suspended. punycoder's GitLab `pages_access_level` is `private` and it has
-# never deployed. Restore this key when a host is chosen; DESCRIPTION's URL:
-# field must name the same site when it does.
+# GitLab Pages is the publisher: the `pages` job in .gitlab-ci.yml builds this
+# site on every push to main and leaves it in `public/`. The URL below is what
+# `GET /projects/:id/pages` reports for this project (unique domains are
+# enabled; turning them off would move the site to
+# https://bart-turczynski.gitlab.io/punycoder instead, which is prettier but is
+# a project-settings change, not a repo change).
+#
+# DESCRIPTION's `URL:` field must name this same site -- it deliberately does
+# NOT yet, because `pages_access_level` is still `private` and the site has
+# never deployed, so a CRAN URL check would hit a 404. Add it there in the same
+# change that confirms the first deployment is publicly reachable.
+url: https://punycoder-a165b3.gitlab.io
 
 template:
   bootstrap: 5
