@@ -10,17 +10,40 @@ repos:
     hooks:
       - id: check-added-large-files
         args: ['--maxkb=5120']
+      # Paths below are TOOL-OWNED: a generator writes their bytes, so a fixer
+      # that "corrects" them is overwritten on the next run and the diff comes
+      # back forever. The rule is rurl's RUL-008 -- tool- or upstream-owned
+      # bytes are excluded, authored files are not.
+      #
       # inst/testdata/ holds byte-sensitive conformance vectors (the per-version
-      # Unicode IdnaTestV2 corpora and the RFC 3492 vectors), so the whitespace/EOF
-      # fixers must not rewrite them.
+      # Unicode IdnaTestV2 corpora and the RFC 3492 vectors).
+      #
+      # README.md is knitted from README.Rmd by devtools::build_readme(). Some
+      # of the console output it captures has REAL trailing spaces -- they are
+      # what the code prints (print.punycoder_validation emits "Domain:
+      # test.com " and "Valid:  TRUE "). Stripping them makes the committed
+      # README stop reproducing its own recorded output, so a fresh knit shows
+      # spurious changes indistinguishable from a real behavior change. Edit
+      # README.Rmd, which is authored and stays covered.
+      #
+      # R/RcppExports.R and src/RcppExports.cpp are written by
+      # Rcpp::compileAttributes(); src/unicode_tables_*.{h,cpp} by
+      # data-raw/generate_unicode_tables.R. Both emit a trailing blank line that
+      # end-of-file-fixer strips and the next regeneration restores (measured:
+      # strip R/RcppExports.R, re-run compileAttributes(), the file is byte
+      # identical to HEAD again). For the Unicode tables it is worse than churn:
+      # AGENTS.md makes "re-run the generator, confirm git diff src/ is empty"
+      # the proof that adding a table set did not perturb the shipped ones, and
+      # a fixer-edited file makes that check red for a reason unrelated to the
+      # data.
       - id: end-of-file-fixer
-        exclude: '^inst/testdata/'
+        exclude: &fixer-excludes '^(inst/testdata/|README\.md$|R/RcppExports\.R$|src/RcppExports\.cpp$|src/unicode_tables_.*\.(h|cpp)$)'
       - id: trailing-whitespace
-        exclude: '^inst/testdata/'
+        exclude: *fixer-excludes
       - id: check-merge-conflict
       - id: check-yaml
       - id: mixed-line-ending
-        exclude: '^inst/testdata/'
+        exclude: *fixer-excludes
       - id: check-case-conflict
   - repo: local
     hooks:

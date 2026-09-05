@@ -98,10 +98,10 @@ is_punycode("xn--example")
 validate_domain("test.com")
 #> Punycoder Domain Validation Results
 #> ==================================
-#>
+#> 
 #> 1 domain: 1 valid, 0 invalid (strict = TRUE)
-#>
-#> Domain: test.com
+#> 
+#> Domain: test.com 
 #> Valid:  TRUE
 ```
 
