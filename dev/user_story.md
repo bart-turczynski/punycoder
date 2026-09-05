@@ -47,7 +47,7 @@ punycoder::puny_encode("münchen.de")  # Should return: "xn--mnchen-3ya.de"
 punycoder::puny_encode("مثال.إختبار")           # → "xn--mgbh0fb.xn--kgbechtv"
 punycoder::puny_encode("москва.рф")              # → "xn--80adxhks.xn--p1ai"
 
-# Decode ASCII domains to Unicode  
+# Decode ASCII domains to Unicode
 punycoder::puny_decode("xn--mgbh0fb.xn--kgbechtv")  # → "مثال.إختبار"
 ```
 
@@ -86,7 +86,7 @@ result <- punycoder::puny_encode("invalid..domain")
 
 # Validation functions
 punycoder::is_punycode("xn--example")     # TRUE/FALSE
-punycoder::is_idn("café.com")             # TRUE  
+punycoder::is_idn("café.com")             # TRUE
 punycoder::validate_domain("test.com")    # Comprehensive validation
 ```
 
@@ -148,7 +148,7 @@ puny_encode(x, ...)           # Unicode string → ASCII punycode
 puny_decode(x, ...)           # ASCII punycode → Unicode string
 
 # URL-aware functions
-url_encode(url, ...)          # URL with Unicode domain → ASCII URL  
+url_encode(url, ...)          # URL with Unicode domain → ASCII URL
 url_decode(url, ...)          # ASCII URL → Unicode URL
 parse_url(url, ...)           # Parse URL with IDN handling
 
@@ -178,14 +178,14 @@ getOption("punycoder.strict")         # Option retrieval
 class PunycodeProcessor {
 private:
     bool strict_validation;
-    
+
     void validate_input(const std::string& input);
     std::string handle_libidn_error(int error_code);
-    
+
 public:
     PunycodeProcessor(bool strict = true);
     std::string encode_domain(const std::string& unicode_domain);
-    std::string decode_domain(const std::string& punycode_domain); 
+    std::string decode_domain(const std::string& punycode_domain);
     bool is_valid_domain(const std::string& domain);
 };
 
@@ -193,7 +193,7 @@ public:
 // [[Rcpp::export]]
 Rcpp::CharacterVector puny_encode_cpp(Rcpp::CharacterVector domains, bool strict);
 
-// [[Rcpp::export]]  
+// [[Rcpp::export]]
 Rcpp::CharacterVector puny_decode_cpp(Rcpp::CharacterVector domains, bool strict);
 ```
 
@@ -211,15 +211,15 @@ puny_encode <- function(x, strict = TRUE) {
   if (!is.character(x)) {
     stop("Input must be a character vector", call. = FALSE)
   }
-  
+
   if (any(is.na(x))) {
     warning("NA values detected in input", call. = FALSE)
   }
-  
+
   result <- puny_encode_cpp(x, strict)
-  
+
   # Add proper class and attributes
-  structure(result, 
+  structure(result,
             class = c("punycoder_result", "character"),
             strict = strict,
             input_encoding = "UTF-8")
@@ -239,7 +239,7 @@ test_that("RFC 3492 compliance", {
   for (i in seq_len(nrow(test_vectors))) {
     unicode_input <- test_vectors$unicode[i]
     expected_ascii <- test_vectors$ascii[i]
-    
+
     expect_equal(puny_encode(unicode_input), expected_ascii)
     expect_equal(puny_decode(expected_ascii), unicode_input)
   }
@@ -259,11 +259,11 @@ test_that("error handling", {
 ```r
 test_that("performance requirements", {
   large_dataset <- rep(c("café.com", "москва.рф"), 5000)
-  
+
   timing <- system.time({
     result <- puny_encode(large_dataset)
   })
-  
+
   # Should process 10k domains in under 1 second
   expect_lt(timing[["elapsed"]], 1.0)
 })
@@ -277,9 +277,9 @@ Package: punycoder
 Type: Package
 Title: Unicode and Punycode Domain Name Processing
 Version: 1.0.0
-Authors@R: person("Your", "Name", email = "you@example.com", 
+Authors@R: person("Your", "Name", email = "you@example.com",
                   role = c("aut", "cre"))
-Description: High-performance Unicode and Punycode encoding/decoding for 
+Description: High-performance Unicode and Punycode encoding/decoding for
     internationalized domain names. Provides RFC 3492 compliant conversion
     functions with a focus on URL processing and data analysis workflows.
 Depends: R (>= 3.5.0)
@@ -312,12 +312,12 @@ PKG_LIBS = @LIBIDN2_LIBS@
 ```r
 #' @title Unicode and Punycode Domain Name Processing
 #' @description
-#' Provides high-performance functions for encoding and decoding 
-#' internationalized domain names according to RFC 3492 (Punycode) 
+#' Provides high-performance functions for encoding and decoding
+#' internationalized domain names according to RFC 3492 (Punycode)
 #' and IDNA standards.
-#' 
+#'
 #' @details
-#' The punycoder package fills a critical gap in R's ecosystem for 
+#' The punycoder package fills a critical gap in R's ecosystem for
 #' handling international domain names. It provides reliable, fast
 #' conversion between Unicode and ASCII representations of domain names.
 #'
@@ -417,7 +417,7 @@ puny_encode_legacy <- function(...) {
 }
 
 puny_decode_legacy <- function(...) {
-  .Deprecated("puny_decode") 
+  .Deprecated("puny_decode")
   puny_decode(...)
 }
 ```
@@ -436,20 +436,20 @@ test_compatibility <- function() {
 ### Technical Risks
 1. **libidn2 Integration Complexity**
    - *Mitigation*: Start with minimal API surface, expand gradually
-   
+
 2. **Cross-platform Build Issues**
    - *Mitigation*: Early testing on all target platforms
-   
+
 3. **Memory Management in C++**
    - *Mitigation*: Extensive Valgrind testing, RAII patterns
 
 ### Project Risks
 1. **CRAN Rejection**
    - *Mitigation*: Follow all CRAN policies, engage with reviewers early
-   
+
 2. **Competition from fixes in other tooling**
    - *Mitigation*: Superior performance and reliability, better API design
-   
+
 3. **Maintenance Burden**
    - *Mitigation*: Clean code, comprehensive tests, community engagement
 
@@ -460,7 +460,7 @@ test_compatibility <- function() {
 - URL-aware processing
 - CRAN submission
 
-### Phase 2: Enhancement (Months 3-6)  
+### Phase 2: Enhancement (Months 3-6)
 - Performance optimizations
 - Advanced URL utilities
 - Integration with popular packages

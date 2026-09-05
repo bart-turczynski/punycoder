@@ -295,4 +295,3 @@ Rcpp::List unicode_versions_cpp() {
             punycoder::kDefaultUnicodeVersion))
     );
 }
-
