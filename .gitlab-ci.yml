@@ -43,9 +43,14 @@ workflow:
 # `install.packages()` resolves Ubuntu *binaries* rather than compiling from
 # source — the equivalent of `use-public-rspm: true` in the r-lib actions.
 # {pak} does the dependency resolution and, running as root on a supported
-# distro, installs each package's declared system requirements itself, so
-# apt lines below are only for things no R package declares (pandoc for
-# rmarkdown/pkgdown, libidn2 for this package's optional backend).
+# distro, installs each package's declared system requirements itself, so the
+# apt lines below are only for things no R package declares (libidn2 for this
+# package's optional backend, qpdf/ghostscript for --compact-vignettes).
+# Pandoc is separate and pinned -- see the .pandoc block.
+#
+# `dependencies = TRUE` on the `deps::.` ref is not optional: without it pak
+# resolves hard dependencies only, and `R CMD build` then dies with "vignette
+# builder 'knitr' not found" because knitr and testthat are Suggests.
 # ---------------------------------------------------------------------------
 .r:
   image: rocker/r-ver:latest
@@ -64,6 +69,37 @@ workflow:
     - mkdir -p "$R_LIBS_USER"
     - Rscript -e 'if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak")'
 
+# Pandoc is PINNED, and the pin is load-bearing rather than tidiness.
+#
+# The `readme` job asserts that README.md is byte-identical to a fresh knit of
+# README.Rmd, and pandoc's markdown writer changes its table layout between
+# versions: the committed README carries compact pipe tables, while Ubuntu's
+# apt pandoc (3.1.x) rewrites every table column-padded. The job then fails on
+# whitespace, reporting "out of sync" for a reason that has nothing to do with
+# the content. The GitHub workflow this replaced hid the problem by using
+# setup-pandoc, which installs a pinned build.
+#
+# 3.10 is the version that reproduces the committed README.md byte for byte
+# (verified locally). If you bump it, re-knit README.md in the same change and
+# check that a maintainer's local pandoc matches, or the job goes red for
+# everyone.
+#
+# The download is from pandoc's own release host. That is upstream software
+# distribution, not a forge dependency -- the same category as the R-hub
+# container images below.
+#
+# Written as a plain YAML anchor rather than `!reference`, deliberately: the
+# pre-commit `check-yaml` hook parses this file with a safe loader and cannot
+# construct GitLab's custom `!reference` tag, so using it makes every commit
+# fail on an unresolvable constructor. GitLab flattens a nested array in
+# `script`, so an anchor splices in exactly the same way.
+.pandoc_script: &pandoc_script
+  - PANDOC_VERSION=3.10
+  - apt-get update -qq && apt-get install -y --no-install-recommends curl ca-certificates
+  - curl -fsSL -o /tmp/pandoc.deb "https://github.com/jgm/pandoc/releases/download/${PANDOC_VERSION}/pandoc-${PANDOC_VERSION}-1-amd64.deb"
+  - (dpkg -i /tmp/pandoc.deb || apt-get install -f -y)
+  - pandoc --version | head -n1
+
 # ---------------------------------------------------------------------------
 # Stage: lint — the fast checks, run on every push and merge request
 # ---------------------------------------------------------------------------
@@ -75,7 +111,7 @@ lint:
     # {lintr} reads this and turns any lint into a non-zero exit.
     LINTR_ERROR_ON_LINT: "true"
   script:
-    - Rscript -e 'pak::pak(c("deps::.", "any::lintr"))'
+    - Rscript -e 'pak::pak("deps::.", dependencies = TRUE); pak::pak("any::lintr")'
     - Rscript -e 'lintr::lint_package()'
 
 readme:
@@ -86,8 +122,9 @@ readme:
   # here: the README's output is backend-independent, and the fallback path
   # keeps this job free of system deps.
   script:
-    - apt-get update -qq && apt-get install -y --no-install-recommends pandoc git
-    - Rscript -e 'pak::pak(c("deps::.", "any::devtools"))'
+    - apt-get update -qq && apt-get install -y --no-install-recommends git
+    - *pandoc_script
+    - Rscript -e 'pak::pak("deps::.", dependencies = TRUE); pak::pak("any::devtools")'
     - Rscript -e 'devtools::build_readme()'
     - |
       if ! git diff --exit-code -- README.md; then
@@ -164,17 +201,18 @@ check:
   # Install the optional libidn2 backend so the native path and the
   # libidn2-vs-fallback parity tests actually exercise on CI.
   script:
-    - apt-get update -qq && apt-get install -y --no-install-recommends libidn2-0-dev pkg-config pandoc qpdf ghostscript
-    - Rscript -e 'pak::pak(c("deps::.", "any::rcmdcheck"))'
+    - apt-get update -qq && apt-get install -y --no-install-recommends libidn2-0-dev pkg-config qpdf ghostscript
+    - *pandoc_script
+    - Rscript -e 'pak::pak("deps::.", dependencies = TRUE); pak::pak("any::rcmdcheck")'
     - >
       Rscript -e 'rcmdcheck::rcmdcheck(args = "--no-manual",
       build_args = c("--no-manual", "--compact-vignettes=gs+qpdf"),
-      error_on = "warning")'
+      error_on = "warning", check_dir = "check")'
   artifacts:
     when: always
     expire_in: 1 week
     paths:
-      - "*.Rcheck/"
+      - check/
 
 # Cross-platform coverage is the one thing leaving GitHub genuinely cost: this
 # project has no macOS or Windows runner any more. What replaces it, per
@@ -203,19 +241,20 @@ full-check:
           - "rocker/r-ver:4.5"
           - "rocker/r-ver:devel"
   script:
-    - apt-get update -qq && apt-get install -y --no-install-recommends libidn2-0-dev pkg-config pandoc qpdf ghostscript
-    - Rscript -e 'pak::pak(c("deps::.", "any::rcmdcheck"))'
+    - apt-get update -qq && apt-get install -y --no-install-recommends libidn2-0-dev pkg-config qpdf ghostscript
+    - *pandoc_script
+    - Rscript -e 'pak::pak("deps::.", dependencies = TRUE); pak::pak("any::rcmdcheck")'
     # The strict CRAN-grade pass: --as-cran. This is what CRAN itself runs, so
     # it is the gate before a release.
     - >
       Rscript -e 'rcmdcheck::rcmdcheck(args = c("--no-manual", "--as-cran"),
       build_args = c("--no-manual", "--compact-vignettes=gs+qpdf"),
-      error_on = "warning")'
+      error_on = "warning", check_dir = "check")'
   artifacts:
     when: always
     expire_in: 1 week
     paths:
-      - "*.Rcheck/"
+      - check/
 
 # Dynamic analysis of the C/C++ codec core, replacing rhub.yaml.
 #
@@ -246,13 +285,15 @@ sanitizers:
   script:
     - mkdir -p "$R_LIBS_USER"
     - Rscript -e 'if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak")'
-    - Rscript -e 'pak::pak("deps::.")'
+    - Rscript -e 'pak::pak("deps::.", dependencies = TRUE)'
     - R CMD build --no-build-vignettes --no-manual .
     - R CMD check --no-manual --no-build-vignettes punycoder_*.tar.gz
   artifacts:
     when: always
     expire_in: 1 week
     paths:
+      # R CMD check run directly writes punycoder.Rcheck/ into the working
+      # directory; the two rcmdcheck jobs redirect theirs to check/ instead.
       - "*.Rcheck/"
 
 # ---------------------------------------------------------------------------
@@ -271,7 +312,7 @@ coverage:
   # covr exercises the fallback backend; libidn2 is optional here, which keeps
   # this job free of system deps.
   script:
-    - Rscript -e 'pak::pak(c("deps::.", "any::covr", "any::xml2"))'
+    - Rscript -e 'pak::pak("deps::.", dependencies = TRUE); pak::pak(c("any::covr", "any::xml2"))'
     - >
       Rscript -e 'cov <- covr::package_coverage(quiet = FALSE);
       print(cov);
@@ -299,8 +340,9 @@ pages:
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   script:
-    - apt-get update -qq && apt-get install -y --no-install-recommends pandoc git
-    - Rscript -e 'pak::pak(c("deps::.", "any::pkgdown"))'
+    - apt-get update -qq && apt-get install -y --no-install-recommends git
+    - *pandoc_script
+    - Rscript -e 'pak::pak("deps::.", dependencies = TRUE); pak::pak("any::pkgdown")'
     - Rscript -e 'pkgdown::build_site(new_process = FALSE, install = TRUE)'
     - rm -rf public && mv docs public
   artifacts:
@@ -324,7 +366,7 @@ codemeta:
       when: manual
       allow_failure: true
   script:
-    - Rscript -e 'pak::pak(c("deps::.", "any::codemetar"))'
+    - Rscript -e 'pak::pak("deps::.", dependencies = TRUE); pak::pak("any::codemetar")'
     - Rscript -e 'codemetar::write_codemeta(".")'
     - git --no-pager diff -- codemeta.json || true
   artifacts:
@@ -371,7 +413,7 @@ osv-audit:
         - tests/testthat/test-osv.R
         - .gitlab-ci.yml
   script:
-    - Rscript -e 'pak::pak(c("deps::.", "any::rosv", "any::testthat", "local::."))'
+    - Rscript -e 'pak::pak("deps::.", dependencies = TRUE); pak::pak(c("any::rosv", "any::testthat", "local::."))'
     - Rscript -e 'testthat::test_local(filter = "osv", stop_on_failure = TRUE)'
 
 # Dependency vulnerability audit against the Sonatype OSS Index via {oysteR}.
@@ -397,5 +439,5 @@ security-audit:
         - tests/testthat/test-security.R
         - .gitlab-ci.yml
   script:
-    - Rscript -e 'pak::pak(c("deps::.", "any::oysteR", "any::testthat", "local::."))'
+    - Rscript -e 'pak::pak("deps::.", dependencies = TRUE); pak::pak(c("any::oysteR", "any::testthat", "local::."))'
     - Rscript -e 'testthat::test_local(filter = "security", stop_on_failure = TRUE)'

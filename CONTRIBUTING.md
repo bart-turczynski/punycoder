@@ -66,8 +66,22 @@ the same five checks, under the same names, that `verify.yml` and
 | `codemeta` | manual, artifact-only (see below) |
 | `osv-audit`, `security-audit` | weekly pipeline schedule; manual; and on `main` when their inputs change |
 
-Three things about it are non-obvious enough to be worth stating:
+Four things about it are non-obvious enough to be worth stating:
 
+- **Pandoc is pinned, and the pin is load-bearing.** The `readme` job asserts
+  that `README.md` is byte-identical to a fresh knit of `README.Rmd`, and
+  pandoc's markdown writer changes table layout between versions — Ubuntu's
+  apt pandoc rewrites every pipe table column-padded, so the job fails on
+  whitespace and reports "out of sync" for a reason unrelated to the content.
+  CI installs pandoc **3.10**, which is what reproduces the committed
+  `README.md` byte for byte. **Keep your local pandoc on the same version**, or
+  your `devtools::build_readme()` will produce a diff CI rejects (and vice
+  versa). Bumping the pin means re-knitting `README.md` in the same change.
+
+- **`dependencies = TRUE` on the `deps::.` ref is not optional.** Without it
+  pak resolves hard dependencies only, and `R CMD build` dies with "vignette
+  builder 'knitr' not found" — knitr and testthat are `Suggests`, which the
+  old `needs: check` in the r-lib actions pulled in implicitly.
 - **`NOT_CRAN` is never set globally.** `test-osv.R` and `test-security.R` call
   `skip_on_cran()`, so setting it package-wide would un-skip them inside
   `R CMD check`, where their network access and credentials are absent. Only
