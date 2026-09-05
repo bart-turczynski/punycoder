@@ -14,8 +14,6 @@ authoritative and `fp context <id>` remains the way to read an issue.
 
 ```
 
-PUNY-suwpnmtk [in-progress] [medium] dev/tracker-snapshot.md is a month stale because the refresh trigger is attached to taking a backup, not to closing an issue
-
 PUNY-eqttmcuc [todo] [low] Retire the Claude auto-memory store: promote what is durable, delete the rest
 
 PUNY-dopcsyjw [todo] [low] Port rurl's verify-on-push mirror predicate: the archival push is guarded by an AGENTS.md sentence instead of by the hook
@@ -73,6 +71,8 @@ PUNY-thyalpud [done] [medium] Skip redundant per-label NFC in validate_label (~2
 PUNY-ktcaptds [done] [medium] Build hygiene: devtools -O0 objects contaminate R CMD INSTALL; perf tests can't catch it
 
 PUNY-wqmwuvtt [done] [medium] Bound print.punycoder_validation output; surface error_codes; add summary() method
+
+PUNY-suwpnmtk [done] [medium] dev/tracker-snapshot.md is a month stale because the refresh trigger is attached to taking a backup, not to closing an issue
 
 PUNY-urifwrpn [done] [low] strict conflates structural validation with DNS length limits
 
@@ -2973,7 +2973,7 @@ Fixed in #65 (commit e3aa875). punycode_decode_label_fallback now rejects an emp
 
 ## PUNY-suwpnmtk: dev/tracker-snapshot.md is a month stale because the refresh trigger is attached to taking a backup, not to closing an issue
 
-**Status:** in-progress
+**Status:** done
 
 ### Description
 
@@ -3046,6 +3046,37 @@ is the only tracker reasoning any clone has ever contained.
 NEGATIVE RESULT worth recording so nobody re-derives it: the sibling repo pslr does NOT currently have punycoder's fixer-ownership problem (the class PUNY-tacfinef and PUNY-jzxomoqq closed). Measured at pslr HEAD 3501440 with the same scratch-copy method -- git archive HEAD into a temp dir, git init + commit, pre-commit run --all-files there: all 9 hooks Passed, nothing rewritten.
 
 pslr's config is nonetheless the same shape as punycoder's was -- end-of-file-fixer, trailing-whitespace and mixed-line-ending each excluding only '^inst/extdata/' -- and its README.md IS knitted from README.Rmd ('README.md is generated from README.Rmd. Please edit that file'). So the hazard is latent by construction there: it starts the moment a knitted chunk prints a trailing space, which is exactly how it started here. Filed nowhere, because filing a bug pslr does not have would be false; recorded here so the next person checking gets the measurement rather than the guess.
+
+#### 2026-09-05 — bartek@turczynski.pl
+
+Done at main 3577107, MR !4, two commits merged verbatim: `0c81c2d` (regenerate) and `9a79b6c` (move the trigger).
+
+### Done-when, both boxes
+
+**Regenerated so every commit-cited id resolves.** 69 issues -> 75; the six added stanzas are PUNY-ahtemhwv, PUNY-dopcsyjw, PUNY-eqttmcuc, PUNY-jzxomoqq, PUNY-suwpnmtk, PUNY-tacfinef. Measured rather than assumed, by matching every id in the log against the file:
+
+- 51 distinct PUNY ids are cited across all commit messages. Against the committed snapshot 3 resolved nowhere; against the regenerated one, 0.
+- 14 distinct ids are cited in tracked files other than the snapshot itself (AGENTS.md, DECISIONS.md, the test suite, data-raw/). All 14 resolve. Measured with the snapshot excluded from the source of ids -- including it makes the check self-satisfying and proves nothing.
+
+**Correction to this issue's own measurement:** it named two missing ids (PUNY-tacfinef, PUNY-jzxomoqq). There were three. **PUNY-ahtemhwv** -- the GitHub-to-GitLab identity move, cited by `4c58ba9` -- was also unresolvable, and it is the one whose reasoning the repo leans on hardest, since it is why the CRAN NOTE about the GitLab 404 must not be "fixed". The issue looked only at ids filed after the snapshot date; matching the whole log finds the older one too.
+
+### Option chosen: 1 (refresh on close), as recommended
+
+Written into AGENTS.md, replacing nothing -- the backup/bundle trigger stays as the backstop it always was.
+
+Option 2 (regenerate in the pre-push gate, fail on a non-empty `git diff --exit-code dev/tracker-snapshot.md`) is the mechanical one and would actually be enforced, but it couples every push to `fp` being installed and to this machine's DB being authoritative, and one observed failure of the *old* trigger is not evidence the cheap fix fails. So the escalation condition is recorded in AGENTS.md rather than left in this issue: **if the snapshot goes stale a second time, take option 2.** That is the whole point of writing it there -- an escalation rule that lives only in a closed issue is as unenforced as the convention it guards.
+
+Option 3 (drop the currency claim) buys nothing: the generated header already stamps its own date.
+
+### One-run lag, named rather than papered over
+
+Refresh-on-close cannot capture its own closure -- this comment lands after the refresh that made `PUNY-suwpnmtk` resolvable. AGENTS.md now says so outright: regenerating just before the closing commit is what a history-only reader needs (the cited id resolves), and the final status flip plus the closing comment are picked up by the next refresh. Claiming the file is exactly current would be the same "looks current" failure this issue is about.
+
+### Verification
+
+`pre-commit run --files` clean on both changed files, and the hooks left them untouched -- the snapshot script already strips trailing whitespace and collapses its own trailing blank lines for exactly this reason. Pre-push gate: 0 errors, 0 warnings. Note it reported **0 notes rather than the usual 1**: the CRAN incoming-feasibility check aborted on a 60s network timeout fetching `archive.rds`, so the GitLab `/-/issues` 404 NOTE was not reached this run. That is a network condition, not the NOTE being resolved -- do not read it as the 404 having gone away.
+
+Next: the `backup` mirror push, which this issue gated, with one more refresh in front of it so the copy carries this closure.
 
 
 
