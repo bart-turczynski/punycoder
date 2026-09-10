@@ -190,6 +190,14 @@
 
 ## Internal
 
+* The OSS Index dependency audit in `tests/testthat/test-security.R` scopes to
+  hard dependencies (`Depends` + `Imports`) instead of the `Suggests` tree.
+  `oysteR::expect_secure()` audits `Suggests` too, which pulled in oysteR's own
+  recursive dependencies --- `curl` among them --- and failed the pre-push gate
+  on a vulnerability in the auditor rather than in anything punycoder ships.
+  Scoped to hard dependencies the audit covers 3 packages and is clean; the old
+  scope covered 78 (PUNY-vymqxjnf).
+
 * **CI, community-health templates and the documentation host followed the move
   to GitLab.** The eight GitHub Actions workflows in `.github/` could not run at
   all --- the account that executed them is suspended --- so `.github/` is gone
