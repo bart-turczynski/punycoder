@@ -16,7 +16,7 @@ url: "https://gitlab.com/bart-turczynski/punycoder"
 repository: "https://CRAN.R-project.org/package=punycoder"
 license: MIT
 version: 1.2.1
-date-released: "2026-06-27"
+date-released: "2026-07-19"
 doi: 10.5281/zenodo.20973629
 identifiers:
   - type: doi
