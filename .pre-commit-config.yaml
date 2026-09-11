@@ -47,6 +47,17 @@ repos:
       - id: check-case-conflict
   - repo: local
     hooks:
+      # CITATION.cff's version: and .zenodo.json's "version" must name the
+      # release DESCRIPTION's Version: points at (X.Y.Z.9000 -> X.Y.Z). Rule:
+      # seor's design/adr/0001-citation-metadata-names-the-release.md. Offline,
+      # stdlib-only, so it runs in seconds without the R toolchain.
+      - id: check-citation
+        name: citation metadata vs DESCRIPTION
+        entry: python3 scripts/check-citation.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
       # Mirrors the CI verify gate: lintr then R CMD check --as-cran, failing on
       # any WARNING. Runs on push (not per commit) since a full check is slow.
       - id: verify

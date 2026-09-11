@@ -17,8 +17,9 @@
 #   security-audit.yml -> security-audit
 #   rhub.yaml          -> sanitizers (R-hub's containers, run directly)
 #
-# The merge gate is `lint` + `readme` + `news-version` + `check` + `coverage`.
-# Everything else is manual, tag-triggered, or scheduled.
+# The merge gate is `lint` + `readme` + `news-version` + `citation-version` +
+# `check` + `coverage`. Everything else is manual, tag-triggered, or
+# scheduled.
 
 stages:
   - lint
@@ -189,6 +190,22 @@ news-version:
       fi
 
       exit "$status"
+
+# CITATION.cff and .zenodo.json each duplicate the version and the project
+# URLs out of DESCRIPTION. Measured 2026-09-11, punycoder's CITATION.cff named
+# a stale released version (1.2.0) after 1.2.1 shipped, the same class of drift
+# as the release-paperwork check above but for a file that check does not
+# touch. The rule is seor's
+# design/adr/0001-citation-metadata-names-the-release.md: version: and
+# "version" carry the release DESCRIPTION's Version: names (X.Y.Z.9000 ->
+# X.Y.Z). Offline, stdlib-only Python, so it runs in seconds without the R
+# image - same shape as news-version above.
+citation-version:
+  stage: lint
+  image: python:3.13-alpine
+  script:
+    - python3 scripts/check-citation.py --self-test
+    - python3 scripts/check-citation.py
 
 # ---------------------------------------------------------------------------
 # Stage: check
