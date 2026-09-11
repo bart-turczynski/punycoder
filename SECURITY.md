@@ -21,7 +21,7 @@ like to be credited.
 
 If you would rather use the tracker, open a **confidential issue** on GitLab:
 
-1. Go to <https://gitlab.com/bart-turczynski/punycoder/-/issues/new>.
+1. Go to <https://gitlab.com/bart-turczynski/punycoder/-/work_items/new>.
 2. Tick **This issue is confidential** before submitting.
 
 A confidential issue is visible only to the project maintainers, not to other
