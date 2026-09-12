@@ -237,7 +237,7 @@ domains_df <- data.frame(
 
 - Explore the function documentation: `help(package = "punycoder")`
 - Check out the test suite for more examples
-- Report issues at: https://gitlab.com/bart-turczynski/punycoder/-/work_items
+- Report issues at: https://gitlab.com/bart-turczynski/punycoder/-/issues
 
 ## Technical Details
 

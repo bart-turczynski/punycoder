@@ -60,28 +60,28 @@
   "release_notes_vulns_justification": "No publicly known vulnerabilities have been fixed to date; NEWS.md records all changes: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/NEWS.md",
 
   "report_url_status": "Met",
-  "report_url_justification": "Bug tracker: https://gitlab.com/bart-turczynski/punycoder/-/work_items",
+  "report_url_justification": "Bug tracker: https://gitlab.com/bart-turczynski/punycoder/-/issues",
 
   "report_tracker_status": "Met",
-  "report_tracker_justification": "GitLab Issues serve as the bug tracker: https://gitlab.com/bart-turczynski/punycoder/-/work_items",
+  "report_tracker_justification": "GitLab Issues serve as the bug tracker: https://gitlab.com/bart-turczynski/punycoder/-/issues",
 
   "report_process_status": "Met",
-  "report_process_justification": "Users submit bug reports through the GitLab issue tracker, which offers a Bug issue template (.gitlab/issue_templates/Bug.md): https://gitlab.com/bart-turczynski/punycoder/-/work_items",
+  "report_process_justification": "Users submit bug reports through the GitLab issue tracker, which offers a Bug issue template (.gitlab/issue_templates/Bug.md): https://gitlab.com/bart-turczynski/punycoder/-/issues",
 
   "report_responses_status": "Met",
-  "report_responses_justification": "Maintainer responds to issue reports on the tracker: https://gitlab.com/bart-turczynski/punycoder/-/work_items",
+  "report_responses_justification": "Maintainer responds to issue reports on the tracker: https://gitlab.com/bart-turczynski/punycoder/-/issues",
 
   "enhancement_responses_status": "Met",
-  "enhancement_responses_justification": "Maintainer responds to enhancement requests on the tracker, which offers a Feature issue template (.gitlab/issue_templates/Feature.md): https://gitlab.com/bart-turczynski/punycoder/-/work_items",
+  "enhancement_responses_justification": "Maintainer responds to enhancement requests on the tracker, which offers a Feature issue template (.gitlab/issue_templates/Feature.md): https://gitlab.com/bart-turczynski/punycoder/-/issues",
 
   "report_archive_status": "Met",
-  "report_archive_justification": "GitLab Issues provide a publicly available, searchable archive of reports and responses: https://gitlab.com/bart-turczynski/punycoder/-/work_items/?state=all",
+  "report_archive_justification": "GitLab Issues provide a publicly available, searchable archive of reports and responses: https://gitlab.com/bart-turczynski/punycoder/-/issues/?state=all",
 
   "vulnerability_report_process_status": "Met",
   "vulnerability_report_process_justification": "The vulnerability-reporting process is published in the security policy: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/SECURITY.md . Reports go to the maintainer by email, with a confidential GitLab issue as a documented alternative.",
 
   "vulnerability_report_private_status": "Met",
-  "vulnerability_report_private_justification": "Two confidential channels are documented in SECURITY.md: email to the maintainer, and a GitLab confidential issue (tick 'This issue is confidential' at https://gitlab.com/bart-turczynski/punycoder/-/work_items/new ), which is visible only to project maintainers. GitHub private vulnerability reporting no longer applies -- the project is not hosted on GitHub.",
+  "vulnerability_report_private_justification": "Two confidential channels are documented in SECURITY.md: email to the maintainer, and a GitLab confidential issue (tick 'This issue is confidential' at https://gitlab.com/bart-turczynski/punycoder/-/issues/new ), which is visible only to project maintainers. GitHub private vulnerability reporting no longer applies -- the project is not hosted on GitHub.",
 
   "vulnerability_report_response_status": "Met",
   "vulnerability_report_response_justification": "SECURITY.md commits to acknowledging reports within 7 days and coordinating a fix and disclosure: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/SECURITY.md",
@@ -162,7 +162,7 @@
   "delivery_unsigned_justification": "All distribution downloads are served over HTTPS (CRAN and GitLab): https://CRAN.R-project.org/package=punycoder",
 
   "vulnerabilities_fixed_60_days_status": "Met",
-  "vulnerabilities_fixed_60_days_justification": "No outstanding known vulnerabilities; tracker at https://gitlab.com/bart-turczynski/punycoder/-/work_items",
+  "vulnerabilities_fixed_60_days_justification": "No outstanding known vulnerabilities; tracker at https://gitlab.com/bart-turczynski/punycoder/-/issues",
 
   "vulnerabilities_critical_fixed_status": "Met",
   "vulnerabilities_critical_fixed_justification": "No known unfixed critical vulnerabilities.",
@@ -195,7 +195,7 @@
   "test_continuous_integration_justification": "GitLab CI/CD runs lint + README-sync + NEWS/version + R CMD check + coverage on every push to main and every merge request: https://gitlab.com/bart-turczynski/punycoder/-/pipelines (configuration: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml )",
 
   "discussion_status": "Met",
-  "discussion_justification": "GitLab Issues provide a public forum for project discussion: https://gitlab.com/bart-turczynski/punycoder/-/work_items",
+  "discussion_justification": "GitLab Issues provide a public forum for project discussion: https://gitlab.com/bart-turczynski/punycoder/-/issues",
 
   "no_leaked_credentials_status": "Met",
   "no_leaked_credentials_justification": "No credentials are committed to the repository; Socket and FOSSA scan the repo: https://gitlab.com/bart-turczynski/punycoder",
