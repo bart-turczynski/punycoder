@@ -84,6 +84,10 @@
 
 ## Bug fixes
 
+* `BugReports:` points at the GitLab tracker's `/-/issues` path, the form
+  CRAN's incoming check requires (a browser is redirected to `/-/work_items`)
+  (PUNY-yomemdzz).
+
 * `puny_decode()` now rejects malformed A-label input consistently across
   backends. The in-tree fallback decoder previously accepted non
   letter-digit-hyphen (LDH) characters in a label's literal section (e.g.
