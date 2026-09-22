@@ -54,15 +54,29 @@ gate there.
 All CI lives in a single `.gitlab-ci.yml`. It replaced eight GitHub Actions
 workflows when the project went GitLab-only; `.github/` no longer exists.
 
-The **merge gate** is `lint`, `readme`, `news-version`, `check`, `coverage` —
-the same five checks, under the same names, that `verify.yml` and
-`news-version.yaml` used to run. Everything else is opt-in:
+The **gate** is `lint`, `readme`, `news-version`, `check`, `coverage` — the
+same five checks, under the same names, that `verify.yml` and
+`news-version.yaml` used to run.
+
+Read "gate" carefully: **it does not run on your merge request.** A top-level
+`workflow:` block admits only a tag, a push to `main`, or a pipeline a human
+started by hand, so a feature-branch push and its merge request both create
+*no pipeline at all* — not a red one, none (SEOR-bmgkzhvy). A clean pipeline
+list on a branch is therefore not a passing result. What actually gates a
+merge is `main` being protected plus the `pre-commit` pre-push hook, which
+runs the same chain locally before the branch leaves your machine.
+
+To get a server-side answer on a branch before merging it, start a pipeline
+yourself at **Build > Pipelines > Run pipeline** and pick the ref. The five
+gate jobs run there, and `full-check` and `sanitizers` become one click away.
+
+Everything else is opt-in:
 
 | Job | When |
 | --- | --- |
-| `full-check` | release tags `v*`; manual from a web-triggered pipeline |
+| `full-check` | release tags `v*`; manual from a hand-started pipeline, on any ref |
 | `sanitizers` | manual — R-hub's clang-ASAN/UBSAN and valgrind containers |
-| `pages` | every push to `main` — builds pkgdown, publishes to GitLab Pages |
+| `pages` | every push to `main` — builds pkgdown, publishes to GitLab Pages. Pinned to `main`: a hand-started branch pipeline cannot reach it |
 | `codemeta` | manual, artifact-only (see below) |
 | `osv-audit`, `security-audit` | weekly pipeline schedule; manual; and on `main` when their inputs change |
 

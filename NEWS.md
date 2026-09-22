@@ -216,10 +216,14 @@
   so they held the runner's only slot while the pipeline that actually gates
   the work queued behind them --- measured once holding the runner for 36+
   minutes on an already-merged MR. Both are now suppressed outright; only a
-  push to `main` or a tag creates a pipeline. Feature-branch pushes get no CI
-  at all, which is the intent, not a regression: `main` is a protected branch
-  so nothing merges without going through it, and no project in the fleet has
-  ever gated a merge on pipeline success (SEOR-bmgkzhvy).
+  push to `main`, a tag, or a pipeline started by hand creates one.
+  Feature-branch pushes get no CI at all, which is the intent, not a
+  regression: `main` is a protected branch so nothing merges without going
+  through it, and no project in the fleet has ever gated a merge on pipeline
+  success. Starting a pipeline by hand from Build > Pipelines > Run pipeline
+  still works against any ref and runs the full gate there --- `full-check`
+  and `sanitizers` included, one click away --- so a branch can still be
+  verified before it merges; only `pages` is pinned to `main` (SEOR-bmgkzhvy).
 
 * **CI installs the pandoc `.deb` for the architecture the runner reports
   rather than a hardcoded `amd64` one.** The `.pandoc_script` anchor, spliced
