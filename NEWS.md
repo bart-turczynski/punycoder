@@ -208,6 +208,11 @@
 
 ## Internal
 
+* The pkgdown site no longer publishes the repository's agent instruction
+  files. pkgdown renders every top-level `.md`, so `AGENTS.html` and
+  `CLAUDE.html` were being served next to the function reference; the `pages`
+  job now strips them with a glob before `build_site` (SEOR-pibdjanz).
+
 * **CI now creates exactly one pipeline per merge, on `main`, instead of
   three.** The `workflow:` block used to allow both merge-request and branch
   pipelines (suppressing the branch one only when an MR was already open).

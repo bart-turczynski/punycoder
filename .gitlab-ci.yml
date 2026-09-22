@@ -402,6 +402,20 @@ pages:
     - apt-get update -qq && apt-get install -y --no-install-recommends git
     - *pandoc_script
     - Rscript -e 'pak::pak("deps::.", dependencies = TRUE); pak::pak("any::pkgdown")'
+    # pkgdown renders EVERY top-level .md into the site, so the agent
+    # instruction files were being published as AGENTS.html, CLAUDE.html and
+    # friends next to the reference -- internal working notes served as if
+    # they were user documentation, and indexable (SEOR-pibdjanz).
+    #
+    # Globbed on purpose, not spelled out file by file. The leak reached
+    # four repos AFTER being fixed in one, because the exact names differ
+    # per repo and the explicit list was copied rather than re-derived.
+    # These three patterns cover every agent file in the fleet today and a
+    # future AGENTS_SOMETHING.md or FP_WHATEVER.md without a second round
+    # of this. `rm -f` so a pattern that matches nothing is a no-op: the
+    # set of files present differs per repo, and some are gitignored and
+    # never reach the runner at all.
+    - 'rm -f AGENTS*.md CLAUDE*.md FP_*.md'
     - Rscript -e 'pkgdown::build_site(new_process = FALSE, install = TRUE)'
     - rm -rf public && mv docs public
   artifacts:

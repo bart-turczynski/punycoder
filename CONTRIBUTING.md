@@ -76,11 +76,13 @@ Everything else is opt-in:
 | --- | --- |
 | `full-check` | release tags `v*`; manual from a hand-started pipeline, on any ref |
 | `sanitizers` | manual — R-hub's clang-ASAN/UBSAN and valgrind containers |
-| `pages` | every push to `main` — builds pkgdown, publishes to GitLab Pages. Pinned to `main`: a hand-started branch pipeline cannot reach it |
+| `pages` | every push to `main` — builds pkgdown, publishes to GitLab Pages. Pinned to `main`: a hand-started branch pipeline cannot reach it. Strips agent instruction files first, see below |
 | `codemeta` | manual, artifact-only (see below) |
 | `osv-audit`, `security-audit` | weekly pipeline schedule; manual; and on `main` when their inputs change |
 
-Four things about it are non-obvious enough to be worth stating:
+Five things about it are non-obvious enough to be worth stating:
+
+- **The `pages` job deletes files before it builds.** It strips the agent instruction files first — pkgdown renders every top-level `.md`, so `AGENTS.md`, `CLAUDE.md` and the `FP_*.md` files were being published next to the function reference as `AGENTS.html`, `CLAUDE.html` and friends: internal working notes served as if they were user documentation (SEOR-pibdjanz). The job removes them with a glob, `rm -f AGENTS*.md CLAUDE*.md FP_*.md`, immediately before `build_site`, so a file later added under one of those names is covered without another round of this. Add an agent file that does **not** match those patterns and you must extend the glob in the same commit.
 
 - **Pandoc is pinned, and the pin is load-bearing.** The `readme` job asserts
   that `README.md` is byte-identical to a fresh knit of `README.Rmd`, and
