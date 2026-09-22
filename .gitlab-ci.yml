@@ -43,16 +43,24 @@ workflow:
     # (plus tags) gets a pipeline.
     #
     # Cost, stated plainly: a feature-branch push gets no CI at all -- that is
-    # the point, not an oversight. A web- or API-triggered pipeline on a
-    # non-default branch also gets nothing, because $CI_COMMIT_BRANCH is set
-    # but isn't $CI_DEFAULT_BRANCH, so it falls through to the last rule. The
-    # manual `if: $CI_PIPELINE_SOURCE == "web"` jobs below (full-check,
-    # sanitizers, codemeta, osv-audit, security-audit) are therefore only
-    # reachable by running the pipeline against main.
+    # the point, not an oversight. An API-triggered pipeline on a non-default
+    # branch also gets nothing, because $CI_COMMIT_BRANCH is set but isn't
+    # $CI_DEFAULT_BRANCH, so it falls through to the last rule.
+    #
+    # A `web` pipeline is the deliberate exception, and it is what makes the
+    # cost above bearable: someone has to open Build > Pipelines > Run
+    # pipeline and choose a ref, so it cannot fire on its own and cannot
+    # recreate the pile-up above, which was entirely push- and
+    # merge-request-driven. Started against a feature branch it runs the whole
+    # merge gate on that branch, and puts full-check and sanitizers one click
+    # away -- which is exactly what one wants to run BEFORE merging, not
+    # after. `pages` stays pinned to the default branch, so the hatch verifies
+    # a branch and never publishes one.
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
     - if: $CI_COMMIT_TAG
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "web"
     - when: never
 
 # ---------------------------------------------------------------------------
