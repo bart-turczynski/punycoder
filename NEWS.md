@@ -84,15 +84,19 @@
 
 ## Bug fixes
 
-* `BugReports:` and the other declared tracker links now point at the GitLab
+* The tracker links a reader clicks --- in `codemeta.json`, `SECURITY.md`,
+  `.bestpractices.json` and the intro vignette --- now point at the GitLab
   tracker's `work_items` path. The path they used before returns 404 across
   gitlab.com since GitLab moved issues platform-wide, so the address shipped in
-  package metadata no longer resolved. The same repoint was applied to
-  `codemeta.json`, `SECURITY.md`, `.bestpractices.json` and the intro vignette.
-  CRAN's incoming check still emits a NOTE suggesting the old form; it is a
-  string test on the path that never fetches, and the suggested address does not
-  resolve either, so the NOTE is expected and deliberately not acted on
-  (PUNY-uixamcbp).
+  those files no longer resolved for an anonymous reader. `DESCRIPTION`'s
+  `BugReports:` is deliberately **not** repointed and keeps naming
+  `https://gitlab.com/bart-turczynski/punycoder/-/issues` (see the next entry):
+  CRAN's incoming check accepts a gitlab.com `BugReports:` only when the path
+  ends in `/-/issues`, and the NOTE it emits otherwise archived a sibling
+  package at the pretest. That check reads `DESCRIPTION` alone, so the two
+  audiences are served independently; the URL check's 404 on the `/-/issues`
+  address is expected and is explained in `cran-comments.md`
+  (PUNY-uixamcbp, PUNY-fxwavtvu).
 
 * `BugReports:` points at the GitLab tracker's `/-/issues` path, the form
   CRAN's incoming check requires (a browser is redirected to `/-/work_items`)
