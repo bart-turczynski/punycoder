@@ -18,6 +18,44 @@ The incoming-feasibility NOTE flags three things:
   parsers). These are valid technical terms from the IDN/URL domain, not
   misspellings.
 
+## A note on the `BugReports` URL
+
+The repository moved from GitHub to GitLab after the 1.2.1 submission the
+results above describe, so that run never saw this; the next one will. An
+automated URL check reports the declared `BugReports:` address
+(`https://gitlab.com/bart-turczynski/punycoder/-/issues`) as **404**:
+
+    Found the following (possibly) invalid URLs:
+      URL: https://gitlab.com/bart-turczynski/punycoder/-/issues
+        From: DESCRIPTION
+              man/punycoder-package.Rd
+        Status: 404
+        Message: Not Found
+
+This is a gitlab.com behavior, not a broken link: GitLab has migrated issues to
+work items and answers `/-/issues` with 404 to any signed-out, non-browser
+client, on every project on the site. The same request against
+`https://gitlab.com/gitlab-org/gitlab/-/issues` -- one of the most public
+trackers there -- returns 404 identically. A browser is redirected to
+`/-/work_items`, which is why the page loads normally by hand. The address is
+correct and is the one users need; it is not dropped.
+
+**The field names `/-/issues` deliberately, and will keep naming it.** R's own
+incoming check accepts a `github.com` or `gitlab.com` `BugReports:` only when
+its path matches `/issues(/new)?/?$`, and NOTEs anything else, recommending
+that form in its place. The sibling package 'pslr' declared `/-/work_items` on
+its first 1.2.1 upload and was archived at the incoming pretest on 2026-09-12
+for precisely that NOTE; resubmitted with `/-/issues`, it was accepted, as
+'rurl' 3.0.1 and 'raddr' 0.1.2 are on CRAN carrying the same explained 404. The
+`/-/work_items/issues` form satisfies the regex but resolves 403, so it is not
+a third option. No gitlab.com address clears both checks, and the two do not
+cost the same: this one trades an explained NOTE for an archived submission.
+
+The metadata a reader clicks -- `codemeta.json`, `SECURITY.md`, the intro
+vignette -- names `/-/work_items`, which returns 200. `BugReports:` is the only
+field the incoming check inspects, so the two can differ at no risk to the
+submission.
+
 ## Changes in this version
 
 This is a feature release (1.1.0 -> 1.2.1) for the UTS #46 host-normalization
