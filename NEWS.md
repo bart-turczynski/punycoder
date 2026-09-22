@@ -84,6 +84,16 @@
 
 ## Bug fixes
 
+* `BugReports:` and the other declared tracker links now point at the GitLab
+  tracker's `work_items` path. The path they used before returns 404 across
+  gitlab.com since GitLab moved issues platform-wide, so the address shipped in
+  package metadata no longer resolved. The same repoint was applied to
+  `codemeta.json`, `SECURITY.md`, `.bestpractices.json` and the intro vignette.
+  CRAN's incoming check still emits a NOTE suggesting the old form; it is a
+  string test on the path that never fetches, and the suggested address does not
+  resolve either, so the NOTE is expected and deliberately not acted on
+  (PUNY-uixamcbp).
+
 * `BugReports:` points at the GitLab tracker's `/-/issues` path, the form
   CRAN's incoming check requires (a browser is redirected to `/-/work_items`)
   (PUNY-yomemdzz).

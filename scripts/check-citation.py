@@ -32,9 +32,11 @@ WHAT IT CHECKS.
 
 WHAT IT DOES NOT CHECK, ON PURPOSE.
 
-* `codemeta.json` carries the same stale URL and is deliberately left alone:
-  it is generated, it is known stale, and regenerating it while `Remotes:` is
-  still in `DESCRIPTION` would make it worse (SEOR-tzxuisnf).
+* `codemeta.json` is out of scope: it is generated rather than authored, so a
+  drift gate over it would be asserting facts about a generator's output. Its
+  `issueTracker` was repointed to `/-/work_items` alongside `DESCRIPTION`'s
+  `BugReports:` under PUNY-uixamcbp and the two agree today; keeping them in
+  step is a regeneration concern, not something this check enforces.
 * Nothing here touches the network. Whether a declared URL resolves is a fact
   about the rest of the world; `R CMD check --as-cran` already fetches declared
   URLs, and wiring a network call into a pre-push gate makes every push fail on

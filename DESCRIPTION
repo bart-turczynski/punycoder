@@ -24,7 +24,7 @@ SystemRequirements: GNU libidn2 (optional, for native punycode backend)
 License: MIT + file LICENSE
 URL: https://gitlab.com/bart-turczynski/punycoder,
     https://CRAN.R-project.org/package=punycoder
-BugReports: https://gitlab.com/bart-turczynski/punycoder/-/issues
+BugReports: https://gitlab.com/bart-turczynski/punycoder/-/work_items
 Encoding: UTF-8
 Language: en-US
 Suggests: testthat (>= 3.0.0), knitr, rmarkdown, oysteR, rosv
