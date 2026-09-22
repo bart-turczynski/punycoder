@@ -30,12 +30,30 @@ stages:
 
 workflow:
   rules:
-    # Merge-request pipelines, plus branch/tag pipelines — but never both for
-    # the same commit, which is what the middle rule suppresses.
+    # One pipeline per merge, not three (SEOR-bmgkzhvy). This used to allow
+    # both merge-request and branch pipelines (suppressing the branch one only
+    # when an MR was already open, GitLab's standard duplicate-pipeline
+    # guard). That guard turned out not to be enough: on a concurrency-1
+    # shared runner the branch and MR pipelines test the same tree as the
+    # pipeline that eventually runs on main, and the useless ones get created
+    # first -- so they hold the runner's only slot while the pipeline that
+    # actually gates the work queues behind them. Measured repeatedly: a
+    # merged, branch-deleted MR's own pipeline held the runner for 36+ minutes
+    # while main sat pending. So both are suppressed outright and only main
+    # (plus tags) gets a pipeline.
+    #
+    # Cost, stated plainly: a feature-branch push gets no CI at all -- that is
+    # the point, not an oversight. A web- or API-triggered pipeline on a
+    # non-default branch also gets nothing, because $CI_COMMIT_BRANCH is set
+    # but isn't $CI_DEFAULT_BRANCH, so it falls through to the last rule. The
+    # manual `if: $CI_PIPELINE_SOURCE == "web"` jobs below (full-check,
+    # sanitizers, codemeta, osv-audit, security-audit) are therefore only
+    # reachable by running the pipeline against main.
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
       when: never
-    - if: $CI_COMMIT_BRANCH || $CI_COMMIT_TAG
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - when: never
 
 # ---------------------------------------------------------------------------
 # Shared R setup

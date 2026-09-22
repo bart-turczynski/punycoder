@@ -208,6 +208,19 @@
 
 ## Internal
 
+* **CI now creates exactly one pipeline per merge, on `main`, instead of
+  three.** The `workflow:` block used to allow both merge-request and branch
+  pipelines (suppressing the branch one only when an MR was already open).
+  On the fleet's concurrency-1 shared runner, the branch and MR pipelines
+  test the same tree as the eventual `main` pipeline and get created first,
+  so they held the runner's only slot while the pipeline that actually gates
+  the work queued behind them --- measured once holding the runner for 36+
+  minutes on an already-merged MR. Both are now suppressed outright; only a
+  push to `main` or a tag creates a pipeline. Feature-branch pushes get no CI
+  at all, which is the intent, not a regression: `main` is a protected branch
+  so nothing merges without going through it, and no project in the fleet has
+  ever gated a merge on pipeline success (SEOR-bmgkzhvy).
+
 * **CI installs the pandoc `.deb` for the architecture the runner reports
   rather than a hardcoded `amd64` one.** The `.pandoc_script` anchor, spliced
   by four jobs, asked for `pandoc-3.10-1-amd64.deb`; on the project's own
