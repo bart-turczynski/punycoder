@@ -94,11 +94,27 @@ workflow:
 # construct GitLab's custom `!reference` tag, so using it makes every commit
 # fail on an unresolvable constructor. GitLab flattens a nested array in
 # `script`, so an anchor splices in exactly the same way.
+#
+# The ARCHITECTURE is derived, never asserted. pandoc ships one .deb per
+# architecture (3.10 publishes both amd64 and arm64) and `dpkg -i` refuses a
+# package built for another one, so a hardcoded `-amd64` takes out every job
+# that splices this anchor the moment the runner is not x86_64 -- which is what
+# happened the first time this pipeline ran on the project's own runner, a
+# local gitlab-runner on Apple Silicon where Docker resolves rocker/r-ver to
+# arm64. `dpkg --print-architecture` spells the value exactly as pandoc names
+# its assets. It is command substitution rather than a variable on purpose:
+# GitLab expands $VAR itself before the shell ever runs, but leaves $( ) alone,
+# so this is evaluated in the container it has to describe.
+#
+# `dpkg -i` is bare, with no `|| apt-get install -f -y` fallback: the .deb is a
+# self-contained binary with nothing to fix up, and the fallback only swallowed
+# dpkg's exit status so the job died 200 lines later at `pandoc: command not
+# found` instead of at the install that actually failed.
 .pandoc_script: &pandoc_script
   - PANDOC_VERSION=3.10
   - apt-get update -qq && apt-get install -y --no-install-recommends curl ca-certificates
-  - curl -fsSL -o /tmp/pandoc.deb "https://github.com/jgm/pandoc/releases/download/${PANDOC_VERSION}/pandoc-${PANDOC_VERSION}-1-amd64.deb"
-  - (dpkg -i /tmp/pandoc.deb || apt-get install -f -y)
+  - curl -fsSL -o /tmp/pandoc.deb "https://github.com/jgm/pandoc/releases/download/${PANDOC_VERSION}/pandoc-${PANDOC_VERSION}-1-$(dpkg --print-architecture).deb"
+  - dpkg -i /tmp/pandoc.deb
   - pandoc --version | head -n1
 
 # ---------------------------------------------------------------------------

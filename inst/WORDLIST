@@ -53,6 +53,7 @@ canonicalizers
 codec
 codecs
 conformant
+dpkg
 eTLD
 erroring
 hardcoded
@@ -67,6 +68,7 @@ nameprep
 normalizations
 normalizer
 oversized
+pandoc
 parsers
 pre
 pslr
