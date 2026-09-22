@@ -39,7 +39,7 @@ Useful links:
 \itemize{
   \item \url{https://gitlab.com/bart-turczynski/punycoder}
   \item \url{https://CRAN.R-project.org/package=punycoder}
-  \item Report bugs at \url{https://gitlab.com/bart-turczynski/punycoder/-/issues}
+  \item Report bugs at \url{https://gitlab.com/bart-turczynski/punycoder/-/work_items}
 }
 
 }
