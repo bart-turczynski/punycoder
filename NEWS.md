@@ -194,6 +194,18 @@
 
 ## Internal
 
+* **CI installs the pandoc `.deb` for the architecture the runner reports
+  rather than a hardcoded `amd64` one.** The `.pandoc_script` anchor, spliced
+  by four jobs, asked for `pandoc-3.10-1-amd64.deb`; on the project's own
+  runner --- a local runner on Apple Silicon, where Docker resolves
+  `rocker/r-ver` to arm64 --- `dpkg -i` refuses that package, so `check` and
+  `readme` failed the first time the pipeline ever ran on a real executor. The
+  suffix is now `$(dpkg --print-architecture)`, command substitution rather
+  than a CI variable so that it is evaluated inside the container it describes.
+  The `|| apt-get install -f -y` fallback is gone with it: it swallowed the
+  dpkg exit status, which is why the trace read as a missing binary two lines
+  later instead of an architecture mismatch at the install (PUNY-llvlqvrr).
+
 * The OSS Index dependency audit in `tests/testthat/test-security.R` scopes to
   hard dependencies (`Depends` + `Imports`) instead of the `Suggests` tree.
   `oysteR::expect_secure()` audits `Suggests` too, which pulled in oysteR's own
