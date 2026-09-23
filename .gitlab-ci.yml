@@ -33,13 +33,17 @@ workflow:
     # One pipeline per merge, not three (SEOR-bmgkzhvy). This used to allow
     # both merge-request and branch pipelines (suppressing the branch one only
     # when an MR was already open, GitLab's standard duplicate-pipeline
-    # guard). That guard turned out not to be enough: on a concurrency-1
-    # shared runner the branch and MR pipelines test the same tree as the
-    # pipeline that eventually runs on main, and the useless ones get created
-    # first -- so they hold the runner's only slot while the pipeline that
-    # actually gates the work queues behind them. Measured repeatedly: a
-    # merged, branch-deleted MR's own pipeline held the runner for 36+ minutes
-    # while main sat pending. So both are suppressed outright and only main
+    # guard). That guard turned out not to be enough: this project runs on
+    # self-hosted Docker runners on one Mac, not GitLab.com's shared runners,
+    # with `concurrent = 4` in `~/.gitlab-runner/config.toml` -- a number this
+    # project owns, not a platform limit (SEOR-gpafxhua; see seor's
+    # design/adr/0003-fleet-ci-runs-on-self-hosted-runners.md for how this was
+    # verified). Even with four slots, the branch and MR pipelines test the
+    # same tree as the pipeline that eventually runs on main, and the useless
+    # ones get created first -- so they hold slots the pipeline that actually
+    # gates the work then queues behind. Measured repeatedly: a merged,
+    # branch-deleted MR's own pipeline held a runner for 36+ minutes while
+    # main sat pending. So both are suppressed outright and only main
     # (plus tags) gets a pipeline.
     #
     # Cost, stated plainly: a feature-branch push gets no CI at all -- that is
@@ -95,6 +99,36 @@ workflow:
   before_script:
     - mkdir -p "$R_LIBS_USER"
     - Rscript -e 'if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak")'
+    # Setting R_LIBS_USER above is NOT sufficient by itself (SEOR-dyzgzyot).
+    # rocker/r-ver's Renviron.site defaults R_LIBS (not R_LIBS_USER) to
+    # site-library:library whenever R_LIBS itself is unset, and that default
+    # wins at session start -- so every package installed here went into the
+    # image's site-library and died with the container, while the cache
+    # faithfully preserved an empty .Rlibs/ every run. Verified directly
+    # against this image:
+    #
+    #   $ docker run --rm -e R_LIBS_USER=/tmp/rlib rocker/r-ver:4.5.1 \
+    #       Rscript -e '.libPaths()'
+    #   [1] "/usr/local/lib/R/site-library" "/usr/local/lib/R/library"
+    #
+    # -- the cache directory does not even appear. Setting R_LIBS_SITE does
+    # NOT fix this either; Renviron.site is read later and still wins.
+    # Rprofile.site is read later still, so appending to it is what actually
+    # moves the install target -- confirmed against the same image:
+    #
+    #   $ docker run --rm -e R_LIBS_USER=/tmp/rlib rocker/r-ver:4.5.1 sh -c '
+    #       mkdir -p /tmp/rlib
+    #       echo ".libPaths(c(Sys.getenv(\"R_LIBS_USER\"), .libPaths()))" \
+    #         >> "${R_HOME}/etc/Rprofile.site"
+    #       Rscript -e ".libPaths()"'
+    #   [1] "/tmp/rlib"                     "/usr/local/lib/R/site-library"
+    #   [3] "/usr/local/lib/R/library"
+    #
+    # site-library stays reachable behind the cache dir, so the image's own
+    # packages (docopt, littler) still resolve. Do not remove this and leave
+    # the R_LIBS_USER variable above looking like it does the job on its own.
+    - echo '.libPaths(c(Sys.getenv("R_LIBS_USER"), .libPaths()))' >> "${R_HOME}/etc/Rprofile.site"
+    - Rscript -e 'cat("Library paths:\n"); print(.libPaths())'
 
 # Pandoc is PINNED, and the pin is load-bearing rather than tidiness.
 #
@@ -402,20 +436,49 @@ pages:
     - apt-get update -qq && apt-get install -y --no-install-recommends git
     - *pandoc_script
     - Rscript -e 'pak::pak("deps::.", dependencies = TRUE); pak::pak("any::pkgdown")'
-    # pkgdown renders EVERY top-level .md into the site, so the agent
-    # instruction files were being published as AGENTS.html, CLAUDE.html and
-    # friends next to the reference -- internal working notes served as if
-    # they were user documentation, and indexable (SEOR-pibdjanz).
+    # pkgdown renders EVERY top-level .md into the site --
+    # pkgdown:::package_mds() hardcodes a skip list of README/NEWS/LICENSE,
+    # so _pkgdown.yml has no setting that can exclude anything else. Left
+    # alone this publishes the agent instruction files as AGENTS.html,
+    # CLAUDE.html and friends next to the reference -- internal working
+    # notes served as if they were user documentation, and folded into
+    # search.json where they outrank real docs on ordinary queries
+    # (SEOR-pibdjanz).
     #
-    # Globbed on purpose, not spelled out file by file. The leak reached
-    # four repos AFTER being fixed in one, because the exact names differ
-    # per repo and the explicit list was copied rather than re-derived.
-    # These three patterns cover every agent file in the fleet today and a
-    # future AGENTS_SOMETHING.md or FP_WHATEVER.md without a second round
-    # of this. `rm -f` so a pattern that matches nothing is a no-op: the
-    # set of files present differs per repo, and some are gitignored and
-    # never reach the runner at all.
-    - 'rm -f AGENTS*.md CLAUDE*.md FP_*.md'
+    # A glob denylist (`rm -f AGENTS*.md CLAUDE*.md FP_*.md`) only widens as
+    # agent-file FAMILIES are added by hand and stays fail-open for the next
+    # unnamed one -- the leak reached four repos after being fixed in one,
+    # for exactly that reason (SEOR-wqxhftpv). Keep-list instead: enumerate
+    # what belongs on the site and move everything else out, so an unknown
+    # file (GEMINI.md, CODEX.md, whatever comes next) defaults to private.
+    #
+    # `mv`, not `rm -f`, per pslr's precedent (see the comment above its own
+    # `pages` job): move the source out of the tree rather than delete it, so
+    # an excluded file stays recoverable within the job instead of being
+    # destroyed outright. Either shape keeps pkgdown from ever seeing the
+    # file, since this step runs before `build_site()`.
+    #
+    # Each keep-listed name is asserted present before anything is moved, so
+    # a rename of one of them (README.md -> Readme.md, say) fails this job
+    # loudly instead of silently dropping it off the site -- the fail-loud
+    # property pslr's job has for its (denylisted) agent files, carried over
+    # here for the (keep-listed) site files instead.
+    - |
+      set -eu
+      KEEP="README.md NEWS.md LICENSE.md CONTRIBUTING.md SECURITY.md CODE_OF_CONDUCT.md THIRD_PARTY_NOTICES.md ACKNOWLEDGMENTS.md"
+      for f in $KEEP; do
+        if [ ! -f "$f" ]; then
+          echo "ERROR: expected top-level file '$f' is missing -- update KEEP in .gitlab-ci.yml or restore the file." >&2
+          exit 1
+        fi
+      done
+      mkdir -p /tmp/agent-md
+      for f in *.md; do
+        case " $KEEP " in
+          *" $f "*) : ;;
+          *) mv "$f" /tmp/agent-md/ ;;
+        esac
+      done
     - Rscript -e 'pkgdown::build_site(new_process = FALSE, install = TRUE)'
     - rm -rf public && mv docs public
   artifacts:

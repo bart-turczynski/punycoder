@@ -344,12 +344,9 @@ PINNED_MD_SURVIVORS = {
     "CODE_OF_CONDUCT.md",
     "THIRD_PARTY_NOTICES.md",
     "ACKNOWLEDGMENTS.md",
-    "ARCHITECTURE.md",
-    "DECISIONS.md",
-    "cran-comments.md",
 }
 
-PINNED_LIBPATHS_ORDER = ("site-library", "library")
+PINNED_LIBPATHS_ORDER = ("R_LIBS_USER-cache", "site-library", "library")
 
 
 def main() -> int:
