@@ -594,6 +594,21 @@ codemeta:
 # token, or CI/CD variables, and has first-class CRAN coverage.
 osv-audit:
   extends: .audit
+  # MERGE PRECONDITION, read this if the audit stopped running: pipeline
+  # schedule 4427280 ("Weekly dependency vulnerability audits", cron
+  # `17 4 * * 1`, ref refs/heads/main) is the only thing that has ever
+  # triggered this job unattended, and as of 2026-09-23 it carries NO CI/CD
+  # variables -- confirmed live via
+  # `glab api projects/bart-turczynski%2Fpunycoder/pipeline_schedules/4427280`.
+  # The rule below requires SCHEDULE_KIND=dependency-audit; until an owner
+  # adds that variable to schedule 4427280 (Build > Pipeline schedules > 4427280
+  # > edit > Variables), this job will NOT fire on it -- its next scheduled
+  # run, 2026-09-28T05:00:00Z, goes quiet. That is not a bug in this rule:
+  # the old bare `if: schedule` was the defect (it would fire on ANY
+  # schedule, including one meant for something else -- see SEOR-ihmntqzm
+  # and the SCHEDULE_KIND comment near the top of this file). The fix is
+  # deliberately strict; the schedule's variable is what has to catch up to
+  # it, not the other way around.
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_KIND == "dependency-audit"
     - if: $CI_PIPELINE_SOURCE == "web"
@@ -620,6 +635,15 @@ osv-audit:
 # without auditing anything.
 security-audit:
   extends: .audit
+  # MERGE PRECONDITION -- same schedule as osv-audit above, same gap: pipeline
+  # schedule 4427280 ("Weekly dependency vulnerability audits", cron
+  # `17 4 * * 1`, ref refs/heads/main) carries NO CI/CD variables as of
+  # 2026-09-23 (confirmed live via `glab api
+  # projects/bart-turczynski%2Fpunycoder/pipeline_schedules/4427280`), so
+  # until an owner adds SCHEDULE_KIND=dependency-audit to it, this job goes
+  # quiet starting with that schedule's next run, 2026-09-28T05:00:00Z. See
+  # the identical note on osv-audit above for why the rule is still correct
+  # as written.
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_KIND == "dependency-audit"
     - if: $CI_PIPELINE_SOURCE == "web"
