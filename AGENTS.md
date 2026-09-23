@@ -133,3 +133,15 @@ It writes `dev/tracker-snapshot.md`, per the `dev/` convention above. Not `docs/
 **Refresh it when you close an issue.** That is the trigger, because it is the one that fires during ordinary work: filing an issue, closing one, and merging a commit that cites one all leave the snapshot untouched otherwise, so between backups it drifts in the direction that matters most — the newest reasoning, which is exactly what a fresh commit subject is most likely to cite, is always the part missing. Measured once already (PUNY-suwpnmtk): at `3804fc1` the snapshot was a month old, and three ids cited by merged commits — `PUNY-ahtemhwv`, `PUNY-tacfinef`, `PUNY-jzxomoqq` — resolved nowhere in the repository. This is a convention with nothing enforcing it, i.e. the same failure class it fixes; if the snapshot goes stale a *second* time, escalate to the mechanical form — regenerate in the pre-push gate and fail on `git diff --exit-code dev/tracker-snapshot.md`, accepting that this couples every push to `fp` being installed and to the local DB being the authoritative one. Do not escalate before that: one observed failure of the old trigger is not evidence that this one fails. Expect a one-run lag: regenerating just before the closing commit is what makes the cited id resolve for a reader who has only the git history, while that issue's own final status flip and closing comment are picked up by the next refresh.
 
 **Refresh it before taking any copy you intend to keep** — a mirror push to the `backup` remote at `~/Projects/_backups/punycoder.git`, or a `git bundle create <path> --all`. Both exist for this repository as of 2026-08-01. A bundle taken without refreshing carries a stale copy of the only tracker reasoning in git, and a snapshot that is never regenerated is worse than none, because it looks current. Push to `backup` with `--no-verify`: a mirror must capture whatever state exists, including a red one.
+
+## A red gate on an untouched tree
+
+Toolchain drift makes the verify gate go red on a tree nobody changed, and it
+looks exactly like a defect in the change being made. `scripts/check-toolchain.R`
+runs ahead of the expensive step and names it in one line: roxygen2's installed
+version against this package's `Config/roxygen2/version`, and any installed
+package built under a newer R than the one running. Both have happened, and both
+cost an afternoon (SEOR-tcytizic).
+
+If that check passes and the gate is still red on a tree you have not touched,
+say so and keep the evidence rather than assuming your change caused it.
