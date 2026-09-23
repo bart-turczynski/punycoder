@@ -337,7 +337,14 @@ check:
 # and are what CRAN itself mirrors. This job keeps the R-VERSION half of the old
 # matrix (devel / release / oldrel-1) on Linux.
 #
-# Runs on release tags ('v*') and on demand; routine merges and MRs use `check`.
+# Runs on release tags ('v*'), on demand, and on the weekly deep-check
+# schedule (SEOR-ihmntqzm; see the SCHEDULE_KIND comment near the top of
+# this file). The manual `web` path was, in practice, the only way this ever
+# ran outside a tag, because nobody starts a manual job on a schedule they
+# forgot exists -- the new schedule rule below is what actually makes this
+# release-shaped, multi-R-version check run unattended on a cadence, on a
+# fleet with one runner that can now sleep between weekly passes instead of
+# running this nightly. Routine merges and MRs use `check`.
 full-check:
   extends: .r
   stage: check
@@ -347,6 +354,7 @@ full-check:
     - if: $CI_PIPELINE_SOURCE == "web"
       when: manual
       allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_KIND == "deep-check"
   parallel:
     matrix:
       # 'latest' tracks the current R release; bump the pinned oldrel-1 tag
@@ -379,8 +387,14 @@ full-check:
 # anywhere: this job pulls the clang-ASAN/UBSAN and valgrind containers
 # directly and runs the check inside them. Same sanitizers, no GitHub.
 #
-# Manual and allow_failure: sanitizer runs are slow and their output is for
-# reading, not for gating a merge. Run before a release, per CONTRIBUTING.md.
+# Manual and allow_failure on tag/web: sanitizer runs are slow and their
+# output is for reading, not for gating a merge. The schedule rule below
+# (SEOR-ihmntqzm; see the SCHEDULE_KIND comment near the top of this file)
+# is what actually runs this on a cadence -- manual-only meant, in practice,
+# never running -- on the weekly deep-check schedule, unattended and without
+# `allow_failure`, since nobody is watching a scheduled pipeline the way a
+# human triggering `web` would be. Still available before a release too, per
+# CONTRIBUTING.md.
 sanitizers:
   stage: check
   image: ghcr.io/r-hub/containers/$RHUB_CONTAINER
@@ -392,6 +406,7 @@ sanitizers:
     - if: $CI_PIPELINE_SOURCE == "web"
       when: manual
       allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_KIND == "deep-check"
   parallel:
     matrix:
       - RHUB_CONTAINER: ["clang-asan", "valgrind"]
@@ -549,9 +564,17 @@ codemeta:
 # The GitHub workflows carried their own `schedule:` cron. GitLab keeps
 # schedules outside the file, so these two jobs key off the pipeline schedule
 # itself (Build > Pipeline schedules -> "Weekly dependency vulnerability
-# audits", Mondays 04:17 UTC). That project has exactly one schedule and this
-# is what it is for; if a second schedule is ever added for something else,
-# reintroduce a guard variable here so the audits do not run on it.
+# audits", Mondays 04:17 UTC).
+#
+# SEOR-ihmntqzm is the second schedule this comment warned about: `full-check`
+# and `sanitizers` (stage: check) now also run off a weekly schedule, so
+# `$CI_PIPELINE_SOURCE == "schedule"` alone is no longer a safe guard here --
+# it would fire these two audits on THAT schedule too. Both rules below now
+# also require `$SCHEDULE_KIND == "dependency-audit"` (see the SCHEDULE_KIND
+# comment near the top of this file); the "Weekly dependency vulnerability
+# audits" schedule needs that CI/CD variable added to it (Build > Pipeline
+# schedules > edit > Variables) for either job to keep firing on it. The web
+# and default-branch-on-`changes:` rules below are unchanged.
 #
 # Both jobs also run on demand from a web-triggered pipeline, and on main when
 # their own inputs change.
@@ -572,7 +595,7 @@ codemeta:
 osv-audit:
   extends: .audit
   rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_KIND == "dependency-audit"
     - if: $CI_PIPELINE_SOURCE == "web"
       when: manual
       allow_failure: true
@@ -598,7 +621,7 @@ osv-audit:
 security-audit:
   extends: .audit
   rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_KIND == "dependency-audit"
     - if: $CI_PIPELINE_SOURCE == "web"
       when: manual
       allow_failure: true
