@@ -60,3 +60,9 @@
 # of the installable package; without this, --as-cran reports it as a
 # non-standard top-level directory.
 ^scripts$
+# The CI job library. `R_LIBS_USER` points here and `cache:` carries it, so
+# once SEOR-dyzgzyot made the cached library actually populate, `R CMD check`
+# started seeing a hidden directory full of installed packages inside the
+# package source -- one WARNING for a non-portable path and one NOTE for the
+# hidden directory. seor carries the same pair of entries for the same reason.
+^\.Rlibs$
