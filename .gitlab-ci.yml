@@ -463,9 +463,20 @@ pages:
     # loudly instead of silently dropping it off the site -- the fail-loud
     # property pslr's job has for its (denylisted) agent files, carried over
     # here for the (keep-listed) site files instead.
+    #
+    # ARCHITECTURE.md and DECISIONS.md are grandfathered onto KEEP, not
+    # newly authorized: both were already live on the deployed site
+    # (https://punycoder-a165b3.gitlab.io/ARCHITECTURE.html and
+    # .../DECISIONS.html both 200 at the time this landed) when the first
+    # cut of this keep-list would otherwise have retired them on the next
+    # merge. SEOR-wqxhftpv is about stopping an UNKNOWN new file from
+    # leaking through; un-publishing an already-published page is a
+    # separate editorial decision, made deliberately here rather than as a
+    # side effect of closing that leak. cran-comments.md was NOT
+    # grandfathered -- nothing links to it and it was never verified live.
     - |
       set -eu
-      KEEP="README.md NEWS.md LICENSE.md CONTRIBUTING.md SECURITY.md CODE_OF_CONDUCT.md THIRD_PARTY_NOTICES.md ACKNOWLEDGMENTS.md"
+      KEEP="README.md NEWS.md LICENSE.md CONTRIBUTING.md SECURITY.md CODE_OF_CONDUCT.md THIRD_PARTY_NOTICES.md ACKNOWLEDGMENTS.md ARCHITECTURE.md DECISIONS.md"
       for f in $KEEP; do
         if [ ! -f "$f" ]; then
           echo "ERROR: expected top-level file '$f' is missing -- update KEEP in .gitlab-ci.yml or restore the file." >&2

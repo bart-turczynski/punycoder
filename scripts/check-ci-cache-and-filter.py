@@ -173,13 +173,23 @@ RM_GLOB_LINE = re.compile(r"^\s*-\s+['\"]?rm -f (.+?)['\"]?\s*$")
 KEEP_ASSIGNMENT = re.compile(r'KEEP="([^"]*)"')
 
 
-def simulate_md_survivors(script: list[str], md_files: set[str]) -> set[str]:
-    """Which of `md_files` the `pages:` job's filter step would still publish.
+def simulate_md_survivors(
+    script: list[str], md_files: set[str]
+) -> tuple[set[str], str]:
+    """Which of `md_files` the `pages:` job's filter step would still publish,
+    plus which shape produced that answer (``"keep-list"`` or ``"glob"``) --
+    the two have different fail-open/fail-closed properties, so a caller
+    comparing this against a pin needs to know which one it is looking at to
+    describe a mismatch honestly (see `check_md_filter`).
 
     Recognizes two shapes:
-      - a glob denylist: ``rm -f PATTERN PATTERN ...`` (pre SEOR-wqxhftpv)
+      - a glob denylist: ``rm -f PATTERN PATTERN ...`` (pre SEOR-wqxhftpv,
+        fail-OPEN: anything not matching a pattern survives, including a
+        family nobody has named yet)
       - a keep-list: a ``KEEP="a.md b.md ..."`` assignment feeding an
-        mv-everything-else loop (post SEOR-wqxhftpv)
+        mv-everything-else loop (post SEOR-wqxhftpv, fail-CLOSED: nothing
+        survives unless it is named in `KEEP`, so a survivor not in `KEEP`
+        is impossible by construction)
 
     An unrecognized script (neither shape found) raises, rather than silently
     reporting every file as a survivor -- a check that can't see the filter
@@ -190,7 +200,7 @@ def simulate_md_survivors(script: list[str], md_files: set[str]) -> set[str]:
     keep_match = KEEP_ASSIGNMENT.search(joined)
     if keep_match:
         keep = set(keep_match.group(1).split())
-        return md_files & keep
+        return md_files & keep, "keep-list"
 
     for line in script:
         m = RM_GLOB_LINE.match(line)
@@ -199,7 +209,7 @@ def simulate_md_survivors(script: list[str], md_files: set[str]) -> set[str]:
             removed = {
                 f for f in md_files if any(fnmatch.fnmatch(f, p) for p in patterns)
             }
-            return md_files - removed
+            return md_files - removed, "glob"
 
     raise ValueError(
         "pages: script matches neither the glob (`rm -f ...`) nor the "
@@ -216,25 +226,45 @@ def check_md_filter(root: Path, expected_survivors: set[str]) -> list[str]:
         return ["could not find `pages:` `script:` in .gitlab-ci.yml"]
     md_files = {p.name for p in root.glob("*.md")}
     try:
-        survivors = simulate_md_survivors(script, md_files)
+        survivors, shape = simulate_md_survivors(script, md_files)
     except ValueError as exc:
         return [str(exc)]
-    if survivors != expected_survivors:
-        extra = survivors - expected_survivors
-        missing = expected_survivors - survivors
-        errors = []
-        if extra:
+    if survivors == expected_survivors:
+        return []
+
+    extra = survivors - expected_survivors
+    missing = expected_survivors - survivors
+    errors = []
+    if extra:
+        if shape == "keep-list":
+            # A keep-list is fail-closed: nothing survives unless it is
+            # literally named in KEEP, so `extra` here cannot be a leak past
+            # the filter -- it means KEEP in .gitlab-ci.yml already names a
+            # file this pin's PINNED_MD_SURVIVORS does not. That is a
+            # deliberate decision recorded in the CI file (e.g. a
+            # grandfathered page, SEOR-wqxhftpv) that the pin has not caught
+            # up to yet, OR an accidental KEEP edit that should be reverted.
             errors.append(
-                f"pages: would publish {sorted(extra)}, not in the pinned "
-                "keep set -- a new top-level .md leaked past the filter"
+                f"pages: KEEP already publishes {sorted(extra)}, which this "
+                "pin does not expect. KEEP only grows on purpose (it is "
+                "fail-closed), so this is a decision recorded in "
+                ".gitlab-ci.yml that PINNED_MD_SURVIVORS has not caught up "
+                "to -- update the constant if the addition to KEEP was "
+                "intended, or revert KEEP if it was not."
             )
-        if missing:
+        else:
             errors.append(
-                f"pages: would no longer publish {sorted(missing)}, which "
-                "the pin expects to survive"
+                f"pages: would publish {sorted(extra)}, which the glob does "
+                "not remove -- an unrecognized top-level .md leaked past a "
+                "fail-open filter (SEOR-wqxhftpv)."
             )
-        return errors
-    return []
+    if missing:
+        errors.append(
+            f"pages: would no longer publish {sorted(missing)}, which "
+            "the pin expects to survive -- either a keep-listed name was "
+            "removed or renamed, or the pin is stale."
+        )
+    return errors
 
 
 # --- self-test (positive + negative coverage, executable) --------------------
@@ -334,6 +364,15 @@ def self_test() -> None:
 # including ARCHITECTURE.md, DECISIONS.md, cran-comments.md -- see
 # SPEC DELTA in the commit that changed this), and libpaths order =
 # ("site-library", "library") with no cache dir at all.
+#
+# ARCHITECTURE.md and DECISIONS.md were grandfathered back onto KEEP after
+# the SEOR-wqxhftpv fix first landed (still SEOR-wqxhftpv, follow-up):
+# https://punycoder-a165b3.gitlab.io/ARCHITECTURE.html and
+# .../DECISIONS.html were already live (200) on the deployed site, and
+# retiring an already-published page is a separate editorial call from
+# closing the unknown-file leak this ticket exists for -- not one to make
+# as a side effect while the owner is away. cran-comments.md was NOT
+# grandfathered; nothing links to it and it was never verified live.
 
 PINNED_MD_SURVIVORS = {
     "README.md",
@@ -344,6 +383,8 @@ PINNED_MD_SURVIVORS = {
     "CODE_OF_CONDUCT.md",
     "THIRD_PARTY_NOTICES.md",
     "ACKNOWLEDGMENTS.md",
+    "ARCHITECTURE.md",
+    "DECISIONS.md",
 }
 
 PINNED_LIBPATHS_ORDER = ("R_LIBS_USER-cache", "site-library", "library")
