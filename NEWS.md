@@ -208,6 +208,24 @@
 
 ## Internal
 
+* **CI folds the formerly-separate `lint`, `readme`, and `news-version`
+  jobs into one `gates` job.** Each was cheap on its own -- well under a
+  minute of real checking combined -- but every GitLab job pays a roughly
+  constant ~2 minute tax for runner pickup and setup regardless of how
+  little script it runs. `scripts/gates.R` runs all three checks
+  unconditionally, accumulates a PASS/FAIL for each, and prints one summary
+  before exiting nonzero if any failed, so folding them costs no
+  diagnostic signal. `citation-version` was a candidate but stayed its own
+  job: it needs `python3`, which the `lint`/`readme`/`news-version` jobs'
+  shared `rocker/r-ver` image does not have (SEOR-pgammbgo).
+
+* **`full-check` and `sanitizers` can now run on a weekly schedule instead
+  of only on a release tag or by hand.** `osv-audit` and `security-audit`,
+  which already ran on any pipeline schedule, now additionally require a
+  `SCHEDULE_KIND` selector so a second schedule (for the release-shaped
+  checks) cannot silently also fire the dependency audits. Adding the
+  actual pipeline schedules is a separate, manual step (SEOR-ihmntqzm).
+
 * The pkgdown site no longer publishes the repository's agent instruction
   files. pkgdown renders every top-level `.md`, so `AGENTS.html` and
   `CLAUDE.html` were being served next to the function reference; the `pages`
