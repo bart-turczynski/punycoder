@@ -216,11 +216,12 @@
 * **CI now creates exactly one pipeline per merge, on `main`, instead of
   three.** The `workflow:` block used to allow both merge-request and branch
   pipelines (suppressing the branch one only when an MR was already open).
-  On the fleet's concurrency-1 shared runner, the branch and MR pipelines
-  test the same tree as the eventual `main` pipeline and get created first,
-  so they held the runner's only slot while the pipeline that actually gates
-  the work queued behind them --- measured once holding the runner for 36+
-  minutes on an already-merged MR. Both are now suppressed outright; only a
+  CI runs on a self-hosted Docker runner on one Mac, not on GitLab.com's
+  shared runners, and its few job slots are shared by six of the fleet's
+  repositories. The branch and MR pipelines test the same tree as the
+  eventual `main` pipeline and get created first, so they took those slots
+  while the pipeline that actually gates the work queued behind them ---
+  measured once holding the runner for 36+ minutes on an already-merged MR. Both are now suppressed outright; only a
   push to `main`, a tag, or a pipeline started by hand creates one.
   Feature-branch pushes get no CI at all, which is the intent, not a
   regression: `main` is a protected branch so nothing merges without going
