@@ -373,8 +373,25 @@
   only warns. The audit also fails on an empty result, and under
   `OSSINDEX_AUDIT_REQUIRED=true` a missing `oysteR` or missing credentials fail
   instead of skipping, so a dedicated audit job cannot pass having audited
-  nothing. Setting that flag in the `security-audit` CI job is a separate,
-  later step (`SEOR-fftbjnpl`).
+  nothing. The `security-audit` CI job sets that flag (see the next entry)
+  (`SEOR-fftbjnpl`).
+
+* **The `security-audit` CI job now fails instead of passing when it cannot
+  audit.** It sets `OSSINDEX_AUDIT_REQUIRED=true`, so missing OSS Index
+  credentials or a missing `oysteR` turn the job red with a message naming
+  what is absent; before, it skipped and reported success having audited
+  nothing. `osv-audit` and `security-audit` now run only from the
+  `dependency-audit` pipeline schedule or by hand, and no longer also run on
+  `main` whenever `DESCRIPTION`, their test file or `.gitlab-ci.yml` changes
+  (`SEOR-fftbjnpl`).
+
+* **A new pre-push and CI check, `scripts/check-bugreports.py`, keeps the two
+  tracker addresses apart.** `DESCRIPTION`'s `BugReports:` (and the man page
+  generated from it) must stay on the `/-/issues` form CRAN's incoming check
+  accepts, while `codemeta.json`, `SECURITY.md`, `.bestpractices.json` and the
+  intro vignette must link `/-/work_items`, and the README must not carry a
+  `/-/issues` link. It runs as its own pre-push hook next to the citation
+  check, and in the `citation-version` CI job (`SEOR-ocbtrrnl`).
 
 # punycoder 1.2.1
 
