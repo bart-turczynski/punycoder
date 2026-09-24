@@ -563,21 +563,26 @@ codemeta:
 #
 # The GitHub workflows carried their own `schedule:` cron. GitLab keeps
 # schedules outside the file, so these two jobs key off the pipeline schedule
-# itself (Build > Pipeline schedules -> "Weekly dependency vulnerability
-# audits", Mondays 04:17 UTC).
+# itself: schedule 4427280 (Build > Pipeline schedules -> "Weekly dependency
+# vulnerability audits (osv-audit, security-audit)", ref refs/heads/main).
 #
 # SEOR-ihmntqzm is the second schedule this comment warned about: `full-check`
-# and `sanitizers` (stage: check) now also run off a weekly schedule, so
-# `$CI_PIPELINE_SOURCE == "schedule"` alone is no longer a safe guard here --
-# it would fire these two audits on THAT schedule too. Both rules below now
-# also require `$SCHEDULE_KIND == "dependency-audit"` (see the SCHEDULE_KIND
-# comment near the top of this file); the "Weekly dependency vulnerability
-# audits" schedule needs that CI/CD variable added to it (Build > Pipeline
-# schedules > edit > Variables) for either job to keep firing on it. The web
-# and default-branch-on-`changes:` rules below are unchanged.
+# and `sanitizers` (stage: check) run off a weekly deep-check schedule, so
+# `$CI_PIPELINE_SOURCE == "schedule"` alone is not a safe guard here -- it
+# would fire these two audits on THAT schedule too. Both rules below also
+# require `$SCHEDULE_KIND == "dependency-audit"` (see the SCHEDULE_KIND
+# comment near the top of this file). Schedule 4427280 carries that CI/CD
+# variable: confirmed live 2026-09-24 via
+# `glab api projects/bart-turczynski%2Fpunycoder/pipeline_schedules/4427280`
+# (variables: SCHEDULE_KIND=dependency-audit). If the audits ever go quiet,
+# check that variable first.
 #
-# Both jobs also run on demand from a web-triggered pipeline, and on main when
-# their own inputs change.
+# The only other way in is a hand-started `web` pipeline (manual,
+# allow_failure). The old third rule -- run on main whenever DESCRIPTION, the
+# audit test or this file changed -- is gone (SEOR-fftbjnpl): the rule is
+# "the dependency-audit schedule, else never", shared with seor's template.
+# With security-audit now failing on missing credentials, that rule would
+# also have turned an ordinary merge that touched this file red on main.
 # ---------------------------------------------------------------------------
 
 .audit:
@@ -585,75 +590,59 @@ codemeta:
   stage: audit
   variables:
     R_LIBS_USER: "$CI_PROJECT_DIR/.Rlibs"
-    # testthat::test_local() does not set NOT_CRAN, so set it here or
-    # skip_on_cran() in the audit tests would skip the audit silently.
+    # Belt and braces so skip_on_cran() in the audit tests cannot skip the
+    # audit silently. testthat::test_local() does set NOT_CRAN=true itself
+    # (measured on testthat 3.3.2; see the header of test-security.R), but
+    # keeping it explicit costs nothing and does not lean on that detail.
     NOT_CRAN: "true"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_KIND == "dependency-audit"
+    # Under `rules`, `when: manual` defaults to `allow_failure: false`, which
+    # would leave a hand-started pipeline blocked on a job nobody meant to
+    # gate on. The allow_failure line is load-bearing.
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+      allow_failure: true
+    - when: never
 
 # Dependency vulnerability audit against the OSV database (https://osv.dev) via
 # {rosv}. Unlike security-audit (Sonatype OSS Index), OSV requires no account,
 # token, or CI/CD variables, and has first-class CRAN coverage.
 osv-audit:
   extends: .audit
-  # MERGE PRECONDITION, read this if the audit stopped running: pipeline
-  # schedule 4427280 ("Weekly dependency vulnerability audits", cron
-  # `17 4 * * 1`, ref refs/heads/main) is the only thing that has ever
-  # triggered this job unattended, and as of 2026-09-23 it carries NO CI/CD
-  # variables -- confirmed live via
-  # `glab api projects/bart-turczynski%2Fpunycoder/pipeline_schedules/4427280`.
-  # The rule below requires SCHEDULE_KIND=dependency-audit; until an owner
-  # adds that variable to schedule 4427280 (Build > Pipeline schedules > 4427280
-  # > edit > Variables), this job will NOT fire on it -- its next scheduled
-  # run, 2026-09-28T05:00:00Z, goes quiet. That is not a bug in this rule:
-  # the old bare `if: schedule` was the defect (it would fire on ANY
-  # schedule, including one meant for something else -- see SEOR-ihmntqzm
-  # and the SCHEDULE_KIND comment near the top of this file). The fix is
-  # deliberately strict; the schedule's variable is what has to catch up to
-  # it, not the other way around.
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_KIND == "dependency-audit"
-    - if: $CI_PIPELINE_SOURCE == "web"
-      when: manual
-      allow_failure: true
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - DESCRIPTION
-        - tests/testthat/test-osv.R
-        - .gitlab-ci.yml
   script:
     - Rscript -e 'pak::pak("deps::.", dependencies = TRUE); pak::pak(c("any::rosv", "any::testthat", "local::."))'
     - Rscript -e 'testthat::test_local(filter = "osv", stop_on_failure = TRUE)'
 
 # Dependency vulnerability audit against the Sonatype OSS Index via {oysteR}.
 # OSS Index requires authentication (anonymous requests get HTTP 401), so this
-# job needs two masked CI/CD variables (Settings > CI/CD > Variables):
+# job needs two CI/CD variables (Settings > CI/CD > Variables):
 #
 #   OSSINDEX_USER   - OSS Index account email (https://ossindex.sonatype.org)
 #   OSSINDEX_TOKEN  - OSS Index API token
 #
-# These were GitHub repository secrets and did not follow the move; until they
-# are re-added here, test-security.R skips cleanly and this job passes green
-# without auditing anything.
+# THIS JOB FAILS WHEN THEY ARE ABSENT, ON PURPOSE (SEOR-fftbjnpl). It used to
+# skip cleanly and stay green: the GitHub repository secrets did not follow
+# the move, so every run reported success having audited nothing
+# (PUNY-rsxtbbln). OSSINDEX_AUDIT_REQUIRED turns each missing precondition in
+# tests/testthat/test-security.R (oysteR not installed, credentials absent)
+# into a loud failure instead of a skip. It is set here and nowhere else, so
+# local runs, the pre-push gate and `R CMD check` still skip.
+#
+# OWNER GATE -- the variables cannot be set from a merge request:
+#
+#   glab variable set OSSINDEX_TOKEN '<api token>' \
+#     --masked --repo bart-turczynski/punycoder
+#   glab variable set OSSINDEX_USER '<account email>' \
+#     --repo bart-turczynski/punycoder
+#
+# OSSINDEX_USER is not `--masked`: GitLab rejects masking for a value
+# containing `@`, and the account email is not the secret. Until both exist,
+# a scheduled run of this job is red and says exactly why.
 security-audit:
   extends: .audit
-  # MERGE PRECONDITION -- same schedule as osv-audit above, same gap: pipeline
-  # schedule 4427280 ("Weekly dependency vulnerability audits", cron
-  # `17 4 * * 1`, ref refs/heads/main) carries NO CI/CD variables as of
-  # 2026-09-23 (confirmed live via `glab api
-  # projects/bart-turczynski%2Fpunycoder/pipeline_schedules/4427280`), so
-  # until an owner adds SCHEDULE_KIND=dependency-audit to it, this job goes
-  # quiet starting with that schedule's next run, 2026-09-28T05:00:00Z. See
-  # the identical note on osv-audit above for why the rule is still correct
-  # as written.
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_KIND == "dependency-audit"
-    - if: $CI_PIPELINE_SOURCE == "web"
-      when: manual
-      allow_failure: true
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - DESCRIPTION
-        - tests/testthat/test-security.R
-        - .gitlab-ci.yml
+  variables:
+    OSSINDEX_AUDIT_REQUIRED: "true"
   script:
     - Rscript -e 'pak::pak("deps::.", dependencies = TRUE); pak::pak(c("any::oysteR", "any::testthat", "local::."))'
     - Rscript -e 'testthat::test_local(filter = "security", stop_on_failure = TRUE)'

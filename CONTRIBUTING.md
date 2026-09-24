@@ -118,18 +118,21 @@ Five things about it are non-obvious enough to be worth stating:
 These live in GitLab's project settings, so a fresh clone does not carry them
 and a `git diff` will never show them missing:
 
-- **Pipeline schedule** (Build > Pipeline schedules): "Weekly dependency
-  vulnerability audits", `17 4 * * 1` UTC on `main`. `osv-audit` and
-  `security-audit` key off `CI_PIPELINE_SOURCE == "schedule"` directly, so this
-  schedule is the only thing that runs them automatically; without it they run
-  only on demand. Because the guard is the pipeline source rather than a
-  variable, adding a *second* schedule for some other purpose would also fire
-  the audits — add a guard variable to both jobs if that ever happens.
-- **`OSSINDEX_USER` / `OSSINDEX_TOKEN`** (Settings > CI/CD > Variables, masked):
-  Sonatype OSS Index credentials. These were GitHub repository secrets and did
-  not follow the move. Until they are re-added, `test-security.R` skips cleanly
-  and `security-audit` passes green **without auditing anything** — a silent
-  pass, so check the job log rather than the badge.
+- **Pipeline schedule** (Build > Pipeline schedules): schedule 4427280,
+  "Weekly dependency vulnerability audits (osv-audit, security-audit)",
+  `17 10 * * 1` Europe/Warsaw on `main`, carrying the schedule variable
+  `SCHEDULE_KIND=dependency-audit`. `osv-audit` and `security-audit` run only
+  on a scheduled pipeline with that value (or by hand from a `web` pipeline),
+  so without the schedule, or without its variable, they never run
+  unattended. The selector is what stops a second schedule (the weekly
+  `deep-check` one for `full-check` and `sanitizers`) from firing the audits
+  too.
+- **`OSSINDEX_USER` / `OSSINDEX_TOKEN`** (Settings > CI/CD > Variables;
+  `OSSINDEX_TOKEN` masked): Sonatype OSS Index credentials. These were GitHub
+  repository secrets and did not follow the move. `security-audit` sets
+  `OSSINDEX_AUDIT_REQUIRED=true`, so while they are absent the job **fails**
+  and names what is missing, rather than skipping and passing green having
+  audited nothing. Everywhere else `test-security.R` still skips without them.
 - **`pages_access_level: public`** (Settings > General > Visibility): required
   for the `pages` job's output to be reachable by anyone but a member.
 
