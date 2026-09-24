@@ -58,6 +58,18 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-push]
+      # DESCRIPTION's BugReports: keeps the CRAN-incoming-safe /-/issues form
+      # (and man/punycoder-package.Rd mirrors it), while every human-facing
+      # file that names the tracker links /-/work_items (SEOR-ocbtrrnl). The
+      # reasoning is in the script's docstring. Offline, stdlib-only, same
+      # shape as check-citation above.
+      - id: check-bugreports
+        name: BugReports split (DESCRIPTION vs human-facing links)
+        entry: python3 scripts/check-bugreports.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
       # Mirrors the CI verify gate: lintr then R CMD check --as-cran, failing on
       # any WARNING. Runs on push (not per commit) since a full check is slow.
       # Toolchain drift makes the gate red on a tree nobody changed, and it

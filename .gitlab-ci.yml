@@ -295,12 +295,21 @@ gates:
 # image this job's other checks share has no python3, verified directly, and
 # this check's whole reason for a dedicated image is staying offline and
 # stdlib-only.
+#
+# `check-bugreports.py` rides along here rather than getting a job of its own
+# (SEOR-ocbtrrnl): DESCRIPTION's BugReports: keeps the CRAN-incoming-safe
+# /-/issues form while human-facing tracker links name /-/work_items. It is
+# stdlib-only, offline and instant, the same shape as check-citation.py, so
+# it belongs in the job that already has a python3; a job of its own would
+# pay the runner-pickup tax for about a second of work.
 citation-version:
   stage: lint
   image: python:3.13-alpine
   script:
     - python3 scripts/check-citation.py --self-test
     - python3 scripts/check-citation.py
+    - python3 scripts/check-bugreports.py --self-test
+    - python3 scripts/check-bugreports.py
 
 # ---------------------------------------------------------------------------
 # Stage: check
