@@ -346,6 +346,18 @@
   nor return a different value for one both accept. No package code changed and
   no result moved.
 
+* The OSS Index audit in `tests/testthat/test-security.R` now gates on
+  dispositions rather than on silence. An allow-list in
+  `tests/testthat/helper-security.R` (empty today: the audit reports no
+  advisories) must account for every reported advisory, and every row in it
+  must still be reported, so the list can neither hide a new finding nor
+  outlive its reason; a row past its review date or seen at an older version
+  only warns. The audit also fails on an empty result, and under
+  `OSSINDEX_AUDIT_REQUIRED=true` a missing `oysteR` or missing credentials fail
+  instead of skipping, so a dedicated audit job cannot pass having audited
+  nothing. Setting that flag in the `security-audit` CI job is a separate,
+  later step (`SEOR-fftbjnpl`).
+
 # punycoder 1.2.1
 
 Maintenance release over the 1.2.0 development tag; the public API is unchanged.
