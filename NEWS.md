@@ -234,11 +234,12 @@
 * **CI now creates exactly one pipeline per merge, on `main`, instead of
   three.** The `workflow:` block used to allow both merge-request and branch
   pipelines (suppressing the branch one only when an MR was already open).
-  On the fleet's concurrency-1 shared runner, the branch and MR pipelines
-  test the same tree as the eventual `main` pipeline and get created first,
-  so they held the runner's only slot while the pipeline that actually gates
-  the work queued behind them --- measured once holding the runner for 36+
-  minutes on an already-merged MR. Both are now suppressed outright; only a
+  CI runs on a self-hosted Docker runner on one Mac, not on GitLab.com's
+  shared runners, and its few job slots are shared by six of the fleet's
+  repositories. The branch and MR pipelines test the same tree as the
+  eventual `main` pipeline and get created first, so they took those slots
+  while the pipeline that actually gates the work queued behind them ---
+  measured once holding the runner for 36+ minutes on an already-merged MR. Both are now suppressed outright; only a
   push to `main`, a tag, or a pipeline started by hand creates one.
   Feature-branch pushes get no CI at all, which is the intent, not a
   regression: `main` is a protected branch so nothing merges without going
@@ -362,6 +363,18 @@
   may newly *accept* a host, but must never reject one an older set accepted,
   nor return a different value for one both accept. No package code changed and
   no result moved.
+
+* The OSS Index audit in `tests/testthat/test-security.R` now gates on
+  dispositions rather than on silence. An allow-list in
+  `tests/testthat/helper-security.R` (empty today: the audit reports no
+  advisories) must account for every reported advisory, and every row in it
+  must still be reported, so the list can neither hide a new finding nor
+  outlive its reason; a row past its review date or seen at an older version
+  only warns. The audit also fails on an empty result, and under
+  `OSSINDEX_AUDIT_REQUIRED=true` a missing `oysteR` or missing credentials fail
+  instead of skipping, so a dedicated audit job cannot pass having audited
+  nothing. Setting that flag in the `security-audit` CI job is a separate,
+  later step (`SEOR-fftbjnpl`).
 
 # punycoder 1.2.1
 
