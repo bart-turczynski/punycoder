@@ -135,11 +135,11 @@ and a `git diff` will never show them missing:
 
 ## Dependency and license scanning
 
-FOSSA and Socket scan this repository's dependencies. On the **free FOSSA
-plan the policy rule columns are view-only** — licenses cannot be batch-approved and custom policies cannot be
-created or cloned — so there is no `.fossa.yml` and no policy-level fix. The
-only lever is per-issue triage in the FOSSA admin panel (ignore + note), which
-persists server-side across scans.
+FOSSA and Socket scan this repository's dependencies. On the **free FOSSA plan
+the policy rule columns are view-only** — licenses cannot be batch-approved
+and custom policies cannot be created or cloned — so there is no `.fossa.yml`
+and no policy-level fix. The only lever is per-issue triage in the FOSSA admin
+panel (ignore + note), which persists server-side across scans.
 
 Triage rule when a license flag fires:
 
