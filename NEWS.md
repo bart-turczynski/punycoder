@@ -208,6 +208,11 @@
 
 ## Internal
 
+* CI's `readme` job ignores blank-line-only differences in `README.md`.
+  pandoc versions disagree about the blank line after the badges marker, so a
+  README rendered with a newer local pandoc passed the pre-push gate and then
+  failed CI, as it did in seor (SEOR-kaqtnovh).
+
 * The pkgdown site no longer publishes the repository's agent instruction
   files. pkgdown renders every top-level `.md`, so `AGENTS.html` and
   `CLAUDE.html` were being served next to the function reference; the `pages`
