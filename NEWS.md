@@ -358,6 +358,15 @@
   nothing. Setting that flag in the `security-audit` CI job is a separate,
   later step (`SEOR-fftbjnpl`).
 
+* `scripts/bestpractices-url.py` is vendored from seor, with a pre-push
+  self-test hook. bestpractices.dev never imports `.bestpractices.json` from a
+  GitLab repository, so the script turns the file into edit links the
+  maintainer saves on the site, and `--check` compares the site with the file.
+  `.bestpractices.json` now names GitLab as the home of the project and GitHub
+  only as a read-only mirror, and describes today's CI: pipelines run on pushes
+  to `main`, the pre-push hook gates branches, and the `sanitizers` job has not
+  yet run, so the dynamic-analysis answers are Unmet (SEOR-grrcptww).
+
 # punycoder 1.2.1
 
 Maintenance release over the 1.2.0 development tag; the public API is unchanged.

@@ -1,9 +1,6 @@
 {
-  "homepage_url_status": "Met",
-  "homepage_url_justification": "Project homepage is the GitLab repository https://gitlab.com/bart-turczynski/punycoder (also linked from DESCRIPTION URL, alongside the CRAN page https://CRAN.R-project.org/package=punycoder). The pkgdown documentation site is being republished on GitLab Pages and will be named here once it is live.",
-
   "sites_https_status": "Met",
-  "sites_https_justification": "All project sites are served over HTTPS: https://gitlab.com/bart-turczynski/punycoder and https://CRAN.R-project.org/package=punycoder .",
+  "sites_https_justification": "All project sites are served over HTTPS only: the repository (https://gitlab.com/bart-turczynski/punycoder), the pkgdown site on GitLab Pages (https://punycoder-a165b3.gitlab.io) and the CRAN page (https://CRAN.R-project.org/package=punycoder).",
 
   "description_good_status": "Met",
   "description_good_justification": "DESCRIPTION and README provide a clear, succinct description of what punycoder does: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/README.md",
@@ -15,7 +12,7 @@
   "contribution_justification": "Contribution guide at https://gitlab.com/bart-turczynski/punycoder/-/blob/main/CONTRIBUTING.md",
 
   "contribution_requirements_status": "Met",
-  "contribution_requirements_justification": "CONTRIBUTING.md states the requirements for acceptable contributions (tests, passing lint via the .lintr style config, and the GitLab CI merge gate -- the lint, readme, news-version, check and coverage jobs): https://gitlab.com/bart-turczynski/punycoder/-/blob/main/CONTRIBUTING.md",
+  "contribution_requirements_justification": "CONTRIBUTING.md (https://gitlab.com/bart-turczynski/punycoder/-/blob/main/CONTRIBUTING.md) states the requirements for acceptable contributions: tests for every user-visible change, stable exported signatures unless a break is planned, preserved R-facing error prefixes, and small reviewable patches. It names the pre-commit pre-push hook, which runs lintr and R CMD check --as-cran failing on any warning, as what gates a merge.",
 
   "license_location_status": "Met",
   "license_location_justification": "LICENSE is at the repository top level: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/LICENSE",
@@ -27,13 +24,13 @@
   "floss_license_osi_justification": "MIT is an OSI-approved open source license: https://opensource.org/license/mit",
 
   "documentation_basics_status": "Met",
-  "documentation_basics_justification": "Basic documentation in the README (https://gitlab.com/bart-turczynski/punycoder/-/blob/main/README.md) plus package vignettes (https://gitlab.com/bart-turczynski/punycoder/-/tree/main/vignettes) and the architecture and decision notes (ARCHITECTURE.md, DECISIONS.md) at the repository root.",
+  "documentation_basics_justification": "The pkgdown site https://punycoder-a165b3.gitlab.io carries the README (installation and use), the introduction vignette and the function reference. The sources are README.md and vignettes/ in the repository (https://gitlab.com/bart-turczynski/punycoder/-/tree/main/vignettes).",
 
   "documentation_interface_status": "Met",
-  "documentation_interface_justification": "Every exported function is documented with roxygen2; the generated Rd pages are in the repository (https://gitlab.com/bart-turczynski/punycoder/-/tree/main/man) and are rendered by CRAN at https://CRAN.R-project.org/package=punycoder .",
+  "documentation_interface_justification": "Every exported function is documented with roxygen2. The reference is published at https://punycoder-a165b3.gitlab.io/reference/ and rendered by CRAN at https://CRAN.R-project.org/package=punycoder .",
 
   "repo_public_status": "Met",
-  "repo_public_justification": "Public GitLab repository: https://gitlab.com/bart-turczynski/punycoder",
+  "repo_public_justification": "Public GitLab repository: https://gitlab.com/bart-turczynski/punycoder. The GitHub repository is a read-only mirror.",
 
   "repo_track_status": "Met",
   "repo_track_justification": "All changes are tracked in git: https://gitlab.com/bart-turczynski/punycoder/-/commits/main",
@@ -59,11 +56,8 @@
   "release_notes_vulns_status": "Met",
   "release_notes_vulns_justification": "No publicly known vulnerabilities have been fixed to date; NEWS.md records all changes: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/NEWS.md",
 
-  "report_url_status": "Met",
-  "report_url_justification": "Bug tracker: https://gitlab.com/bart-turczynski/punycoder/-/work_items",
-
   "report_tracker_status": "Met",
-  "report_tracker_justification": "GitLab Issues serve as the bug tracker: https://gitlab.com/bart-turczynski/punycoder/-/work_items",
+  "report_tracker_justification": "GitLab work items serve as the public issue tracker: https://gitlab.com/bart-turczynski/punycoder/-/work_items",
 
   "report_process_status": "Met",
   "report_process_justification": "Users submit bug reports through the GitLab issue tracker, which offers a Bug issue template (.gitlab/issue_templates/Bug.md): https://gitlab.com/bart-turczynski/punycoder/-/work_items",
@@ -81,7 +75,7 @@
   "vulnerability_report_process_justification": "The vulnerability-reporting process is published in the security policy: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/SECURITY.md . Reports go to the maintainer by email, with a confidential GitLab issue as a documented alternative.",
 
   "vulnerability_report_private_status": "Met",
-  "vulnerability_report_private_justification": "Two confidential channels are documented in SECURITY.md: email to the maintainer, and a GitLab confidential issue (tick 'This issue is confidential' at https://gitlab.com/bart-turczynski/punycoder/-/work_items/new ), which is visible only to project maintainers. GitHub private vulnerability reporting no longer applies -- the project is not hosted on GitHub.",
+  "vulnerability_report_private_justification": "SECURITY.md (https://gitlab.com/bart-turczynski/punycoder/-/blob/main/SECURITY.md) documents two confidential channels: email to the maintainer, and a confidential GitLab issue (open a new item at https://gitlab.com/bart-turczynski/punycoder/-/work_items and tick 'This issue is confidential'), visible only to project maintainers. The GitHub repository is a read-only mirror with private vulnerability reporting turned off.",
 
   "vulnerability_report_response_status": "Met",
   "vulnerability_report_response_justification": "SECURITY.md commits to acknowledging reports within 7 days and coordinating a fix and disclosure: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/SECURITY.md",
@@ -102,10 +96,10 @@
   "test_invocation_justification": "Tests run via devtools::test() and as part of R CMD check.",
 
   "test_most_status": "Met",
-  "test_most_justification": "Coverage is measured with covr in the `coverage` CI job and published through GitLab's native coverage reporting (pipeline coverage badge, merge-request coverage diff, and per-file annotations from the Cobertura report): https://gitlab.com/bart-turczynski/punycoder/-/pipelines",
+  "test_most_justification": "covr measures coverage in the `coverage` CI job on every push to main and reports it through GitLab's native coverage reporting; the latest main pipeline (2026-09-24) measured 97.82% line coverage: https://gitlab.com/bart-turczynski/punycoder/-/pipelines",
 
   "test_policy_status": "Met",
-  "test_policy_justification": "CONTRIBUTING.md requires tests for new features and bug fixes: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/CONTRIBUTING.md",
+  "test_policy_justification": "CONTRIBUTING.md requires tests for every user-visible change: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/CONTRIBUTING.md",
 
   "tests_are_added_status": "Met",
   "tests_are_added_justification": "New functionality ships with tests, enforced in review.",
@@ -114,19 +108,19 @@
   "tests_documented_added_justification": "The test-addition policy is documented in CONTRIBUTING.md: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/CONTRIBUTING.md",
 
   "warnings_status": "Met",
-  "warnings_justification": "Warnings are surfaced via R CMD check and lintr in CI (the `lint` and `check` jobs): https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml",
+  "warnings_justification": "lintr and R CMD check surface warnings in the pre-push verification chain and in the `lint` and `check` CI jobs on every push to main: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml",
 
   "warnings_fixed_status": "Met",
-  "warnings_fixed_justification": "Warnings are treated as errors and fixed; R CMD check is kept clean.",
+  "warnings_fixed_justification": "Warnings are fixed before merge: the verification chain and the `check` CI job fail on any R CMD check warning, and `lint` fails on any lint.",
 
   "warnings_strict_status": "Met",
-  "warnings_strict_justification": "The `lint` CI job sets LINTR_ERROR_ON_LINT=true so any lint fails the build, and `check` runs rcmdcheck with error_on = \"warning\": https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml",
+  "warnings_strict_justification": "The `lint` CI job sets LINTR_ERROR_ON_LINT=true so any lint fails, and `check` runs rcmdcheck with error_on = \"warning\"; the pre-push verification chain applies the same rules to R CMD check --as-cran: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml",
 
   "know_secure_design_status": "Met",
   "know_secure_design_justification": "The maintainer applies secure design principles; punycoder defensively handles untrusted Punycode/IDNA input through its C/C++ codec core, enforcing length limits, valid UTF-8, and label-structure rules.",
 
   "know_common_errors_status": "Met",
-  "know_common_errors_justification": "The maintainer is aware of common C/C++ memory-safety and IDNA parsing pitfalls (buffer overflows, integer overflows, homograph attacks). The C++ codec core is covered by clang-ASAN/UBSAN and valgrind in dynamic analysis.",
+  "know_common_errors_justification": "The maintainer knows the common C/C++ memory-safety and IDNA parsing pitfalls (buffer overflows, integer overflows, invalid UTF-8, homograph attacks). The C++ codec core validates UTF-8 and enforces label and DNS length limits on untrusted input.",
 
   "crypto_published_status": "N/A",
   "crypto_published_justification": "punycoder performs no cryptographic operations.",
@@ -168,37 +162,37 @@
   "vulnerabilities_critical_fixed_justification": "No known unfixed critical vulnerabilities.",
 
   "static_analysis_status": "Met",
-  "static_analysis_justification": "lintr (full-package lint), R CMD check, and goodpractice are run; FOSSA and Socket scan dependencies: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml",
+  "static_analysis_justification": "lintr (a full-package lint using the goodpractice-aligned linter set in .lintr) and R CMD check run in the pre-push verification chain and in the `lint` and `check` CI jobs on every push to main: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml",
 
-  "static_analysis_common_vulnerabilities_status": "Met",
-  "static_analysis_common_vulnerabilities_justification": "R CMD check plus lintr cover common defect classes; FOSSA/Socket cover dependency vulnerabilities; R CMD check --as-cran (the `full-check` job) flags C/C++ compiler warnings: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml",
+  "static_analysis_common_vulnerabilities_status": "Unmet",
+  "static_analysis_common_vulnerabilities_justification": "lintr and R CMD check find defects but are not vulnerability scanners, and no vulnerability-focused analyzer (such as a C/C++ SAST tool) is run over the codec core in src/. The osv-audit job checks dependencies against OSV weekly, but that is SCA, not static analysis of punycoder's own code: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml",
 
   "static_analysis_fixed_status": "Met",
-  "static_analysis_fixed_justification": "Static-analysis findings are addressed before merge.",
+  "static_analysis_fixed_justification": "The verification chain fails on any lintr finding or R CMD check warning, so static-analysis findings are fixed before merge.",
 
   "static_analysis_often_status": "Met",
-  "static_analysis_often_justification": "lintr runs on every CI build (each push to main and each merge request): https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml",
+  "static_analysis_often_justification": "lintr runs on every push: the verification chain is a pre-push hook, and the `lint` CI job runs again on every push to main: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml",
 
-  "dynamic_analysis_status": "Met",
-  "dynamic_analysis_justification": "Before releases the `sanitizers` CI job runs R CMD check — including the testthat suite — inside R-hub's clang-ASAN/UBSAN and valgrind container images (ghcr.io/r-hub/containers/clang-asan and .../valgrind), exercising the C/C++ Punycode/IDNA codec core: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml",
+  "dynamic_analysis_status": "Unmet",
+  "dynamic_analysis_justification": "No dynamic analysis tool is run routinely. A manual `sanitizers` CI job is configured to run R CMD check inside R-hub's clang-ASAN/UBSAN and valgrind container images (https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml), but it has not been run since the project moved to GitLab CI.",
 
-  "dynamic_analysis_unsafe_status": "Met",
-  "dynamic_analysis_unsafe_justification": "punycoder ships C/C++ code in src/ (the RFC 3492 Punycode encoder/decoder and UTS #46 normalizer). The `sanitizers` CI job runs the package under clang-ASAN/UBSAN (memory errors and undefined behaviour) and valgrind (memory leaks and illegal memory access) before releases, using R-hub's published container images: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml",
+  "dynamic_analysis_unsafe_status": "Unmet",
+  "dynamic_analysis_unsafe_justification": "punycoder ships C/C++ in src/ (the RFC 3492 codec and the UTS #46 normalizer), but no memory-safety tool is run over it routinely. The manual `sanitizers` CI job (clang-ASAN/UBSAN and valgrind) is configured but has not yet been run on GitLab: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml",
 
   "dynamic_analysis_enable_assertions_status": "Met",
-  "dynamic_analysis_enable_assertions_justification": "punycoder's automated test suite uses testthat, whose expectations (expect_*) are assertions checked at runtime during dynamic analysis on every CI run: https://gitlab.com/bart-turczynski/punycoder/-/tree/main/tests/testthat . The `sanitizers` CI job additionally runs the package under the clang-ASAN/UBSAN and valgrind configurations, enabling runtime memory and undefined-behaviour assertions over the C/C++ codec core: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml",
+  "dynamic_analysis_enable_assertions_justification": "The testthat suite's expectations (expect_*) are assertions checked at runtime on every run of the verification chain and the `check` CI job: https://gitlab.com/bart-turczynski/punycoder/-/tree/main/tests/testthat",
 
-  "dynamic_analysis_fixed_status": "Met",
-  "dynamic_analysis_fixed_justification": "Any issues surfaced by the sanitizer or valgrind runs are fixed before release.",
+  "dynamic_analysis_fixed_status": "N/A",
+  "dynamic_analysis_fixed_justification": "No dynamic analysis is run (see dynamic_analysis), so there are no findings to fix.",
 
   "test_continuous_integration_status": "Met",
-  "test_continuous_integration_justification": "GitLab CI/CD runs lint + README-sync + NEWS/version + R CMD check + coverage on every push to main and every merge request: https://gitlab.com/bart-turczynski/punycoder/-/pipelines (configuration: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml )",
+  "test_continuous_integration_justification": "The GitLab CI pipeline (https://gitlab.com/bart-turczynski/punycoder/-/pipelines) runs lint, README sync, NEWS/version, citation-version, R CMD check and coverage on every push to main (configuration: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml ). Branch pushes and merge requests start no pipeline; the same verification chain runs as a pre-push hook on every branch before it leaves a contributor's machine.",
 
   "discussion_status": "Met",
   "discussion_justification": "GitLab Issues provide a public forum for project discussion: https://gitlab.com/bart-turczynski/punycoder/-/work_items",
 
   "no_leaked_credentials_status": "Met",
-  "no_leaked_credentials_justification": "No credentials are committed to the repository; Socket and FOSSA scan the repo: https://gitlab.com/bart-turczynski/punycoder",
+  "no_leaked_credentials_justification": "No credentials are committed. A gitleaks scan of the full git history (271 commits, 2026-09-26) found only two false positives: the fixed 'Generator token' UUID that Rcpp::compileAttributes() writes into R/RcppExports.R and src/RcppExports.cpp: https://gitlab.com/bart-turczynski/punycoder",
 
   "english_status": "Met",
   "english_justification": "Documentation and issue-tracker interaction are conducted in English (Language: en-US): https://gitlab.com/bart-turczynski/punycoder/-/blob/main/README.md",
