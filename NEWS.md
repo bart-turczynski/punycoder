@@ -226,6 +226,12 @@
   checks) cannot silently also fire the dependency audits. Adding the
   actual pipeline schedules is a separate, manual step (SEOR-ihmntqzm).
 
+* The `readme` check, now inside the `gates` job, ignores blank-line-only
+  differences in `README.md`. pandoc versions disagree about the blank line
+  after the badges marker, so a README rendered with a newer local pandoc
+  passed the pre-push gate and then failed CI, as it did in seor
+  (SEOR-kaqtnovh).
+
 * The pkgdown site no longer publishes the repository's agent instruction
   files. pkgdown renders every top-level `.md`, so `AGENTS.html` and
   `CLAUDE.html` were being served next to the function reference; the `pages`
@@ -392,6 +398,15 @@
   intro vignette must link `/-/work_items`, and the README must not carry a
   `/-/issues` link. It runs as its own pre-push hook next to the citation
   check, and in the `citation-version` CI job (`SEOR-ocbtrrnl`).
+
+* `scripts/bestpractices-url.py` is vendored from seor, with a pre-push
+  self-test hook. bestpractices.dev never imports `.bestpractices.json` from a
+  GitLab repository, so the script turns the file into edit links the
+  maintainer saves on the site, and `--check` compares the site with the file.
+  `.bestpractices.json` now names GitLab as the home of the project and GitHub
+  only as a read-only mirror, and describes today's CI: pipelines run on pushes
+  to `main`, the pre-push hook gates branches, and the `sanitizers` job has not
+  yet run, so the dynamic-analysis answers are Unmet (SEOR-grrcptww).
 
 # punycoder 1.2.1
 
