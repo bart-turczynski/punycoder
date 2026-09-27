@@ -138,6 +138,9 @@ and a `git diff` will never show them missing:
   audited nothing. Everywhere else `test-security.R` still skips without them.
 - **`pages_access_level: public`** (Settings > General > Visibility): required
   for the `pages` job's output to be reachable by anyone but a member.
+- **Pages unique domain off** (Deploy > Pages): the site lives at the
+  namespace path `https://bart-turczynski.gitlab.io/punycoder/`, the fleet
+  standard (SEOR-hcmtspmv), which `_pkgdown.yml` and `DESCRIPTION` name.
 
 ## Dependency and license scanning
 
