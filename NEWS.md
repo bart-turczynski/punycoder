@@ -208,6 +208,11 @@
 
 ## Internal
 
+* The agent instructions no longer import fp's generated `FP_CLAUDE.md`, and
+  point at the house `agent-workflow` and `fp` skills for the git workflow.
+  The tracker snapshot is refreshed before a copy leaves the machine, not on
+  every issue closure (SEOR-ipwcbcov, PUNY-lezxwoov).
+
 * **CI folds the formerly-separate `lint`, `readme`, and `news-version`
   jobs into one `gates` job.** Each was cheap on its own -- well under a
   minute of real checking combined -- but every GitLab job pays a roughly

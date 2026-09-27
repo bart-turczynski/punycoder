@@ -95,7 +95,6 @@ _scratch/
 
 # Fiberplane local issue tracking
 .fp/
-FP_CLAUDE.md
 
 # pkgdown site (generated). _pkgdown.yml sets no `destination:`, so a local
 # build_site() writes the whole site here. Nothing needs it in git: the `pages`
