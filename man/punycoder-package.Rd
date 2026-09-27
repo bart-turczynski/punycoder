@@ -38,6 +38,7 @@ host_normalize(c("Example.COM", "M\u00DCNCHEN.de"))
 Useful links:
 \itemize{
   \item \url{https://gitlab.com/bart-turczynski/punycoder}
+  \item \url{https://bart-turczynski.gitlab.io/punycoder/}
   \item \url{https://CRAN.R-project.org/package=punycoder}
   \item Report bugs at \url{https://gitlab.com/bart-turczynski/punycoder/-/issues}
 }

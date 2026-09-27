@@ -1,6 +1,6 @@
 {
   "sites_https_status": "Met",
-  "sites_https_justification": "All project sites are served over HTTPS only: the repository (https://gitlab.com/bart-turczynski/punycoder), the pkgdown site on GitLab Pages (https://punycoder-a165b3.gitlab.io) and the CRAN page (https://CRAN.R-project.org/package=punycoder).",
+  "sites_https_justification": "All project sites are served over HTTPS only: the repository (https://gitlab.com/bart-turczynski/punycoder), the pkgdown site on GitLab Pages (https://bart-turczynski.gitlab.io/punycoder/) and the CRAN page (https://CRAN.R-project.org/package=punycoder).",
 
   "description_good_status": "Met",
   "description_good_justification": "DESCRIPTION and README provide a clear, succinct description of what punycoder does: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/README.md",
@@ -24,10 +24,10 @@
   "floss_license_osi_justification": "MIT is an OSI-approved open source license: https://opensource.org/license/mit",
 
   "documentation_basics_status": "Met",
-  "documentation_basics_justification": "The pkgdown site https://punycoder-a165b3.gitlab.io carries the README (installation and use), the introduction vignette and the function reference. The sources are README.md and vignettes/ in the repository (https://gitlab.com/bart-turczynski/punycoder/-/tree/main/vignettes).",
+  "documentation_basics_justification": "The pkgdown site https://bart-turczynski.gitlab.io/punycoder/ carries the README (installation and use), the introduction vignette and the function reference. The sources are README.md and vignettes/ in the repository (https://gitlab.com/bart-turczynski/punycoder/-/tree/main/vignettes).",
 
   "documentation_interface_status": "Met",
-  "documentation_interface_justification": "Every exported function is documented with roxygen2. The reference is published at https://punycoder-a165b3.gitlab.io/reference/ and rendered by CRAN at https://CRAN.R-project.org/package=punycoder .",
+  "documentation_interface_justification": "Every exported function is documented with roxygen2. The reference is published at https://bart-turczynski.gitlab.io/punycoder/reference/ and rendered by CRAN at https://CRAN.R-project.org/package=punycoder .",
 
   "repo_public_status": "Met",
   "repo_public_justification": "Public GitLab repository: https://gitlab.com/bart-turczynski/punycoder. The GitHub repository is a read-only mirror.",

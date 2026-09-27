@@ -208,6 +208,12 @@
 
 ## Internal
 
+* The documentation site is published at
+  <https://bart-turczynski.gitlab.io/punycoder/>, the GitLab Pages namespace
+  path every package in the family uses. `DESCRIPTION`'s `URL:`, `_pkgdown.yml`
+  and `.bestpractices.json` name it; the project's unique-domain Pages address
+  no longer resolves (PUNY-rsxtbbln, SEOR-hcmtspmv).
+
 * The agent instructions no longer import fp's generated `FP_CLAUDE.md`, and
   point at the house `agent-workflow` and `fp` skills for the git workflow.
   The tracker snapshot is refreshed before a copy leaves the machine, not on
@@ -322,10 +328,8 @@
   published submission at bestpractices.dev must be updated from it separately,
   or the badge keeps citing URLs that no longer resolve.
 
-  The pkgdown site itself is **not yet republished**: `_pkgdown.yml` now names
-  the GitLab Pages URL, but `DESCRIPTION`'s `URL:` deliberately still does not,
-  because the project's Pages access level has to be made public and a first
-  deployment has to land before a CRAN URL check would find anything there.
+  The pkgdown site was republished on GitLab Pages afterwards; see the
+  documentation-site bullet above.
 
   Historical release notes below were left as written. They cite
   `bart-turczynski.github.io/punycoder/` and GitHub Actions because that is

@@ -512,8 +512,8 @@ pages:
     #
     # ARCHITECTURE.md and DECISIONS.md are grandfathered onto KEEP, not
     # newly authorized: both were already live on the deployed site
-    # (https://punycoder-a165b3.gitlab.io/ARCHITECTURE.html and
-    # .../DECISIONS.html both 200 at the time this landed) when the first
+    # (ARCHITECTURE.html and DECISIONS.html both 200 at the time this landed,
+    # now under https://bart-turczynski.gitlab.io/punycoder/) when the first
     # cut of this keep-list would otherwise have retired them on the next
     # merge. SEOR-wqxhftpv is about stopping an UNKNOWN new file from
     # leaking through; un-publishing an already-published page is a

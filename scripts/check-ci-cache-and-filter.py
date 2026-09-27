@@ -367,8 +367,8 @@ def self_test() -> None:
 #
 # ARCHITECTURE.md and DECISIONS.md were grandfathered back onto KEEP after
 # the SEOR-wqxhftpv fix first landed (still SEOR-wqxhftpv, follow-up):
-# https://punycoder-a165b3.gitlab.io/ARCHITECTURE.html and
-# .../DECISIONS.html were already live (200) on the deployed site, and
+# ARCHITECTURE.html and DECISIONS.html were already live (200) on the
+# deployed site, now https://bart-turczynski.gitlab.io/punycoder/, and
 # retiring an already-published page is a separate editorial call from
 # closing the unknown-file leak this ticket exists for -- not one to make
 # as a side effect while the owner is away. cran-comments.md was NOT
