@@ -23,6 +23,11 @@
 #     legitimately call library().
 #   * undesirable_operator_linter: configured to keep flagging `<<-`/`->>` but
 #     allow `:::`, which tests use to reach internal (unexported) functions.
+#   * strings_as_factors_linter: ON, although goodpractice 1.2.0 dropped it
+#     (ropensci-review-tools/goodpractice#321) and the rest of the fleet has it
+#     off. punycoder Depends on R >= 3.5.0, where data.frame() still defaults to
+#     stringsAsFactors = TRUE, so the stringsAsFactors = FALSE arguments this
+#     linter enforces are load-bearing here.
 linters: linters_with_defaults(
     defaults = list(),
     undesirable_operator_linter = lintr::undesirable_operator_linter(
