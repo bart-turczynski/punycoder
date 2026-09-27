@@ -1,29 +1,36 @@
+## Submission
+
+This is an update, 1.2.1 -> 1.3.0. It contains breaking changes, listed under
+"Changes in this version" below, and it changes the results of one exported
+function (`host_normalize()`) for a small set of inputs. Both reverse
+dependencies are discussed at the end.
+
 ## R CMD check results
 
-0 errors | 0 warnings | 1 note
+<!-- TODO(release): fill from the release-time runs. Do not copy numbers from
+     a development build. -->
 
-The incoming-feasibility NOTE flags three things:
+0 errors | 0 warnings | TODO notes
 
-* A short interval since the last update (1.1.0). The quick turnaround is to land
-  a coordinated breaking change before the ecosystem grows: 1.1.0 introduced
-  `host_normalize()` only yesterday, so the inert `strict` argument removed here
-  has essentially no installed base, and removing it now (rather than after wider
-  adoption) keeps the disruption to the single, already-coordinated reverse
-  dependency. Apologies for the quick turnaround.
-* A maintainer email change, from `bartek+punycoder@turczynski.pl` to
-  `bartek@turczynski.pl`. This is the same maintainer (Bart Turczynski); the
-  address was normalized to drop the per-package plus-tag alias. No change of
-  person or organization.
-* Possibly misspelled words in DESCRIPTION (IDNA, WHATWG, canonicalizers,
-  parsers). These are valid technical terms from the IDN/URL domain, not
-  misspellings.
+* TODO: local `R CMD check --as-cran` on the release tarball (macOS aarch64,
+  R release).
+* TODO: win-builder, R-devel and R-release (`devtools::check_win_devel()`,
+  `devtools::check_win_release()`).
+* TODO: macOS builder (<https://mac.r-project.org/macbuilder/submit.html>).
+* TODO: GitLab CI `full-check` (Ubuntu; R devel, release, oldrel-1), and the
+  `sanitizers` job (R-hub clang-ASAN/UBSAN and valgrind containers).
 
-## A note on the `BugReports` URL
+Both Punycode backends are exercised where available: the optional libidn2
+backend on Linux and macOS, and the in-tree fallback everywhere (Windows
+builds always use the fallback). The test suite includes fallback-vs-libidn2
+parity tests.
 
-The repository moved from GitHub to GitLab after the 1.2.1 submission the
-results above describe, so that run never saw this; the next one will. An
-automated URL check reports the declared `BugReports:` address
-(`https://gitlab.com/bart-turczynski/punycoder/-/issues`) as **404**:
+## Expected NOTE: the `BugReports` URL
+
+The repository moved from GitHub to GitLab after 1.2.1, so `URL:` and
+`BugReports:` now name gitlab.com (1.2.1 on CRAN still names the GitHub
+account, which is suspended). An automated URL check is expected to report
+the declared `BugReports:` address as a 404:
 
     Found the following (possibly) invalid URLs:
       URL: https://gitlab.com/bart-turczynski/punycoder/-/issues
@@ -32,64 +39,90 @@ automated URL check reports the declared `BugReports:` address
         Status: 404
         Message: Not Found
 
-This is a gitlab.com behavior, not a broken link: GitLab has migrated issues to
-work items and answers `/-/issues` with 404 to any signed-out, non-browser
-client, on every project on the site. The same request against
-`https://gitlab.com/gitlab-org/gitlab/-/issues` -- one of the most public
-trackers there -- returns 404 identically. A browser is redirected to
-`/-/work_items`, which is why the page loads normally by hand. The address is
-correct and is the one users need; it is not dropped.
+This is how gitlab.com behaves, and the link is not broken. GitLab has
+migrated issues to work items and answers `/-/issues` with 404 to any
+signed-out, non-browser client, on every project on the site; GitLab's own
+tracker, `https://gitlab.com/gitlab-org/gitlab/-/issues`, returns 404 the
+same way. A browser is redirected to `/-/work_items`, so the page loads
+normally by hand.
 
-**The field names `/-/issues` deliberately, and will keep naming it.** R's own
-incoming check accepts a `github.com` or `gitlab.com` `BugReports:` only when
-its path matches `/issues(/new)?/?$`, and NOTEs anything else, recommending
-that form in its place. The sibling package 'pslr' declared `/-/work_items` on
-its first 1.2.1 upload and was archived at the incoming pretest on 2026-09-12
-for precisely that NOTE; resubmitted with `/-/issues`, it was accepted, as
-'rurl' 3.0.1 and 'raddr' 0.1.2 are on CRAN carrying the same explained 404. The
-`/-/work_items/issues` form satisfies the regex but resolves 403, so it is not
-a third option. No gitlab.com address clears both checks, and the two do not
-cost the same: this one trades an explained NOTE for an archived submission.
+`DESCRIPTION` keeps `/-/issues` on purpose. The incoming check string-tests
+this one field and accepts a gitlab.com `BugReports:` only when its path ends
+in `/issues` (optionally `/new`), so it flags the working `/-/work_items`
+address. The first 1.2.1 upload of the sibling package 'pslr' declared
+`/-/work_items` and was archived at the incoming pretest on 2026-09-12 for
+that NOTE; resubmitted with `/-/issues`, it was accepted. 'rurl' 3.0.1 and
+'raddr' 0.1.2 are on CRAN with the same `/-/issues` form. The
+`/-/work_items/issues` form satisfies the pattern but returns 403, so it is
+not an option either. No gitlab.com address passes both checks, so this
+submission accepts an explained NOTE rather than risk an archived upload.
 
-The metadata a reader clicks -- `codemeta.json`, `SECURITY.md`, the intro
-vignette -- names `/-/work_items`, which returns 200. `BugReports:` is the only
-field the incoming check inspects, so the two can differ at no risk to the
-submission.
+Files a reader clicks through (`codemeta.json`, `SECURITY.md`, the intro
+vignette) link `/-/work_items`, which returns 200. The incoming check reads
+only `BugReports:`, so the two can differ without affecting the submission.
 
 ## Changes in this version
 
-This is a feature release (1.1.0 -> 1.2.1) for the UTS #46 host-normalization
-API introduced in 1.1.0. (The 1.2.0 development tag was never submitted to CRAN;
-1.2.1 adds only maintenance/tooling on top of the same public API.)
+Full details are in NEWS.md. What a user or a reverse dependency can notice:
 
-* Breaking: `host_normalize()` no longer accepts the `strict` argument. It was
-  inert in 1.1.0 (the full profile always applied) and is replaced by three
-  explicit UTS #46 flags below.
-* New: `host_normalize()` gains `check_hyphens`, `use_std3`, and
-  `verify_dns_length`, each defaulting to the strict
-  `uts46-nontransitional-std3-v1` profile and independently relaxable.
-  `normalization_profile_info()` reflects the chosen flags in its identity.
-* Deprecated: `url_encode()`, `url_decode()`, and `parse_url()` now emit a
-  `.Deprecated()` warning. They remain exported and functional this release and
-  are scheduled for removal next release.
-
-## Platform
-
-Tested locally (macOS aarch64, R release) and on GitLab CI:
-
-* Ubuntu, R devel / release / oldrel-1
-* Both the libidn2 backend (Linux + macOS) and the fallback C++ backend are
-  exercised, including fallback-vs-libidn2 parity tests.
-
-Windows and macOS coverage for this submission comes from win-builder and the
-macOS builder rather than from CI; the project's CI is Linux-only since it
-moved off GitHub Actions.
+* **Breaking: the pinned Unicode version moved from 16.0.0 to 17.0.0, and the
+  normalization profile token is now `uts46-nontransitional-std3-v2`** (was
+  `-v1`). A `host_normalize()` call that names no `unicode_version` now uses
+  the Unicode 17.0.0 IDNA mapping tables. In practice the change only adds
+  accepted hosts: across both vendored UTS #46 conformance corpora and all 8
+  flag combinations, the new default differs from 16.0.0 on 3 rows (16.0.0
+  corpus) and 5 rows (17.0.0 corpus), and in every one of them `NA` became a
+  value; no value changed. The token bump is what a caller has to act on:
+  anything keyed on the token must re-key, and a stale key now misses loudly
+  instead of colliding. The 16.0.0 tables still ship and can be selected with
+  `unicode_version = "16.0.0"`, which returns the same results as 1.2.1.
+* **Breaking: `url_encode()`, `url_decode()` and `parse_url()` are removed**,
+  one release after they were deprecated in 1.2.0 with a `.Deprecated()`
+  warning. They did best-effort host extraction and were never a URL parser.
+  'rurl' covers URL parsing; `host_normalize()`, `puny_encode()` and
+  `puny_decode()` cover hosts.
+* **Breaking: `is_punycode()` and `is_idn()` now both return `FALSE` for
+  input that is not well-formed UTF-8.** Previously `is_punycode()` silently
+  returned `TRUE` for it, and `is_idn()` warned. Answers for well-formed input
+  are unchanged.
+* New: `host_normalize()` and `normalization_profile_info()` take a
+  `unicode_version` argument, and a new `unicode_versions()` lists the table
+  sets this build ships (`"16.0.0"`, `"17.0.0"`).
+* New: `print()` and `summary()` methods make `validate_domain()` results
+  readable for large inputs.
+* Fixes: the fallback `puny_decode()` now rejects malformed A-labels the same
+  way the libidn2 backend does; `puny_encode()`, `puny_decode()` and
+  `validate_domain()` now convert input to UTF-8 before native code sees it.
+* `host_normalize()` is faster, with output unchanged on the conformance
+  corpora under every flag combination.
 
 ## Reverse dependencies
 
-The only CRAN reverse dependency is 'pslr'. The breaking removal of the
-`host_normalize()` `strict` argument was coordinated with 'pslr': its CRAN
-version no longer passes that argument (it calls `host_normalize()` with
-defaults, which is behavior-preserving and compatible with both 1.1.0 and
-1.2.x). 'pslr' (>= 1.1.1) was updated on CRAN ahead of this submission, so its
-reverse-dependency check passes against punycoder 1.2.1.
+There are two reverse dependencies on CRAN, both by the same maintainer:
+'pslr' 1.2.1 (Imports `punycoder (>= 1.1.0)`) and 'rurl' 3.0.1 (Imports
+`punycoder (>= 1.2.1)`). Neither calls the removed URL functions: in their
+CRAN sources, 'pslr' uses `host_normalize()`, `normalization_profile_info()`
+and `puny_decode()`, and 'rurl' uses `host_normalize()`, `puny_encode()`,
+`puny_decode()` and `validate_domain()`.
+
+<!-- TODO(release): record `R CMD check` of both CRAN tarballs
+     (pslr_1.2.1.tar.gz, rurl_3.0.1.tar.gz) against the 1.3.0 tarball being
+     submitted. Check the published tarballs, not the development trees: a
+     development tree is what hid four test failures in pslr 1.1.1. -->
+
+* 'pslr' 1.2.1: TODO. Expected impact: 'pslr' ships a pre-built index stamped
+  with the `-v1` profile and Unicode 16.0.0. It compares both fields with the
+  installed 'punycoder' and, on a mismatch, rebuilds the index in memory once
+  per session, so it returns current answers rather than stale ones. An
+  element-wise comparison of 'pslr' results under 'punycoder' 1.2.1 and the
+  development version (about 9 million cells) found no previously returned
+  value changed; some `NA` results became values. The rebuild takes time:
+  'pslr' 1.2.0 measured it at 2.75 s, which pushed four examples past 5 s.
+  The 1.2.1 check recorded in its own cran-comments, run on 2026-09-12
+  against a development 'punycoder' 1.2.1.9000 (the Unicode 17.0.0 / `-v2`
+  code this release ships), reported only its `BugReports` NOTE. A 'pslr'
+  update that ships the index under `-v2`, removing the rebuild, is planned
+  to follow this release.
+* 'rurl' 3.0.1: TODO. Its test suite anticipates this release: a
+  characterization test expects Unicode 16.0.0 / `-v1` from 'punycoder' 1.2.1
+  and 17.0.0 / `-v2` from any later version.

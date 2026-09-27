@@ -208,10 +208,29 @@
 
 ## Internal
 
-* CI's `readme` job ignores blank-line-only differences in `README.md`.
-  pandoc versions disagree about the blank line after the badges marker, so a
-  README rendered with a newer local pandoc passed the pre-push gate and then
-  failed CI, as it did in seor (SEOR-kaqtnovh).
+* **CI folds the formerly-separate `lint`, `readme`, and `news-version`
+  jobs into one `gates` job.** Each was cheap on its own -- well under a
+  minute of real checking combined -- but every GitLab job pays a roughly
+  constant ~2 minute tax for runner pickup and setup regardless of how
+  little script it runs. `scripts/gates.R` runs all three checks
+  unconditionally, accumulates a PASS/FAIL for each, and prints one summary
+  before exiting nonzero if any failed, so folding them costs no
+  diagnostic signal. `citation-version` was a candidate but stayed its own
+  job: it needs `python3`, which the `lint`/`readme`/`news-version` jobs'
+  shared `rocker/r-ver` image does not have (SEOR-pgammbgo).
+
+* **`full-check` and `sanitizers` can now run on a weekly schedule instead
+  of only on a release tag or by hand.** `osv-audit` and `security-audit`,
+  which already ran on any pipeline schedule, now additionally require a
+  `SCHEDULE_KIND` selector so a second schedule (for the release-shaped
+  checks) cannot silently also fire the dependency audits. Adding the
+  actual pipeline schedules is a separate, manual step (SEOR-ihmntqzm).
+
+* The `readme` check, now inside the `gates` job, ignores blank-line-only
+  differences in `README.md`. pandoc versions disagree about the blank line
+  after the badges marker, so a README rendered with a newer local pandoc
+  passed the pre-push gate and then failed CI, as it did in seor
+  (SEOR-kaqtnovh).
 
 * The pkgdown site no longer publishes the repository's agent instruction
   files. pkgdown renders every top-level `.md`, so `AGENTS.html` and
@@ -360,8 +379,25 @@
   only warns. The audit also fails on an empty result, and under
   `OSSINDEX_AUDIT_REQUIRED=true` a missing `oysteR` or missing credentials fail
   instead of skipping, so a dedicated audit job cannot pass having audited
-  nothing. Setting that flag in the `security-audit` CI job is a separate,
-  later step (`SEOR-fftbjnpl`).
+  nothing. The `security-audit` CI job sets that flag (see the next entry)
+  (`SEOR-fftbjnpl`).
+
+* **The `security-audit` CI job now fails instead of passing when it cannot
+  audit.** It sets `OSSINDEX_AUDIT_REQUIRED=true`, so missing OSS Index
+  credentials or a missing `oysteR` turn the job red with a message naming
+  what is absent; before, it skipped and reported success having audited
+  nothing. `osv-audit` and `security-audit` now run only from the
+  `dependency-audit` pipeline schedule or by hand, and no longer also run on
+  `main` whenever `DESCRIPTION`, their test file or `.gitlab-ci.yml` changes
+  (`SEOR-fftbjnpl`).
+
+* **A new pre-push and CI check, `scripts/check-bugreports.py`, keeps the two
+  tracker addresses apart.** `DESCRIPTION`'s `BugReports:` (and the man page
+  generated from it) must stay on the `/-/issues` form CRAN's incoming check
+  accepts, while `codemeta.json`, `SECURITY.md`, `.bestpractices.json` and the
+  intro vignette must link `/-/work_items`, and the README must not carry a
+  `/-/issues` link. It runs as its own pre-push hook next to the citation
+  check, and in the `citation-version` CI job (`SEOR-ocbtrrnl`).
 
 * `scripts/bestpractices-url.py` is vendored from seor, with a pre-push
   self-test hook. bestpractices.dev never imports `.bestpractices.json` from a

@@ -6,7 +6,10 @@
 # none of those workflows could execute any more.
 #
 # Job-name map from the workflows they replace, because CONTRIBUTING.md and
-# `.bestpractices.json` cite job names:
+# `.bestpractices.json` cite job names (as of SEOR-pgammbgo below, `lint`,
+# `readme`, `news-version` no longer exist as separate jobs -- they folded
+# into `gates` -- so both files are now stale on that point; not fixed here,
+# see the `gates:` job comment):
 #
 #   verify.yml         -> lint, readme, check, coverage
 #   news-version.yaml  -> news-version
@@ -17,9 +20,27 @@
 #   security-audit.yml -> security-audit
 #   rhub.yaml          -> sanitizers (R-hub's containers, run directly)
 #
-# The merge gate is `lint` + `readme` + `news-version` + `citation-version` +
-# `check` + `coverage`. Everything else is manual, tag-triggered, or
-# scheduled.
+# The merge gate is `gates` (folding what used to be the separate `lint`,
+# `readme`, `news-version` jobs -- SEOR-pgammbgo) + `citation-version` +
+# `check` + `coverage`. `citation-version` stayed its own job rather than
+# folding in too -- see the `gates:` job comment for why (its image has no
+# python3 and adding one is not free). Everything else is manual,
+# tag-triggered, or scheduled.
+#
+# SCHEDULE_KIND selects among pipeline-schedule-triggered jobs (SEOR-ihmntqzm).
+# A scheduled pipeline alone is not a selector: this project intends more than
+# one schedule (a weekly dependency audit and a weekly deep-check), and a job
+# guarded only by `$CI_PIPELINE_SOURCE == "schedule"` fires on ANY of them.
+# Each schedule sets `SCHEDULE_KIND` (a pipeline-schedule CI/CD variable, not
+# defined here -- see Build > Pipeline schedules) to a value naming what it is
+# for; each schedule-triggered job then requires both
+# `$CI_PIPELINE_SOURCE == "schedule"` AND its own `$SCHEDULE_KIND`, so adding a
+# schedule for one purpose cannot silently fire jobs meant for another. Two
+# values are in use: `dependency-audit` (osv-audit, security-audit) and
+# `deep-check` (full-check, sanitizers). See the `.audit` block below and the
+# `full-check`/`sanitizers` jobs for where each is applied. Creating the
+# schedules themselves is a separate, manual step (Build > Pipeline
+# schedules) -- not done by this file.
 
 stages:
   - lint
@@ -181,114 +202,114 @@ workflow:
 # Stage: lint — the fast checks, run on every push and merge request
 # ---------------------------------------------------------------------------
 
-lint:
+# Folds the formerly-separate `lint`, `readme`, and `news-version` jobs into
+# one (SEOR-pgammbgo). Each was cheap on its own -- well under a minute of
+# real work combined -- but every GitLab job pays a roughly constant ~2
+# minute tax for runner pickup, image pull, and before_script regardless of
+# how little script it runs, so three thin jobs cost 3x that tax for one
+# job's worth of checking.
+#
+# `check`, `coverage`, `pages`, `full-check`, `sanitizers`, `osv-audit`, and
+# `security-audit` stay separate: each is a genuinely different failure
+# meaning (build/test correctness, coverage regression, publish, a full
+# R-version matrix, dynamic analysis, a security finding), not another
+# instance of "the same kind of cheap check".
+#
+# Two of the five candidates the owner named for folding did NOT qualify and
+# stay their own jobs:
+#
+# `citation-version` runs on `image: python:3.13-alpine`, not this job's
+# `rocker/r-ver` (see `.r` above) -- and rocker/r-ver has no `python3` at all
+# (verified directly: `docker run --rm rocker/r-ver:latest sh -c 'which
+# python3'` -> nothing). Folding it in would mean either installing python3
+# via apt on every merge forever just to save one runner pickup, or -- worse
+# -- a harness step that silently exits 127 and reads as an ordinary FAIL.
+# check-citation.py is deliberately offline, stdlib-only Python (see its own
+# job comment below), which is exactly why it was given its own minimal
+# interpreter image in the first place; that reasoning does not stop being
+# true just because this fold exists. `glab ci lint` cannot catch this class
+# of mistake -- it validates YAML, not whether a binary exists in the image a
+# job's script assumes -- so this was confirmed by literally running the
+# command in the image, not by inspecting the YAML.
+#
+# `codemeta` is not part of the merge gate today (`rules: web` +
+# `when: manual` + `allow_failure: true` -- it only ever runs when someone
+# starts it by hand), and its own script line,
+# `git --no-pager diff -- codemeta.json || true`, can never fail the job --
+# it is an artifact-generation step for a human to review the diff, not a
+# pass/fail check. There is no red/green signal here to fold; folding it in
+# would also silently change it from manual-only to running (and gating) on
+# every push.
+#
+# BINDING CONDITION: scripts/gates.R runs every one of the three folded
+# checks regardless of an earlier one failing, gives each its own PASS/FAIL,
+# prints ONE summary naming every check's verdict, and only THEN exits
+# nonzero if any failed -- ported from rurl's tools/verify.R
+# (gitlab.com/bart-turczynski/rurl, tools/verify.R): it accumulates into a
+# `results` list across every stage regardless of earlier failures and
+# prints a single `VERDICT: FAIL -- <labels>` line before exiting. A
+# fail-fast harness that stopped at the first red check would gut the point
+# of this fold: three independent signals collapsed into one that still
+# needed N re-runs to find the Nth failure. Proved by mutation: see the
+# commit that introduced scripts/gates.R for what was broken, what the
+# summary printed, and that it was restored afterwards.
+#
+# Before/after command enumeration (each former job's script, and what
+# scripts/gates.R runs in its place) is in the body of the commit that
+# introduced this job -- kept there rather than here so it cannot drift
+# silently out of sync with a later edit to either side.
+#
+# What moved into this job's own script (below) vs. scripts/gates.R: package
+# installation, apt packages, and pandoc are one-time SETUP shared by more
+# than one of the three checks (lintr for lint; devtools + pandoc + git for
+# readme; grep/sed/head -- all base-image tools, verified present -- for
+# news-version) and are not themselves a gate, so they run here, once,
+# exactly as rurl's `.r` template/before_script installs packages before
+# `Rscript tools/verify.R` ever runs. scripts/gates.R contains only the
+# three checks themselves.
+gates:
   extends: .r
   stage: lint
   variables:
-    # {lintr} reads this and turns any lint into a non-zero exit.
+    # {lintr} reads this and turns any lint into a non-zero exit; read again
+    # inside scripts/gates.R in case this job ever runs the script directly
+    # (e.g. locally, outside this CI variable).
     LINTR_ERROR_ON_LINT: "true"
-  script:
-    - Rscript -e 'pak::pak("deps::.", dependencies = TRUE); pak::pak("any::lintr")'
-    - Rscript -e 'lintr::lint_package()'
-
-readme:
-  extends: .r
-  stage: lint
-  # devtools::build_readme() installs the package (README.Rmd has a live
-  # `library(punycoder)` chunk) and re-knits it. libidn2 is deliberately absent
-  # here: the README's output is backend-independent, and the fallback path
-  # keeps this job free of system deps.
   script:
     - apt-get update -qq && apt-get install -y --no-install-recommends git
     - *pandoc_script
-    - Rscript -e 'pak::pak("deps::.", dependencies = TRUE); pak::pak("any::devtools")'
-    - Rscript -e 'devtools::build_readme()'
-    # Blank-line-only differences don't count: pandoc versions disagree about
-    # the blank line after `<!-- badges: start -->`, so a README rendered with
-    # a newer local pandoc would pass pre-push and fail here. The test is on
-    # the diff's output, not `--exit-code`: rocker's git 2.43 still exits 1 on
-    # a blank-only diff under --ignore-blank-lines (SEOR-kaqtnovh).
-    - |
-      readme_diff=$(git diff --ignore-blank-lines -- README.md)
-      if [ -n "$readme_diff" ]; then
-        printf '%s\n' "$readme_diff"
-        echo "ERROR: README.md is out of sync with README.Rmd."
-        echo "Run devtools::build_readme() and commit the result."
-        exit 1
-      fi
-
-news-version:
-  stage: lint
-  image: debian:stable-slim
-  interruptible: true
-  # Lightweight guard against NEWS/DESCRIPTION version drift. The top NEWS.md
-  # heading must be either "(development version)" or exactly the DESCRIPTION
-  # Version. This catches a stale "(development version)" heading left in place
-  # at release time (as happened for 1.0.0).
-  script:
-    - |
-      set -eu
-      version="$(grep -E '^Version:' DESCRIPTION | head -n1 | sed -E 's/^Version:[[:space:]]*//')"
-      heading="$(grep -m1 -E '^# ' NEWS.md | sed -E 's/^#[[:space:]]+punycoder[[:space:]]*//')"
-      echo "DESCRIPTION Version : '$version'"
-      echo "Top NEWS heading    : '$heading'"
-      if [ "$heading" = "(development version)" ] || [ "$heading" = "$version" ]; then
-        echo "OK: NEWS heading and version are consistent."
-      else
-        echo "ERROR: top NEWS.md heading ('$heading') is neither '(development version)' nor the DESCRIPTION Version ('$version'). Update NEWS.md before release."
-        exit 1
-      fi
-    # Release paperwork that no generator keeps current: .zenodo.json feeds the
-    # Zenodo archive of each release (the version field is citation metadata --
-    # omitting it would make Zenodo fall back to the tag, i.e. 'v1.2.1' rather
-    # than '1.2.1'), and _pkgdown.yml links the release on the news page. Both
-    # silently went stale at 1.2.0 while 1.2.1 shipped (PUNY-aaheyvva). Checked
-    # only on a RELEASE version: during development DESCRIPTION carries a .9000
-    # suffix and these two correctly still name the last actual release.
-    - |
-      set -eu
-      version="$(grep -E '^Version:' DESCRIPTION | head -n1 | sed -E 's/^Version:[[:space:]]*//')"
-      case "$version" in
-        *.9000)
-          echo "Development version ('$version'); release paperwork not checked."
-          exit 0
-          ;;
-      esac
-
-      status=0
-
-      zenodo="$(grep -E '"version"' .zenodo.json | head -n1 | sed -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/')"
-      if [ "$zenodo" = "$version" ]; then
-        echo "OK: .zenodo.json version is '$zenodo'."
-      else
-        echo "ERROR (.zenodo.json): version ('$zenodo') does not match the DESCRIPTION Version ('$version')."
-        status=1
-      fi
-
-      if grep -q "tags/v$version\$" _pkgdown.yml; then
-        echo "OK: _pkgdown.yml links the v$version release."
-      else
-        echo "ERROR (_pkgdown.yml): does not link the v$version release tag. Update the news.releases entry."
-        status=1
-      fi
-
-      exit "$status"
+    - >
+      Rscript -e 'pak::pak("deps::.", dependencies = TRUE);
+      pak::pak(c("any::lintr", "any::devtools"))'
+    - Rscript scripts/gates.R
 
 # CITATION.cff and .zenodo.json each duplicate the version and the project
 # URLs out of DESCRIPTION. Measured 2026-09-11, punycoder's CITATION.cff named
 # a stale released version (1.2.0) after 1.2.1 shipped, the same class of drift
-# as the release-paperwork check above but for a file that check does not
+# as news-version's release-paperwork check but for a file that check does not
 # touch. The rule is seor's
 # design/adr/0001-citation-metadata-names-the-release.md: version: and
 # "version" carry the release DESCRIPTION's Version: names (X.Y.Z.9000 ->
 # X.Y.Z). Offline, stdlib-only Python, so it runs in seconds without the R
-# image - same shape as news-version above.
+# image. NOT folded into `gates` -- see that job's comment for why: the R
+# image this job's other checks share has no python3, verified directly, and
+# this check's whole reason for a dedicated image is staying offline and
+# stdlib-only.
+#
+# `check-bugreports.py` rides along here rather than getting a job of its own
+# (SEOR-ocbtrrnl): DESCRIPTION's BugReports: keeps the CRAN-incoming-safe
+# /-/issues form while human-facing tracker links name /-/work_items. It is
+# stdlib-only, offline and instant, the same shape as check-citation.py, so
+# it belongs in the job that already has a python3; a job of its own would
+# pay the runner-pickup tax for about a second of work.
 citation-version:
   stage: lint
   image: python:3.13-alpine
   script:
     - python3 scripts/check-citation.py --self-test
     - python3 scripts/check-citation.py
+    - python3 scripts/check-bugreports.py --self-test
+    - python3 scripts/check-bugreports.py
 
 # ---------------------------------------------------------------------------
 # Stage: check
@@ -297,7 +318,10 @@ citation-version:
 check:
   extends: .r
   stage: check
-  needs: ["lint"]
+  # Was needs: ["lint"] -- `lint` folded into `gates` (SEOR-pgammbgo).
+  # `citation-version` stayed its own job and was never a `check` dependency
+  # either before or after this fold; unchanged.
+  needs: ["gates"]
   # Install the optional libidn2 backend so the native path and the
   # libidn2-vs-fallback parity tests actually exercise on CI.
   script:
@@ -322,7 +346,14 @@ check:
 # and are what CRAN itself mirrors. This job keeps the R-VERSION half of the old
 # matrix (devel / release / oldrel-1) on Linux.
 #
-# Runs on release tags ('v*') and on demand; routine merges and MRs use `check`.
+# Runs on release tags ('v*'), on demand, and on the weekly deep-check
+# schedule (SEOR-ihmntqzm; see the SCHEDULE_KIND comment near the top of
+# this file). The manual `web` path was, in practice, the only way this ever
+# ran outside a tag, because nobody starts a manual job on a schedule they
+# forgot exists -- the new schedule rule below is what actually makes this
+# release-shaped, multi-R-version check run unattended on a cadence, on a
+# fleet with one runner that can now sleep between weekly passes instead of
+# running this nightly. Routine merges and MRs use `check`.
 full-check:
   extends: .r
   stage: check
@@ -332,6 +363,7 @@ full-check:
     - if: $CI_PIPELINE_SOURCE == "web"
       when: manual
       allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_KIND == "deep-check"
   parallel:
     matrix:
       # 'latest' tracks the current R release; bump the pinned oldrel-1 tag
@@ -364,8 +396,14 @@ full-check:
 # anywhere: this job pulls the clang-ASAN/UBSAN and valgrind containers
 # directly and runs the check inside them. Same sanitizers, no GitHub.
 #
-# Manual and allow_failure: sanitizer runs are slow and their output is for
-# reading, not for gating a merge. Run before a release, per CONTRIBUTING.md.
+# Manual and allow_failure on tag/web: sanitizer runs are slow and their
+# output is for reading, not for gating a merge. The schedule rule below
+# (SEOR-ihmntqzm; see the SCHEDULE_KIND comment near the top of this file)
+# is what actually runs this on a cadence -- manual-only meant, in practice,
+# never running -- on the weekly deep-check schedule, unattended and without
+# `allow_failure`, since nobody is watching a scheduled pipeline the way a
+# human triggering `web` would be. Still available before a release too, per
+# CONTRIBUTING.md.
 sanitizers:
   stage: check
   image: ghcr.io/r-hub/containers/$RHUB_CONTAINER
@@ -377,6 +415,7 @@ sanitizers:
     - if: $CI_PIPELINE_SOURCE == "web"
       when: manual
       allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_KIND == "deep-check"
   parallel:
     matrix:
       - RHUB_CONTAINER: ["clang-asan", "valgrind"]
@@ -533,13 +572,26 @@ codemeta:
 #
 # The GitHub workflows carried their own `schedule:` cron. GitLab keeps
 # schedules outside the file, so these two jobs key off the pipeline schedule
-# itself (Build > Pipeline schedules -> "Weekly dependency vulnerability
-# audits", Mondays 04:17 UTC). That project has exactly one schedule and this
-# is what it is for; if a second schedule is ever added for something else,
-# reintroduce a guard variable here so the audits do not run on it.
+# itself: schedule 4427280 (Build > Pipeline schedules -> "Weekly dependency
+# vulnerability audits (osv-audit, security-audit)", ref refs/heads/main).
 #
-# Both jobs also run on demand from a web-triggered pipeline, and on main when
-# their own inputs change.
+# SEOR-ihmntqzm is the second schedule this comment warned about: `full-check`
+# and `sanitizers` (stage: check) run off a weekly deep-check schedule, so
+# `$CI_PIPELINE_SOURCE == "schedule"` alone is not a safe guard here -- it
+# would fire these two audits on THAT schedule too. Both rules below also
+# require `$SCHEDULE_KIND == "dependency-audit"` (see the SCHEDULE_KIND
+# comment near the top of this file). Schedule 4427280 carries that CI/CD
+# variable: confirmed live 2026-09-24 via
+# `glab api projects/bart-turczynski%2Fpunycoder/pipeline_schedules/4427280`
+# (variables: SCHEDULE_KIND=dependency-audit). If the audits ever go quiet,
+# check that variable first.
+#
+# The only other way in is a hand-started `web` pipeline (manual,
+# allow_failure). The old third rule -- run on main whenever DESCRIPTION, the
+# audit test or this file changed -- is gone (SEOR-fftbjnpl): the rule is
+# "the dependency-audit schedule, else never", shared with seor's template.
+# With security-audit now failing on missing credentials, that rule would
+# also have turned an ordinary merge that touched this file red on main.
 # ---------------------------------------------------------------------------
 
 .audit:
@@ -547,51 +599,59 @@ codemeta:
   stage: audit
   variables:
     R_LIBS_USER: "$CI_PROJECT_DIR/.Rlibs"
-    # testthat::test_local() does not set NOT_CRAN, so set it here or
-    # skip_on_cran() in the audit tests would skip the audit silently.
+    # Belt and braces so skip_on_cran() in the audit tests cannot skip the
+    # audit silently. testthat::test_local() does set NOT_CRAN=true itself
+    # (measured on testthat 3.3.2; see the header of test-security.R), but
+    # keeping it explicit costs nothing and does not lean on that detail.
     NOT_CRAN: "true"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_KIND == "dependency-audit"
+    # Under `rules`, `when: manual` defaults to `allow_failure: false`, which
+    # would leave a hand-started pipeline blocked on a job nobody meant to
+    # gate on. The allow_failure line is load-bearing.
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+      allow_failure: true
+    - when: never
 
 # Dependency vulnerability audit against the OSV database (https://osv.dev) via
 # {rosv}. Unlike security-audit (Sonatype OSS Index), OSV requires no account,
 # token, or CI/CD variables, and has first-class CRAN coverage.
 osv-audit:
   extends: .audit
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-    - if: $CI_PIPELINE_SOURCE == "web"
-      when: manual
-      allow_failure: true
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - DESCRIPTION
-        - tests/testthat/test-osv.R
-        - .gitlab-ci.yml
   script:
     - Rscript -e 'pak::pak("deps::.", dependencies = TRUE); pak::pak(c("any::rosv", "any::testthat", "local::."))'
     - Rscript -e 'testthat::test_local(filter = "osv", stop_on_failure = TRUE)'
 
 # Dependency vulnerability audit against the Sonatype OSS Index via {oysteR}.
 # OSS Index requires authentication (anonymous requests get HTTP 401), so this
-# job needs two masked CI/CD variables (Settings > CI/CD > Variables):
+# job needs two CI/CD variables (Settings > CI/CD > Variables):
 #
 #   OSSINDEX_USER   - OSS Index account email (https://ossindex.sonatype.org)
 #   OSSINDEX_TOKEN  - OSS Index API token
 #
-# These were GitHub repository secrets and did not follow the move; until they
-# are re-added here, test-security.R skips cleanly and this job passes green
-# without auditing anything.
+# THIS JOB FAILS WHEN THEY ARE ABSENT, ON PURPOSE (SEOR-fftbjnpl). It used to
+# skip cleanly and stay green: the GitHub repository secrets did not follow
+# the move, so every run reported success having audited nothing
+# (PUNY-rsxtbbln). OSSINDEX_AUDIT_REQUIRED turns each missing precondition in
+# tests/testthat/test-security.R (oysteR not installed, credentials absent)
+# into a loud failure instead of a skip. It is set here and nowhere else, so
+# local runs, the pre-push gate and `R CMD check` still skip.
+#
+# OWNER GATE -- the variables cannot be set from a merge request:
+#
+#   glab variable set OSSINDEX_TOKEN '<api token>' \
+#     --masked --repo bart-turczynski/punycoder
+#   glab variable set OSSINDEX_USER '<account email>' \
+#     --repo bart-turczynski/punycoder
+#
+# OSSINDEX_USER is not `--masked`: GitLab rejects masking for a value
+# containing `@`, and the account email is not the secret. Until both exist,
+# a scheduled run of this job is red and says exactly why.
 security-audit:
   extends: .audit
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-    - if: $CI_PIPELINE_SOURCE == "web"
-      when: manual
-      allow_failure: true
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - DESCRIPTION
-        - tests/testthat/test-security.R
-        - .gitlab-ci.yml
+  variables:
+    OSSINDEX_AUDIT_REQUIRED: "true"
   script:
     - Rscript -e 'pak::pak("deps::.", dependencies = TRUE); pak::pak(c("any::oysteR", "any::testthat", "local::."))'
     - Rscript -e 'testthat::test_local(filter = "security", stop_on_failure = TRUE)'
