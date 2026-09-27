@@ -40,11 +40,11 @@ cold cache). Commit, push, merge.
 
 Still do the cheap things that *are* implicated, because CI checks them:
 
-- re-knit `README.md` when `README.Rmd` changes (the `readme` job checks they
-  are in sync);
+- re-knit `README.md` when `README.Rmd` changes (the `readme` check in the
+  `gates` job checks they are in sync);
 - run `roxygenise()` and commit `man/` when roxygen blocks change;
 - keep `NEWS.md` consistent with the `DESCRIPTION` version (the `news-version`
-  job checks the top heading).
+  check in the `gates` job checks the top heading).
 
 Anything touching `R/`, `src/`, or `tests/` is not doc-only — run the normal
 gate there.
@@ -54,9 +54,11 @@ gate there.
 All CI lives in a single `.gitlab-ci.yml`. It replaced eight GitHub Actions
 workflows when the project went GitLab-only; `.github/` no longer exists.
 
-The **gate** is `lint`, `readme`, `news-version`, `check`, `coverage` — the
-same five checks, under the same names, that `verify.yml` and
-`news-version.yaml` used to run.
+The **gate** is `gates`, `check`, `coverage`. `gates` runs `scripts/gates.R`,
+which folds the `lint`, `readme` and `news-version` checks that `verify.yml` and
+`news-version.yaml` used to run into one job: it runs all three, prints a
+PASS/FAIL line for each, and fails if any failed (SEOR-pgammbgo, ADR 0005 in
+seor).
 
 Read "gate" carefully: **it does not run on your merge request.** A top-level
 `workflow:` block admits only a tag, a push to `main`, or a pipeline a human
@@ -67,7 +69,7 @@ merge is `main` being protected plus the `pre-commit` pre-push hook, which
 runs the same chain locally before the branch leaves your machine.
 
 To get a server-side answer on a branch before merging it, start a pipeline
-yourself at **Build > Pipelines > Run pipeline** and pick the ref. The five
+yourself at **Build > Pipelines > Run pipeline** and pick the ref. The three
 gate jobs run there, and `full-check` and `sanitizers` become one click away.
 
 Everything else is opt-in:
@@ -78,14 +80,15 @@ Everything else is opt-in:
 | `sanitizers` | manual — R-hub's clang-ASAN/UBSAN and valgrind containers |
 | `pages` | every push to `main` — builds pkgdown, publishes to GitLab Pages. Pinned to `main`: a hand-started branch pipeline cannot reach it. Strips agent instruction files first, see below |
 | `codemeta` | manual, artifact-only (see below) |
-| `osv-audit`, `security-audit` | weekly pipeline schedule; manual; and on `main` when their inputs change |
+| `osv-audit`, `security-audit` | a pipeline schedule that sets `SCHEDULE_KIND=dependency-audit`; manual from a hand-started pipeline. Never on a push |
 
 Five things about it are non-obvious enough to be worth stating:
 
 - **The `pages` job deletes files before it builds.** It strips the agent instruction files first — pkgdown renders every top-level `.md`, so `AGENTS.md`, `CLAUDE.md` and the `FP_*.md` files were being published next to the function reference as `AGENTS.html`, `CLAUDE.html` and friends: internal working notes served as if they were user documentation (SEOR-pibdjanz). The job removes them with a glob, `rm -f AGENTS*.md CLAUDE*.md FP_*.md`, immediately before `build_site`, so a file later added under one of those names is covered without another round of this. Add an agent file that does **not** match those patterns and you must extend the glob in the same commit.
 
-- **Pandoc is pinned, and the pin is load-bearing.** The `readme` job asserts
-  that `README.md` is byte-identical to a fresh knit of `README.Rmd`, and
+- **Pandoc is pinned, and the pin is load-bearing.** The `readme` check
+  asserts that `README.md` matches a fresh knit of `README.Rmd` (blank-line-only
+  differences aside, SEOR-kaqtnovh), and
   pandoc's markdown writer changes table layout between versions — Ubuntu's
   apt pandoc rewrites every pipe table column-padded, so the job fails on
   whitespace and reports "out of sync" for a reason unrelated to the content.
