@@ -84,7 +84,7 @@ Everything else is opt-in:
 
 Five things about it are non-obvious enough to be worth stating:
 
-- **The `pages` job deletes files before it builds.** It strips the agent instruction files first — pkgdown renders every top-level `.md`, so `AGENTS.md`, `CLAUDE.md` and the `FP_*.md` files were being published next to the function reference as `AGENTS.html`, `CLAUDE.html` and friends: internal working notes served as if they were user documentation (SEOR-pibdjanz). The job removes them with a glob, `rm -f AGENTS*.md CLAUDE*.md FP_*.md`, immediately before `build_site`, so a file later added under one of those names is covered without another round of this. Add an agent file that does **not** match those patterns and you must extend the glob in the same commit.
+- **The `pages` job deletes files before it builds.** It strips the agent instruction files first — pkgdown renders every top-level `.md`, so `AGENTS.md`, `CLAUDE.md` and the `FP_*.md` files were being published next to the function reference as `AGENTS.html`, `CLAUDE.html` and friends: internal working notes served as if they were user documentation (SEOR-pibdjanz). The job uses a **keep-list**, not a glob: immediately before `build_site`, every top-level `.md` not named in its `KEEP` variable is moved out of the tree, so a new agent file of any name stays private (SEOR-wqxhftpv). The flip side: a new top-level `.md` meant for the public site is not published until you add it to `KEEP` in the same commit, and a `KEEP` entry whose file is missing fails the job.
 
 - **Pandoc is pinned, and the pin is load-bearing.** The `readme` check
   asserts that `README.md` matches a fresh knit of `README.Rmd` (blank-line-only

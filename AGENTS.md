@@ -115,8 +115,9 @@ Before any of them runs, `nfc()` **quick-checks** its input (PUNY-wfzldcuo, ADR-
 
 ## Repo conventions
 
+- Git follows the house `agent-workflow` skill. fp tracks issues, and status changes stay decoupled from git (the `fp` skill's `references/decoupling.md`). The verify command is the pre-push `verify` hook; see `CONTRIBUTING.md`.
 - `dev/` holds off-CRAN planning and development notes (e.g. `dev/user_story.md`). It's excluded from the package build via `.Rbuildignore`; put any new dev-only docs here rather than at repo root.
-- `AGENTS.md`, `CLAUDE.md`, `FP_CLAUDE.md`, `CONTRIBUTING.md`, `THIRD_PARTY_NOTICES.md`, `README.Rmd`, `_pkgdown.yml`, and generated artifacts (`*.Rcheck`, `*.tar.gz`, `*coverage.html`, `lib/`, `README.html`) are all `.Rbuildignore`d — never commit a coverage HTML or a built `.tar.gz`.
+- `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `THIRD_PARTY_NOTICES.md`, `README.Rmd`, `_pkgdown.yml`, and generated artifacts (`*.Rcheck`, `*.tar.gz`, `*coverage.html`, `lib/`, `README.html`) are all `.Rbuildignore`d — never commit a coverage HTML or a built `.tar.gz`.
 
 ### The tracker is not in git unless it is snapshotted
 
@@ -130,7 +131,7 @@ It writes `dev/tracker-snapshot.md`, per the `dev/` convention above. Not `docs/
 
 `fp` stays authoritative — nothing reads the snapshot back, `fp context <id>` is still the way to read an issue, and **every run overwrites the file wholesale**, so hand-edits to it are lost.
 
-**Refresh it when you close an issue.** That is the trigger, because it is the one that fires during ordinary work: filing an issue, closing one, and merging a commit that cites one all leave the snapshot untouched otherwise, so between backups it drifts in the direction that matters most — the newest reasoning, which is exactly what a fresh commit subject is most likely to cite, is always the part missing. Measured once already (PUNY-suwpnmtk): at `3804fc1` the snapshot was a month old, and three ids cited by merged commits — `PUNY-ahtemhwv`, `PUNY-tacfinef`, `PUNY-jzxomoqq` — resolved nowhere in the repository. This is a convention with nothing enforcing it, i.e. the same failure class it fixes; if the snapshot goes stale a *second* time, escalate to the mechanical form — regenerate in the pre-push gate and fail on `git diff --exit-code dev/tracker-snapshot.md`, accepting that this couples every push to `fp` being installed and to the local DB being the authoritative one. Do not escalate before that: one observed failure of the old trigger is not evidence that this one fails. Expect a one-run lag: regenerating just before the closing commit is what makes the cited id resolve for a reader who has only the git history, while that issue's own final status flip and closing comment are picked up by the next refresh.
+**Refresh it in a session that commits, not on closure.** An earlier rule tied the refresh to closing an issue, and it could not hold (PUNY-lezxwoov): an issue closes only after its merge request lands, often from a session that writes the tracker and never commits, and a commit triggered by a status change is the git side effect the decoupling rule forbids. pslr and raddr never had that trigger. The snapshot is a backstop for a reader who has only the git history, so its trigger is the moment such a copy is taken.
 
 **Refresh it before taking any copy you intend to keep** — a mirror push to the `backup` remote at `~/Projects/_backups/punycoder.git`, or a `git bundle create <path> --all`. Both exist for this repository as of 2026-08-01. A bundle taken without refreshing carries a stale copy of the only tracker reasoning in git, and a snapshot that is never regenerated is worse than none, because it looks current. Push to `backup` with `--no-verify`: a mirror must capture whatever state exists, including a red one.
 
