@@ -105,15 +105,24 @@ CRAN sources, 'pslr' uses `host_normalize()`, `normalization_profile_info()`
 and `puny_decode()`, and 'rurl' uses `host_normalize()`, `puny_encode()`,
 `puny_decode()` and `validate_domain()`.
 
-<!-- TODO(release): record `R CMD check` of both CRAN tarballs
-     (pslr_1.2.1.tar.gz, rurl_3.0.1.tar.gz) against the 1.3.0 tarball being
-     submitted. Check the published tarballs, not the development trees: a
-     development tree is what hid four test failures in pslr 1.1.1. -->
+<!-- Checked 2026-09-28 against a tarball built from main at 9c9d97c
+     (1.2.1.9000). If punycoder's R/ or src/ changes before submission,
+     re-run against the 1.3.0 tarball being submitted. Check the published
+     tarballs, not the development trees: a development tree is what hid
+     four test failures in pslr 1.1.1. -->
 
-* 'pslr' 1.2.1: TODO. Expected impact: 'pslr' ships a pre-built index stamped
-  with the `-v1` profile and Unicode 16.0.0. It compares both fields with the
-  installed 'punycoder' and, on a mismatch, rebuilds the index in memory once
-  per session, so it returns current answers rather than stale ones. An
+Both CRAN tarballs (pslr_1.2.1.tar.gz, rurl_3.0.1.tar.gz) were checked with
+`R CMD check --as-cran` against this release's code, in a library where every
+other dependency came from CRAN. Tests, examples and vignettes pass for both.
+The only finding is the incoming-feasibility WARNING that re-checking an
+already-published version produces ("Insufficient package version") together
+with the `BugReports` 404 explained above.
+
+* 'pslr' 1.2.1: OK, with no example-timing NOTE. Expected impact: 'pslr'
+  ships a pre-built index stamped with the `-v1` profile and Unicode 16.0.0.
+  It compares both fields with the installed 'punycoder' and, on a mismatch,
+  rebuilds the index in memory once per session, so it returns current
+  answers rather than stale ones. An
   element-wise comparison of 'pslr' results under 'punycoder' 1.2.1 and the
   development version (about 9 million cells) found no previously returned
   value changed; some `NA` results became values. The rebuild takes time:
@@ -123,6 +132,6 @@ and `puny_decode()`, and 'rurl' uses `host_normalize()`, `puny_encode()`,
   code this release ships), reported only its `BugReports` NOTE. A 'pslr'
   update that ships the index under `-v2`, removing the rebuild, is planned
   to follow this release.
-* 'rurl' 3.0.1: TODO. Its test suite anticipates this release: a
+* 'rurl' 3.0.1: OK. Its test suite anticipates this release: a
   characterization test expects Unicode 16.0.0 / `-v1` from 'punycoder' 1.2.1
   and 17.0.0 / `-v2` from any later version.
