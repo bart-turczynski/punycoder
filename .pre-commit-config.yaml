@@ -95,6 +95,20 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-push]
+      # R CMD check skips its DESCRIPTION spelling check on a machine with no
+      # English aspell/hunspell dictionary, so a typo first showed up in
+      # win-builder's incoming NOTE. spelling bundles its own hunspell
+      # dictionaries and also reads man/, vignettes, README and NEWS
+      # (SEOR-mtbzfroz). Genuine terms go in inst/WORDLIST.
+      - id: spelling
+        name: spelling (en-US, inst/WORDLIST)
+        entry: Rscript -e
+        args:
+          - 'bad <- spelling::spell_check_package(); if (nrow(bad)) { print(bad); quit(status = 1) }'
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
       - id: verify
         name: verify (mirrors CI)
         entry: Rscript -e

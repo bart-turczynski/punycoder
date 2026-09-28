@@ -48,6 +48,9 @@
 ^CRAN-SUBMISSION$
 ^\.lintr$
 ^_scratch$
+# Logs and build output. R CMD build ignores .gitignore, so without this a
+# local build sweeps tmp/ into the tarball (SEOR-jlwnvzoq).
+^tmp$
 ^_pkgdown\.yml$
 ^CITATION\.cff$
 ^codemeta\.json$
