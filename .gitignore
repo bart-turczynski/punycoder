@@ -90,6 +90,9 @@ tests/testthat/_snaps/
 # Agent scratch (raw planning notes, standalone conformance harnesses)
 _scratch/
 
+# Logs and build output (fleet convention, SEOR-jlwnvzoq)
+tmp/
+
 # Claude Cowork
 .claude/
 
