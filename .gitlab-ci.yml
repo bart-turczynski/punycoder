@@ -120,7 +120,18 @@ workflow:
       - .Rlibs/
   before_script:
     - mkdir -p "$R_LIBS_USER"
-    - Rscript -e 'if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak")'
+    # pak from r-lib's own binary repository, not CRAN: rocker/r-ver:devel has
+    # no Posit Package Manager binaries, so a CRAN install.packages("pak")
+    # builds from source, needs libcurl headers the image lacks, and fails with
+    # only a warning -- the next step then dies on "no package called 'pak'"
+    # (full-check R-devel, pipeline 2894951198). The r-lib repo serves a
+    # self-contained build for every R version, so all three images take the
+    # same path.
+    - >
+      Rscript -e 'if (!requireNamespace("pak", quietly = TRUE))
+      install.packages("pak", repos = sprintf(
+      "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+      .Platform$pkgType, R.Version()$os, R.Version()$arch))'
     # Setting R_LIBS_USER above is NOT sufficient by itself (SEOR-dyzgzyot).
     # rocker/r-ver's Renviron.site defaults R_LIBS (not R_LIBS_USER) to
     # site-library:library whenever R_LIBS itself is unset, and that default
