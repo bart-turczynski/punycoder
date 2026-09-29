@@ -2,9 +2,17 @@
 % Please edit documentation in R/normalize.R
 \name{normalization_profile_info}
 \alias{normalization_profile_info}
+\alias{normalisation_profile_info}
 \title{Canonical-host normalization profile identity}
 \usage{
 normalization_profile_info(
+  check_hyphens = TRUE,
+  use_std3 = TRUE,
+  verify_dns_length = TRUE,
+  unicode_version = NULL
+)
+
+normalisation_profile_info(
   check_hyphens = TRUE,
   use_std3 = TRUE,
   verify_dns_length = TRUE,

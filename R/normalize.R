@@ -79,6 +79,10 @@ host_normalize <- function(x, check_hyphens = TRUE, use_std3 = TRUE,
   out
 }
 
+#' @rdname host_normalize
+#' @export
+host_normalise <- host_normalize
+
 #' Unicode table sets available in this build
 #'
 #' punycoder vendors its Unicode data (combining classes, decompositions, UTS
@@ -198,3 +202,7 @@ normalization_profile_info <- function(check_hyphens = TRUE, use_std3 = TRUE,
     stringsAsFactors = FALSE
   )
 }
+
+#' @rdname normalization_profile_info
+#' @export
+normalisation_profile_info <- normalization_profile_info

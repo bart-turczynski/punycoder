@@ -28,3 +28,42 @@ test_that("pin: normalization_profile_info() default and relaxed identity", {
     "uts46-nontransitional-std3-v2+no-check-hyphens"
   )
 })
+
+# --- British-spelling aliases ---------------------------------------------
+
+.alias_exports <- getNamespaceExports("punycoder")
+
+test_that("host_normalise() is host_normalize()", {
+  expect_identical(host_normalise, host_normalize)
+  expect_true("host_normalise" %in% .alias_exports)
+  expect_identical(host_normalise(.alias_hosts), .alias_hosts_expected)
+  expect_identical(host_normalise("a_b.com", use_std3 = FALSE), "a_b.com")
+})
+
+test_that("normalisation_profile_info() is normalization_profile_info()", {
+  expect_identical(normalisation_profile_info, normalization_profile_info)
+  expect_true("normalisation_profile_info" %in% .alias_exports)
+  expect_identical(
+    normalisation_profile_info(), normalization_profile_info()
+  )
+  expect_identical(
+    normalisation_profile_info(check_hyphens = FALSE)$profile,
+    "uts46-nontransitional-std3-v2+no-check-hyphens"
+  )
+})
+
+test_that("each alias is documented on its US name's help page", {
+  # Reads the source tree's man/, so it runs under devtools::test() and skips
+  # in an installed-package check, where R CMD check's own codoc covers it.
+  man_dir <- test_path("..", "..", "man")
+  skip_if_not(dir.exists(man_dir), "man/ not in tree")
+  rd_aliases <- function(page) {
+    rd <- tools::parse_Rd(file.path(man_dir, paste0(page, ".Rd")))
+    tags <- vapply(rd, attr, character(1L), "Rd_tag")
+    vapply(rd[tags == "\\alias"], as.character, character(1L))
+  }
+  expect_true("host_normalise" %in% rd_aliases("host_normalize"))
+  expect_true(
+    "normalisation_profile_info" %in% rd_aliases("normalization_profile_info")
+  )
+})
