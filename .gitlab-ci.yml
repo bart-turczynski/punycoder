@@ -417,8 +417,34 @@ full-check:
 # R-hub v2 is GitHub-Actions-native -- `rhub::rhub_setup()` writes a workflow
 # and `rhub::rhub_check()` dispatches it -- so there is nothing to port. But
 # R-hub publishes its check environments as ordinary OCI images, and those run
-# anywhere: this job pulls the clang-ASAN/UBSAN and valgrind containers
-# directly and runs the check inside them. Same sanitizers, no GitHub.
+# anywhere: this job pulls the clang-ASAN/UBSAN container directly and runs
+# the check inside it. Same sanitizer, no GitHub.
+#
+# There is deliberately no valgrind leg (PUNY-pxdhoaov). R-hub's `valgrind`
+# image is x86_64 and this project's runner is an arm64 Mac, so it runs under
+# Rosetta 2 -- and no R process can start in it there. Its R is built with
+# GCC 15, which compiles `machar_LD` (src/main/machar.c, inlined into
+# `Init_R_Machine`, run at every R startup) using the x87 instruction
+# `ffreep %st(0)` (bytes DF C0), which Rosetta does not implement: every
+# `Rscript` dies with SIGILL, exit 132. clang, which builds the clang-asan
+# image, does not emit it, which is why that leg runs fine under the same
+# emulation. Located with a SIGILL handler in the image itself; it is in the
+# image's prebuilt libR.so, so no flag of ours can avoid it. Do not re-add the
+# matrix entry unless the runner is x86_64. Valgrind now comes from R-hub's
+# own x86_64 runners, `rhub::rc_submit(platforms = "valgrind")`, before every
+# CRAN submission (CONTRIBUTING.md, release checklist). A native arm64
+# valgrind on rocker/r-ver does work, but that R is not built with valgrind
+# instrumentation and is not CRAN's platform, so a green run there would look
+# stronger than it is.
+#
+# `--ignore-vignettes` on the check, not `--no-build-vignettes`: the tarball is
+# built without vignettes (no pandoc in the image, and vignettes are not what
+# this job is for), and checking it with `--no-build-vignettes` reported two
+# WARNINGs on every run (files in vignettes/ but no inst/doc; a vignette
+# without its HTML), so a real WARNING could not be told apart from them.
+# `--ignore-vignettes` skips every vignette check, including running the
+# vignette's R code, so that code no longer runs under ASAN/UBSAN. The test
+# suite exercises the same functions on the same classes of input.
 #
 # Manual and allow_failure on tag/web: sanitizer runs are slow and their
 # output is for reading, not for gating a merge. The schedule rule below
@@ -432,7 +458,7 @@ full-check:
 # the note on full-check).
 sanitizers:
   stage: check
-  image: ghcr.io/r-hub/containers/$RHUB_CONTAINER
+  image: ghcr.io/r-hub/containers/clang-asan
   interruptible: true
   rules:
     - if: $CI_COMMIT_TAG =~ /^v/
@@ -443,9 +469,6 @@ sanitizers:
       allow_failure: true
     - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_KIND == "deep-check"
     - if: $CI_PIPELINE_SOURCE == "api" && $DEEP_CHECK == "1"
-  parallel:
-    matrix:
-      - RHUB_CONTAINER: ["clang-asan", "valgrind"]
   variables:
     R_LIBS_USER: "$CI_PROJECT_DIR/.Rlibs"
   script:
@@ -453,7 +476,7 @@ sanitizers:
     - Rscript -e 'if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak")'
     - Rscript -e 'pak::pak("deps::.", dependencies = TRUE)'
     - R CMD build --no-build-vignettes --no-manual .
-    - R CMD check --no-manual --no-build-vignettes punycoder_*.tar.gz
+    - R CMD check --no-manual --ignore-vignettes punycoder_*.tar.gz
   artifacts:
     when: always
     expire_in: 1 week
