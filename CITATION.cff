@@ -23,8 +23,8 @@ identifiers:
     value: 10.5281/zenodo.20973629
     description: "Concept DOI (all versions; resolves to the latest release)"
   - type: doi
-    value: 10.5281/zenodo.20973630
-    description: "Version DOI for punycoder 1.2.0"
+    value: 10.5281/zenodo.21444807
+    description: "Version DOI for punycoder 1.2.1"
 keywords:
   - punycode
   - IDNA
