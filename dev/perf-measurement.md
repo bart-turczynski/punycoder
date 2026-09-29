@@ -36,12 +36,12 @@ over it.
 It is not a stylistic preference. On PUNY-mbzhgbta the rebuild loop reported the
 change as **flat at every mix** and a real win was nearly written off as noise;
 the same two builds measured this way showed **28 of 32 paired comparisons**
-favouring the candidate, at 1.03–1.05x.
+favoring the candidate, at 1.03–1.05x.
 
 ## 3. Report the paired win count alongside the ratio
 
 The win count is what distinguishes a small real effect from noise — a 1.04x
-mean means nothing on its own, "28 of 32 paired comparisons favour the
+mean means nothing on its own, "28 of 32 paired comparisons favor the
 candidate" means something. PUNY-wfzldcuo reports 16 of 16 the same way.
 
 ## 4. Report min, not mean

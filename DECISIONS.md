@@ -427,7 +427,7 @@ within a run of non-starters.
 - **`NFC_QC` is read from the UCD, not derived.** `DerivedNormalizationProps.txt`
   is already parsed for `Full_Composition_Exclusion`, so the property costs one
   more pass over a cached file. It gets the same two-stage trie as its
-  neighbours; `Yes` is the default and covers nearly the whole code space, which
+  neighbors; `Yes` is the default and covers nearly the whole code space, which
   is exactly the case block dedup collapses (6.1 KB).
 - **`Maybe` is a real third value** — the character *may* compose with what
   precedes it — and falls through to the full pipeline alongside `No`. Folding
@@ -446,7 +446,7 @@ within a run of non-starters.
 **Consequences.** Measured with both builds installed side by side and
 alternated (min of 9 batched samples, 8 rounds, 20k hosts): **1.22x** all-ASCII,
 1.21x at 20% non-ASCII, 1.22x at 50%, **1.19x** all-non-ASCII — uniform across
-the range, with all 16 paired comparisons favouring the check. This is the
+the range, with all 16 paired comparisons favoring the check. This is the
 largest single win since ADR-011, and unlike ADR-012 and ADR-013 it helps the
 all-ASCII case most, because that case was paying the most for nothing.
 
