@@ -133,7 +133,7 @@ It writes `dev/tracker-snapshot.md`, per the `dev/` convention above. Not `docs/
 
 **Refresh it in a session that commits, not on closure.** An earlier rule tied the refresh to closing an issue, and it could not hold (PUNY-lezxwoov): an issue closes only after its merge request lands, often from a session that writes the tracker and never commits, and a commit triggered by a status change is the git side effect the decoupling rule forbids. pslr and raddr never had that trigger. The snapshot is a backstop for a reader who has only the git history, so its trigger is the moment such a copy is taken.
 
-**Refresh it before taking any copy you intend to keep** — a mirror push to the `backup` remote at `~/Projects/_backups/punycoder.git`, or a `git bundle create <path> --all`. Both exist for this repository as of 2026-08-01. A bundle taken without refreshing carries a stale copy of the only tracker reasoning in git, and a snapshot that is never regenerated is worse than none, because it looks current. Push to `backup` with `--no-verify`: a mirror must capture whatever state exists, including a red one.
+**Refresh it before taking any copy you intend to keep** — a mirror push to the `backup` remote at `~/Projects/_backups/punycoder.git`, or a `git bundle create <path> --all`. Both exist for this repository as of 2026-08-01. A bundle taken without refreshing carries a stale copy of the only tracker reasoning in git, and a snapshot that is never regenerated is worse than none, because it looks current. A plain push to `backup` does not run the verify gate: `scripts/verify-on-push.sh` skips it for a destination that is a directory on this machine.
 
 ## A red gate on an untouched tree
 
