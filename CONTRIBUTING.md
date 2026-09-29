@@ -113,12 +113,25 @@ To get a server-side answer on a branch before merging it, start a pipeline
 yourself at **Build > Pipelines > Run pipeline** and pick the ref. The three
 gate jobs run there, and `full-check` and `sanitizers` become one click away.
 
+To run `full-check` and `sanitizers` on `main` from the terminal, for example
+before a CRAN submission, start an API pipeline with the `DEEP_CHECK` variable:
+
+```sh
+glab ci run --branch main --variables DEEP_CHECK:1
+glab ci status --branch main --wait
+```
+
+Both jobs start at once, not as manual jobs, and neither is allowed to fail.
+The trigger works on `main` only: the `workflow:` rules give an API pipeline
+on any other branch nothing. Without `DEEP_CHECK:1`, `glab ci run` starts only
+the jobs a push to `main` would run.
+
 Everything else is opt-in:
 
 | Job | When |
 | --- | --- |
-| `full-check` | release tags `v*`; manual from a hand-started pipeline, on any ref |
-| `sanitizers` | manual — R-hub's clang-ASAN/UBSAN and valgrind containers |
+| `full-check` | release tags `v*`; the `deep-check` schedule; an API pipeline on `main` with `DEEP_CHECK=1`; manual from a hand-started pipeline, on any ref |
+| `sanitizers` | R-hub's clang-ASAN/UBSAN and valgrind containers: the `deep-check` schedule; an API pipeline on `main` with `DEEP_CHECK=1`; manual on a release tag or a hand-started pipeline |
 | `pages` | every push to `main` — builds pkgdown, publishes to GitLab Pages. Pinned to `main`: a hand-started branch pipeline cannot reach it. Strips agent instruction files first, see below |
 | `codemeta` | manual, artifact-only (see below) |
 | `osv-audit`, `security-audit` | a pipeline schedule that sets `SCHEDULE_KIND=dependency-audit`; manual from a hand-started pipeline. Never on a push |
@@ -219,9 +232,10 @@ fast-forward are the ones we have missed before — skipping them leaves
 2. **Set the release version** in `DESCRIPTION` (drop the `.9000` dev suffix).
 3. Update `cran-comments.md` for this submission.
 4. Run `R CMD build . && R CMD check --as-cran punycoder_*.tar.gz` clean; confirm
-   the `full-check` and `sanitizers` jobs are green (run both from
-   **Build > Pipelines > Run pipeline** on GitLab, or push the release tag,
-   which triggers `full-check` automatically).
+   the `full-check` and `sanitizers` jobs are green, before submitting (run
+   both with `glab ci run --branch main --variables DEEP_CHECK:1`, or from
+   **Build > Pipelines > Run pipeline** on GitLab; the release tag triggers
+   `full-check` automatically, but that is after the submission).
 
    **Cross-platform coverage is not in CI any more.** The GitLab side is a
    Linux R-version matrix only; macOS and Windows checking left with GitHub
