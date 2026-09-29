@@ -51,9 +51,9 @@
 # So under OSSINDEX_AUDIT_REQUIRED=true every precondition below becomes a hard
 # failure with a message naming what is missing. The flag is meant to be set
 # in the `security-audit` job in `.gitlab-ci.yml` and nowhere else, so no other
-# context changes behaviour. As of this commit the job does NOT set it yet:
+# context changes behavior. As of this commit the job does NOT set it yet:
 # that half of SEOR-fftbjnpl is deferred until the pending CI consolidation
-# (MR !26, which rewrites `.gitlab-ci.yml`) merges. This file already honours
+# (MR !26, which rewrites `.gitlab-ci.yml`) merges. This file already honors
 # the flag, so enabling the gate is a one-line variable in that job.
 #
 # NOTE ON THE PRE-PUSH HOOK. This repository's pre-push `verify` hook is inline

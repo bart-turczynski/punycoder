@@ -144,7 +144,7 @@ test_that("predicate UTF-8 gating leaves well-formed input untouched", {
   expect_identical(is_punycode(character(0)), logical(0))
   expect_identical(is_idn(character(0)), logical(0))
 
-  # Mixed vectors: a bad element must not perturb its neighbours' answers.
+  # Mixed vectors: a bad element must not perturb its neighbors' answers.
   mixed <- c("xn--caf-dma.com", raw_utf8(0xED, 0xA0, 0x80), "café.com")
   expect_identical(is_punycode(mixed), c(TRUE, FALSE, FALSE))
   expect_identical(is_idn(mixed), c(FALSE, FALSE, TRUE))

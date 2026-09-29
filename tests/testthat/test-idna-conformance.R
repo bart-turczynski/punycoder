@@ -7,7 +7,7 @@
 # path live in helper-idna.R; this file is ASCII-clean and all Unicode inputs
 # come from the fixture.
 #
-# punycoder honours every UTS #46 validity flag, so under the strict v1 profile
+# punycoder honors every UTS #46 validity flag, so under the strict v1 profile
 # any status code means the row is expected to be rejected as NA. The single
 # documented divergence is the trailing FQDN root dot: strict VerifyDnsLength
 # flags the empty root label as A4_2, but host_normalize permits it, mapping a
