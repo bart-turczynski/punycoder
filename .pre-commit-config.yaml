@@ -45,6 +45,27 @@ repos:
       - id: mixed-line-ending
         exclude: *fixer-excludes
       - id: check-case-conflict
+  # British spellings in code, comments, string literals and tooling, which
+  # the `spelling` hook below never reads: spell_check_package() covers
+  # DESCRIPTION, roxygen, vignettes, README and NEWS only, and that gap let
+  # British runtime messages ship (SEOR-xtmnpmae). Only the en-GB_to_en-US
+  # dictionary is enabled, so this is not a general typo checker. codespell
+  # skips dotfiles unless given --check-hidden, so .bestpractices.json is
+  # skipped either way; it is listed so the intent survives a flag change.
+  # Excluded: man/ (roxygen output; fix the roxygen source), the vendored
+  # conformance vectors in inst/testdata/, src/unicode_tables_* (generated
+  # from the upstream UCD), the tracker snapshot (data-raw/snapshot-tracker.sh
+  # overwrites it wholesale) and .bestpractices.json (mirrors the live
+  # bestpractices.dev entry). roxygen2::roxygenise needs no allow-list: the
+  # en-GB_to_en-US dictionary has no entry for it.
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.3
+    hooks:
+      - id: codespell
+        name: codespell (British spellings, en-GB_to_en-US; SEOR-xtmnpmae)
+        args: [--builtin, en-GB_to_en-US]
+        stages: [pre-commit, pre-push]
+        exclude: '^(man/|inst/testdata/|src/unicode_tables_.*\.(h|cpp)$|dev/tracker-snapshot\.md$|\.bestpractices\.json$)'
   - repo: local
     hooks:
       # CITATION.cff's version: and .zenodo.json's "version" must name the
