@@ -7,18 +7,19 @@ dependencies are discussed at the end.
 
 ## R CMD check results
 
-<!-- TODO(release): fill from the release-time runs. Do not copy numbers from
-     a development build. -->
+0 errors | 0 warnings | 1 note
 
-0 errors | 0 warnings | TODO notes
+The note is the `BugReports` URL, explained in the next section.
 
-* TODO: local `R CMD check --as-cran` on the release tarball (macOS aarch64,
-  R release).
-* TODO: win-builder, R-devel and R-release (`devtools::check_win_devel()`,
-  `devtools::check_win_release()`).
-* TODO: macOS builder (<https://mac.r-project.org/macbuilder/submit.html>).
-* TODO: GitLab CI `full-check` (Ubuntu; R devel, release, oldrel-1), and the
-  `sanitizers` job (R-hub clang-ASAN/UBSAN and valgrind containers).
+* Local `R CMD check --as-cran` on the release tarball, built from a clean
+  `git archive` export of the submitted commit, with
+  `_R_CHECK_CRAN_INCOMING_=true` and `_R_CHECK_CRAN_INCOMING_REMOTE_=true`
+  (macOS 26.7 aarch64, R 4.6.0, libidn2 backend): 0 errors, 0 warnings,
+  1 note.
+<!-- TODO(release, needs the owner's go): win-builder (R-devel, R-release,
+     R-oldrelease), macOS builder, R-hub (`rhub::rc_submit()`), and GitLab CI
+     `full-check` and `sanitizers`, all on the same final SHA. Write each
+     platform and its result here. -->
 
 Both Punycode backends are exercised where available: the optional libidn2
 backend on Linux and macOS, and the in-tree fallback everywhere (Windows
@@ -90,6 +91,10 @@ Full details are in NEWS.md. What a user or a reverse dependency can notice:
   sets this build ships (`"16.0.0"`, `"17.0.0"`).
 * New: `print()` and `summary()` methods make `validate_domain()` results
   readable for large inputs.
+* New: `host_normalise()` and `normalisation_profile_info()` are exported as
+  British-spelling aliases of `host_normalize()` and
+  `normalization_profile_info()`. Each is the same function object as its
+  primary and shares its help page.
 * Fixes: the fallback `puny_decode()` now rejects malformed A-labels the same
   way the libidn2 backend does; `puny_encode()`, `puny_decode()` and
   `validate_domain()` now convert input to UTF-8 before native code sees it.
@@ -105,18 +110,16 @@ CRAN sources, 'pslr' uses `host_normalize()`, `normalization_profile_info()`
 and `puny_decode()`, and 'rurl' uses `host_normalize()`, `puny_encode()`,
 `puny_decode()` and `validate_domain()`.
 
-<!-- Checked 2026-09-28 against a tarball built from main at 9c9d97c
-     (1.2.1.9000). If punycoder's R/ or src/ changes before submission,
-     re-run against the 1.3.0 tarball being submitted. Check the published
-     tarballs, not the development trees: a development tree is what hid
-     four test failures in pslr 1.1.1. -->
+<!-- Checked 2026-09-29 against the 1.3.0 release tarball built from
+     5fd5a10 (sha256 54e0d0a6...5d24). If punycoder's R/ or src/ changes
+     before submission, re-run against the tarball being submitted. Check the
+     published tarballs, not the development trees: a development tree is
+     what hid four test failures in pslr 1.1.1. -->
 
 Both CRAN tarballs (pslr_1.2.1.tar.gz, rurl_3.0.1.tar.gz) were checked with
-`R CMD check --as-cran` against this release's code, in a library where every
-other dependency came from CRAN. Tests, examples and vignettes pass for both.
-The only finding is the incoming-feasibility WARNING that re-checking an
-already-published version produces ("Insufficient package version") together
-with the `BugReports` 404 explained above.
+`R CMD check --as-cran` against the 1.3.0 release tarball, in a library where
+every other dependency came from CRAN. Tests, examples and vignettes pass for
+both.
 
 * 'pslr' 1.2.1: OK, with no example-timing NOTE. Expected impact: 'pslr'
   ships a pre-built index stamped with the `-v1` profile and Unicode 16.0.0.
@@ -132,6 +135,8 @@ with the `BugReports` 404 explained above.
   code this release ships), reported only its `BugReports` NOTE. A 'pslr'
   update that ships the index under `-v2`, removing the rebuild, is planned
   to follow this release.
-* 'rurl' 3.0.1: OK. Its test suite anticipates this release: a
+* 'rurl' 3.0.1: OK apart from one NOTE local to the check machine ('V8' is
+  not installed there, so the HTML manual's math rendering was skipped). Its
+  test suite anticipates this release: a
   characterization test expects Unicode 16.0.0 / `-v1` from 'punycoder' 1.2.1
   and 17.0.0 / `-v2` from any later version.
