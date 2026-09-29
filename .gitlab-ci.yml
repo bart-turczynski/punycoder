@@ -37,7 +37,8 @@
 # `$CI_PIPELINE_SOURCE == "schedule"` AND its own `$SCHEDULE_KIND`, so adding a
 # schedule for one purpose cannot silently fire jobs meant for another. Two
 # values are in use: `dependency-audit` (osv-audit, security-audit) and
-# `deep-check` (full-check, sanitizers). See the `.audit` block below and the
+# `deep-check` (full-check, sanitizers) -- the latter pair also
+# runs on an API pipeline on `main` that sets `DEEP_CHECK=1`. See the `.audit` block below and the
 # `full-check`/`sanitizers` jobs for where each is applied. Creating the
 # schedules themselves is a separate, manual step (Build > Pipeline
 # schedules) -- not done by this file.
@@ -354,6 +355,17 @@ check:
 # release-shaped, multi-R-version check run unattended on a cadence, on a
 # fleet with one runner that can now sleep between weekly passes instead of
 # running this nightly. Routine merges and MRs use `check`.
+#
+# The `api` rule is the terminal trigger, so the release checklist can run this
+# before a CRAN submission without opening the web UI:
+#
+#   glab ci run --branch main --variables DEEP_CHECK:1
+#
+# It starts the job outright (no `when: manual`, no `allow_failure`): whoever
+# passed DEEP_CHECK=1 asked for this result, and a red one should read red.
+# Only `main` qualifies, because the top-level `workflow:` rules give an API
+# pipeline on any other branch nothing at all. A plain `glab ci run` without
+# the variable still leaves this job out.
 full-check:
   extends: .r
   stage: check
@@ -364,6 +376,7 @@ full-check:
       when: manual
       allow_failure: true
     - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_KIND == "deep-check"
+    - if: $CI_PIPELINE_SOURCE == "api" && $DEEP_CHECK == "1"
   parallel:
     matrix:
       # 'latest' tracks the current R release; bump the pinned oldrel-1 tag
@@ -403,7 +416,9 @@ full-check:
 # never running -- on the weekly deep-check schedule, unattended and without
 # `allow_failure`, since nobody is watching a scheduled pipeline the way a
 # human triggering `web` would be. Still available before a release too, per
-# CONTRIBUTING.md.
+# CONTRIBUTING.md: `glab ci run --branch main --variables DEEP_CHECK:1` starts
+# it, and full-check with it, straight from the terminal (the `api` rule; see
+# the note on full-check).
 sanitizers:
   stage: check
   image: ghcr.io/r-hub/containers/$RHUB_CONTAINER
@@ -416,6 +431,7 @@ sanitizers:
       when: manual
       allow_failure: true
     - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_KIND == "deep-check"
+    - if: $CI_PIPELINE_SOURCE == "api" && $DEEP_CHECK == "1"
   parallel:
     matrix:
       - RHUB_CONTAINER: ["clang-asan", "valgrind"]
