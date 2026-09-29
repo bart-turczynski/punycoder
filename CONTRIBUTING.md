@@ -195,7 +195,7 @@ Triage rule when a license flag fires:
 
 - **GPL / LGPL / MPL**, any version — including `GPL-2.0-or-later` for Rcpp and
   `GPL-3.0-only` for knitr/rmarkdown — **ignore with a note**. These are
-  GPL-compatible with this package's MIT licence, the source is already
+  GPL-compatible with this package's MIT license, the source is already
   published on CRAN and GitLab, so the copyleft source-disclosure obligation is
   already satisfied. This is standard CRAN practice.
 - **AGPL or proprietary — stop and evaluate.** AGPL closes the SaaS loophole and
