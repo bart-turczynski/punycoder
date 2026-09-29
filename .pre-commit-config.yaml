@@ -130,11 +130,20 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-push]
+      # `entry` is scripts/verify-on-push.sh, which runs the lintr + rcmdcheck
+      # command this hook used to spell inline, unchanged, except when the
+      # push DESTINATION is a directory on this filesystem -- the local
+      # archival mirror `backup`, where the gate verifies nothing because that
+      # history already passed on its way to origin (PUNY-dopcsyjw, ported
+      # from rurl's RURL-qkowfsdt). It reads the URL pre-commit re-exports as
+      # $PRE_COMMIT_REMOTE_URL; anything it cannot positively identify as a
+      # local mirror, origin included, runs the gate. Read the wrapper's header
+      # before changing the predicate -- this is a scoped skip, not a hole.
+      # `always_run: true` stays: the missing predicate was the remote, not the
+      # file set.
       - id: verify
         name: verify (mirrors CI)
-        entry: Rscript -e
-        args:
-          - 'lints <- lintr::lint_package(); if (length(lints)) { print(lints); quit(status = 1) }; rcmdcheck::rcmdcheck(args = "--as-cran", error_on = "warning")'
+        entry: scripts/verify-on-push.sh
         language: system
         pass_filenames: false
         always_run: true

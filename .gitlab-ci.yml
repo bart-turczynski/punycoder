@@ -627,8 +627,16 @@ osv-audit:
 # OSS Index requires authentication (anonymous requests get HTTP 401), so this
 # job needs two CI/CD variables (Settings > CI/CD > Variables):
 #
-#   OSSINDEX_USER   - OSS Index account email (https://ossindex.sonatype.org)
-#   OSSINDEX_TOKEN  - OSS Index API token
+#   OSSINDEX_USER   - the literal placeholder `x`, NOT the account email
+#   OSSINDEX_TOKEN  - a Sonatype Guide personal access token (`sonatype_pat_*`)
+#
+# OSS Index moved to Sonatype Guide, whose help says the basic-auth username is
+# ignored for a PAT. It is not: with the account email as username a valid PAT
+# returns HTTP 401, and with `x` the same token returns 200 (measured in
+# pagerankr 2026-07-25 by changing only OSSINDEX_USER). A local
+# `curl -u 'x:$PAT'` that succeeds while this job 401s is this, not a bad
+# token. A legacy OSS Index API token, if one is ever rotated back in, is the
+# case that takes the email.
 #
 # THIS JOB FAILS WHEN THEY ARE ABSENT, ON PURPOSE (SEOR-fftbjnpl). It used to
 # skip cleanly and stay green: the GitHub repository secrets did not follow
@@ -640,14 +648,14 @@ osv-audit:
 #
 # OWNER GATE -- the variables cannot be set from a merge request:
 #
-#   glab variable set OSSINDEX_TOKEN '<api token>' \
+#   glab variable set OSSINDEX_TOKEN '<Sonatype Guide PAT>' \
 #     --masked --repo bart-turczynski/punycoder
-#   glab variable set OSSINDEX_USER '<account email>' \
+#   glab variable set OSSINDEX_USER 'x' \
 #     --repo bart-turczynski/punycoder
 #
-# OSSINDEX_USER is not `--masked`: GitLab rejects masking for a value
-# containing `@`, and the account email is not the secret. Until both exist,
-# a scheduled run of this job is red and says exactly why.
+# OSSINDEX_USER is not `--masked`: `x` is not a secret, and GitLab rejects
+# masking a value shorter than 8 characters. Only the token is the secret.
+# Until both exist, a scheduled run of this job is red and says exactly why.
 security-audit:
   extends: .audit
   variables:
