@@ -131,7 +131,7 @@ Everything else is opt-in:
 | Job | When |
 | --- | --- |
 | `full-check` | release tags `v*`; the `deep-check` schedule; an API pipeline on `main` with `DEEP_CHECK=1`; manual from a hand-started pipeline, on any ref |
-| `sanitizers` | R-hub's clang-ASAN/UBSAN and valgrind containers: the `deep-check` schedule; an API pipeline on `main` with `DEEP_CHECK=1`; manual on a release tag or a hand-started pipeline |
+| `sanitizers` | R-hub's clang-ASAN/UBSAN container (no valgrind: see the release checklist): the `deep-check` schedule; an API pipeline on `main` with `DEEP_CHECK=1`; manual on a release tag or a hand-started pipeline |
 | `pages` | every push to `main` — builds pkgdown, publishes to GitLab Pages. Pinned to `main`: a hand-started branch pipeline cannot reach it. Strips agent instruction files first, see below |
 | `codemeta` | manual, artifact-only (see below) |
 | `osv-audit`, `security-audit` | a pipeline schedule that sets `SCHEDULE_KIND=dependency-audit`; manual from a hand-started pipeline. Never on a push |
@@ -236,6 +236,24 @@ fast-forward are the ones we have missed before — skipping them leaves
    both with `glab ci run --branch main --variables DEEP_CHECK:1`, or from
    **Build > Pipelines > Run pipeline** on GitLab; the release tag triggers
    `full-check` automatically, but that is after the submission).
+
+   **Valgrind is not in CI.** R-hub's valgrind image cannot start any R
+   process on this project's arm64 runner (its GCC-built R uses an x87
+   instruction Rosetta 2 does not implement; the `sanitizers` job comment has
+   the detail), so `sanitizers` runs clang-ASAN/UBSAN only. Run valgrind on
+   R-hub's own x86_64 runners instead, before every submission and after any
+   substantial change under `src/`:
+
+   ```r
+   rhub::rc_submit(platforms = "valgrind")
+   ```
+
+   It needs no GitHub repository of ours, only a token (`rhub::rc_new_token()`
+   once). No email comes back: the build runs in R-hub's shared `r-hub2`
+   organization on GitHub, and `rc_submit()` returns its `actions_url`. Read
+   the valgrind output in the test `.Rout` files there for `ERROR SUMMARY: 0
+   errors` and `definitely lost: 0 bytes`, not just a green status: valgrind
+   findings do not fail `R CMD check` on their own.
 
    **Cross-platform coverage is not in CI any more.** The GitLab side is a
    Linux R-version matrix only; macOS and Windows checking left with GitHub
