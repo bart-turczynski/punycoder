@@ -2,9 +2,18 @@
 % Please edit documentation in R/normalize.R
 \name{host_normalize}
 \alias{host_normalize}
+\alias{host_normalise}
 \title{Normalize hosts to canonical comparison form}
 \usage{
 host_normalize(
+  x,
+  check_hyphens = TRUE,
+  use_std3 = TRUE,
+  verify_dns_length = TRUE,
+  unicode_version = NULL
+)
+
+host_normalise(
   x,
   check_hyphens = TRUE,
   use_std3 = TRUE,

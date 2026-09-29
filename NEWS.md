@@ -82,6 +82,12 @@
   `n_valid`, `n_invalid`, and `strict` as attributes, so failures across a
   large batch can be tallied programmatically.
 
+* `host_normalise()` and `normalisation_profile_info()` are now exported as
+  British-spelling aliases of `host_normalize()` and
+  `normalization_profile_info()`. Each alias is the same function as its
+  US-spelled primary and is documented on the primary's help page; the US
+  spellings stay the canonical names (`SEOR-qwomlgjd`).
+
 ## Bug fixes
 
 * The tracker links a reader clicks --- in `codemeta.json`, `SECURITY.md`,
