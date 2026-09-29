@@ -9,17 +9,58 @@ dependencies are discussed at the end.
 
 0 errors | 0 warnings | 1 note
 
-The note is the `BugReports` URL, explained in the next section.
+The note is the `BugReports` URL, explained in the next section. Every check
+below ran on the same package source, the one submitted: a tarball built from
+a clean `git archive` export of commit 9774e6f.
 
-* Local `R CMD check --as-cran` on the release tarball, built from a clean
-  `git archive` export of the submitted commit, with
-  `_R_CHECK_CRAN_INCOMING_=true` and `_R_CHECK_CRAN_INCOMING_REMOTE_=true`
-  (macOS 26.7 aarch64, R 4.6.0, libidn2 backend): 0 errors, 0 warnings,
-  1 note.
-<!-- TODO(release, needs the owner's go): win-builder (R-devel, R-release,
-     R-oldrelease), macOS builder, R-hub (`rhub::rc_submit()`), and GitLab CI
-     `full-check` and `sanitizers`, all on the same final SHA. Write each
-     platform and its result here. -->
+* **local**, macOS Tahoe 26.7, aarch64-apple-darwin23, R 4.6.0, libidn2
+  backend: `R CMD check --as-cran` with `_R_CHECK_CRAN_INCOMING_=true` and
+  `_R_CHECK_CRAN_INCOMING_REMOTE_=true`. 0 errors | 0 warnings | 1 note.
+* **macOS builder**, macOS 26.6, aarch64-apple-darwin23, R 4.6.1 Patched
+  (2026-07-27 r90311): Status: OK.
+* **win-builder**, x86_64-w64-mingw32:
+  * R-oldrelease, R 4.5.3 (2026-03-11 ucrt): 0 errors | 0 warnings | 1 note.
+    Besides the `BugReports` URL, the note lists "IDNA", "Punycode" and
+    "selectable" as possibly misspelled in DESCRIPTION; all three are
+    correct.
+  * R-release, R 4.6.1 (2026-06-24 ucrt), and R-devel (2026-09-25 r90590
+    ucrt): the package installed and the Windows binary built, but on each
+    of two submissions `R CMD check` stopped at "checking CRAN incoming
+    feasibility ..." with no result. For a package already on CRAN, R 4.6
+    reads `src/contrib/Meta/current.rds` from the configured CRAN mirror and
+    halts when the mirror answers 404; the first R-devel log carried a 404
+    page from the builder's own server at that point. Reproduced in
+    `rocker/r-ver:4.6.1`, whose default mirror lacks that file: the check
+    halts at the same step, and with a mirror that serves it the step
+    completes with only the `BugReports` note.
+* **R-hub** (R Consortium runners), R-devel, Status: OK on each:
+  * linux: Ubuntu 24.04.5 LTS, x86_64-pc-linux-gnu
+  * macos: macOS Sequoia 15.7.9, x86_64-apple-darwin20
+  * macos-arm64: macOS Tahoe 26.6.2, aarch64-apple-darwin23
+  * windows: Windows Server 2022, x86_64-w64-mingw32
+  * nold: Ubuntu 22.04.5 LTS, x86_64-pc-linux-gnu
+  * clang-asan, clang-ubsan (Ubuntu 22.04.5 LTS) and gcc-asan (Fedora 42):
+    no sanitizer reports
+  * valgrind (Fedora 42): 0 errors, 0 bytes definitely lost
+  * rchk: its only finding is in Rcpp's own header
+    (`Rcpp/protection/Shield.h:25`, "possible protection stack imbalance"
+    in `Rcpp::Rcpp_protect`), which rchk reports for Rcpp-based packages in
+    general; nothing in this package's code.
+* **GitLab CI**, `R CMD check --as-cran` in rocker/r-ver containers,
+  aarch64-unknown-linux-gnu, libidn2 backend (pipeline 2895032359):
+  * R 4.6.1 (2026-06-24), Ubuntu 24.04.4 LTS: 0 errors | 0 warnings | 0 notes
+  * R 4.5.3 (2026-03-11), Ubuntu 24.04.4 LTS: 0 errors | 0 warnings | 0 notes
+  * R-devel (2026-09-28 r90591), Ubuntu 26.04.1 LTS: 0 errors | 0 warnings |
+    2 notes: the `BugReports` URL, and "compilation flags used" naming
+    `-Wdate-time`, `-Werror=format-security` and `-Wformat`, which come from
+    the image's own R build configuration; the package sets no compiler flags
+    of its own.
+  * clang-ASAN/UBSAN (R-hub's `clang-asan` container, R-devel 2026-09-25
+    r90590, x86_64): tests, examples and vignette code run with no sanitizer
+    reports. (Its two WARNINGs are the job's own doing: it builds with
+    `--no-build-vignettes`, so the tarball it checks has no `inst/doc`.) The
+    valgrind container cannot start on this CI's arm64 runner, so valgrind
+    coverage is R-hub's, above.
 
 Both Punycode backends are exercised where available: the optional libidn2
 backend on Linux and macOS, and the in-tree fallback everywhere (Windows
@@ -119,7 +160,9 @@ and `puny_decode()`, and 'rurl' uses `host_normalize()`, `puny_encode()`,
 Both CRAN tarballs (pslr_1.2.1.tar.gz, rurl_3.0.1.tar.gz) were checked with
 `R CMD check --as-cran` against the 1.3.0 release tarball, in a library where
 every other dependency came from CRAN. Tests, examples and vignettes pass for
-both.
+both. `revdepcheck::revdep_check()` against the same source, comparing
+'punycoder' 1.2.1 with 1.3.0, found no new problems for either (0 new
+errors, warnings or notes).
 
 * 'pslr' 1.2.1: OK, with no example-timing NOTE. Expected impact: 'pslr'
   ships a pre-built index stamped with the `-v1` profile and Unicode 16.0.0.
