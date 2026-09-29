@@ -381,6 +381,19 @@ full-check:
   extends: .r
   stage: check
   image: $R_IMAGE
+  variables:
+    # Where `--as-cran`'s "checking CRAN incoming feasibility" reads CRAN's
+    # metadata. By default that is the repos option's CRAN entry, which
+    # rocker/r-ver points at p3m (see `.r`), and p3m serves neither
+    # src/contrib/Meta/current.rds nor web/packages/packages.rds (404). For a
+    # package already on CRAN the check halts at that step, and rcmdcheck reads
+    # the cut-off log as "0 errors | 0 warnings | 0 notes", so the job goes
+    # green having checked nothing (seen on raddr's CI, pipeline 2893490558).
+    # These two variables move only that step to cloud.r-project.org; package
+    # installs still come from p3m. The devel image already uses
+    # cloud.r-project.org, where they change nothing. SEOR-ygzjighu.
+    R_CRAN_SRC: "https://cloud.r-project.org"
+    R_CRAN_WEB: "https://cloud.r-project.org"
   rules:
     - if: $CI_COMMIT_TAG =~ /^v/
     - if: $CI_PIPELINE_SOURCE == "web"
