@@ -236,7 +236,20 @@ fast-forward are the ones we have missed before — skipping them leaves
    that the top NEWS heading is either `(development version)` or the
    `DESCRIPTION` Version.
 2. **Set the release version** in `DESCRIPTION` (drop the `.9000` dev suffix).
-3. Update `cran-comments.md` for this submission.
+3. Update `cran-comments.md` for this submission. `devtools::submit_cran()`
+   sends the file verbatim as the submission comment, and the CRAN reviewer
+   reads all of it as plain text, HTML comments included. Keep it to what the
+   reviewer needs. Notes to ourselves (what was checked against which
+   tarball, what to re-run if the tree changes) go in the release's fp issue,
+   not in an HTML comment here.
+
+   Cite a GitLab `full-check` result only after reading its job log: look for
+   `Execution halted` before the check summary. A green job and rcmdcheck's
+   `0 errors | 0 warnings | 0 notes` do not show that the check finished.
+   When `R CMD check` halts part-way, rcmdcheck still prints a clean summary
+   of the steps that ran, and the job passes (1.3.0's cran-comments cited two
+   such false passes, PUNY-lzuolvgp). The rule stands until the job itself
+   fails on a halted check (SEOR-maavnxdm).
 4. Run `R CMD build . && R CMD check --as-cran punycoder_*.tar.gz` clean; confirm
    the `full-check` and `sanitizers` jobs are green, before submitting (run
    both with `glab ci run --branch main --variables DEEP_CHECK:1`, or from
