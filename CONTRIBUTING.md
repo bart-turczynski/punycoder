@@ -248,8 +248,9 @@ fast-forward are the ones we have missed before — skipping them leaves
    `0 errors | 0 warnings | 0 notes` do not show that the check finished.
    When `R CMD check` halts part-way, rcmdcheck still prints a clean summary
    of the steps that ran, and the job passes (1.3.0's cran-comments cited two
-   such false passes, PUNY-lzuolvgp). The rule stands until the job itself
-   fails on a halted check (SEOR-maavnxdm).
+   such false passes, PUNY-lzuolvgp). Since SEOR-maavnxdm the job also fails
+   when `R CMD check` exits non-zero, so a halted check turns it red. The log
+   read is still needed for any `full-check` run from before that change.
 4. Run `R CMD build . && R CMD check --as-cran punycoder_*.tar.gz` clean; confirm
    the `full-check` and `sanitizers` jobs are green, before submitting (run
    both with `glab ci run --branch main --variables DEEP_CHECK:1`, or from

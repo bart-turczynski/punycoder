@@ -340,10 +340,14 @@ check:
     - apt-get update -qq && apt-get install -y --no-install-recommends libidn2-0-dev pkg-config qpdf ghostscript
     - *pandoc_script
     - Rscript -e 'pak::pak("deps::.", dependencies = TRUE); pak::pak("any::rcmdcheck")'
+    # rcmdcheck reads a check that halted partway as 0/0/0 and returns normally,
+    # so error_on never fires; the guard also fails on R CMD check's own exit
+    # status (SEOR-maavnxdm).
     - >
-      Rscript -e 'rcmdcheck::rcmdcheck(args = "--no-manual",
+      Rscript -e 'res <- rcmdcheck::rcmdcheck(args = "--no-manual",
       build_args = c("--no-manual", "--compact-vignettes=gs+qpdf"),
-      error_on = "warning", check_dir = "check")'
+      error_on = "warning", check_dir = "check");
+      if (!identical(as.integer(res$status), 0L)) stop("R CMD check exited with status ", res$status, "; the run did not complete.", call. = FALSE)'
   artifacts:
     when: always
     expire_in: 1 week
@@ -415,10 +419,14 @@ full-check:
     - Rscript -e 'pak::pak("deps::.", dependencies = TRUE); pak::pak("any::rcmdcheck")'
     # The strict CRAN-grade pass: --as-cran. This is what CRAN itself runs, so
     # it is the gate before a release.
+    # rcmdcheck reads a check that halted partway as 0/0/0 and returns normally,
+    # so error_on never fires; the guard also fails on R CMD check's own exit
+    # status (SEOR-maavnxdm).
     - >
-      Rscript -e 'rcmdcheck::rcmdcheck(args = c("--no-manual", "--as-cran"),
+      Rscript -e 'res <- rcmdcheck::rcmdcheck(args = c("--no-manual", "--as-cran"),
       build_args = c("--no-manual", "--compact-vignettes=gs+qpdf"),
-      error_on = "warning", check_dir = "check")'
+      error_on = "warning", check_dir = "check");
+      if (!identical(as.integer(res$status), 0L)) stop("R CMD check exited with status ", res$status, "; the run did not complete.", call. = FALSE)'
   artifacts:
     when: always
     expire_in: 1 week
