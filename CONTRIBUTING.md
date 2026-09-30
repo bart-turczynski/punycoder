@@ -181,9 +181,15 @@ and a `git diff` will never show them missing:
   `SCHEDULE_KIND=dependency-audit`. `osv-audit` and `security-audit` run only
   on a scheduled pipeline with that value (or by hand from a `web` pipeline),
   so without the schedule, or without its variable, they never run
-  unattended. The selector is what stops a second schedule (the weekly
-  `deep-check` one for `full-check` and `sanitizers`) from firing the audits
-  too.
+  unattended. The selector is what stops the second schedule, below, from
+  firing the audits too.
+- **Pipeline schedule** (Build > Pipeline schedules): schedule 4466444,
+  "Weekly deep check (full-check, sanitizers)", `0 21 * * 1` Europe/Warsaw on
+  `main`, carrying `SCHEDULE_KIND=deep-check`. It is the only unattended run of
+  `full-check` and `sanitizers`; without it they run only before a release or
+  by hand, and OpenSSF `dynamic_analysis_unsafe` ("routinely used") in
+  `.bestpractices.json` is no longer true. It was documented here long before
+  it existed (PUNY-pxfqjjgg), so check the schedule list, not this file.
 - **`OSSINDEX_USER` / `OSSINDEX_TOKEN`** (Settings > CI/CD > Variables;
   `OSSINDEX_TOKEN` masked): Sonatype OSS Index credentials. These were GitHub
   repository secrets and did not follow the move. `security-audit` sets
