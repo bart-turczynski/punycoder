@@ -1671,7 +1671,7 @@ Optional, per wizard Q4/Q5:
 
 ## PUNY-ffnnhpml: Next CRAN submission: clear the 'selectable' spelling NOTE and keep internal notes and false passes out of cran-comments
 
-**Status:** todo
+**Status:** todo | **Revisions:** `3d68568d`, `c8e91c19`
 
 ### Description
 
@@ -1691,6 +1691,17 @@ Three things in the 1.3.0 submission cost reviewer attention or overstated the e
 - [ ] The next `cran-comments.md` carries no HTML comments or other internal notes. The CONTRIBUTING.md release checklist step for cran-comments says where such notes go instead (the fp issue).
 - [ ] That checklist step also says to cite a GitLab full-check result only after reading its log for "Execution halted" before the check summary, until SEOR-maavnxdm makes the job fail on it.
 - [ ] Nothing here lands on main in a way that changes the package source before 1.3.0 is published.
+
+
+### Comments
+
+#### 2026-09-30 — bartek@turczynski.pl
+
+Starting (maintainer approved 2026-09-30): acceptance items 2 and 3 now, as CONTRIBUTING.md release-checklist text (.Rbuildignored, so no package-source change). Item 1 (DESCRIPTION 'selectable') still waits on PUNY-lzuolvgp, or goes into a 1.3.0 resubmission if CRAN asks for changes.
+
+#### 2026-09-30 — bartek@turczynski.pl
+
+BLOCKED: acceptance item 1 waits on PUNY-lzuolvgp (already a dependency). Items 2 and 3 landed in !58 (3d68568, merge c8e91c1): CONTRIBUTING.md release checklist step 3 now says internal notes go in the release's fp issue, not HTML comments in cran-comments.md, and that a GitLab full-check result is cited only after reading its log for 'Execution halted', until SEOR-maavnxdm. Package source unchanged (CONTRIBUTING.md is .Rbuildignored). Remaining: reword 'selectable' in DESCRIPTION line 16 and verify no 'Possibly misspelled words' under --as-cran with _R_CHECK_CRAN_INCOMING_=true; then close. If CRAN requests changes to 1.3.0, do item 1 in that resubmission instead.
 
 
 
