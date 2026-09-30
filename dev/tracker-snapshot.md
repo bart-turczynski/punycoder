@@ -16,11 +16,9 @@ authoritative and `fp context <id>` remains the way to read an issue.
 
 PUNY-lzuolvgp [in-progress] [medium] CRAN still carries GitHub URLs, so r-universe reports punycoder as not on CRAN
 
-PUNY-eqobxzex [in-progress] [low] Refresh .bestpractices.json dynamic-analysis claims after the sanitizers changes
+PUNY-pxfqjjgg [in-progress] [medium] Create the weekly deep-check pipeline schedule CONTRIBUTING.md describes
 
 PUNY-mbyvbzxj [todo] [high] [PARKED] reticulate code-injection survey: IP2Location embargo lapses 2026-10-22, 6 packages still uncontacted
-
-PUNY-pxfqjjgg [todo] [medium] [USER] Create the weekly deep-check pipeline schedule CONTRIBUTING.md describes, or stop describing it
 
 PUNY-ffnnhpml [todo] [low] Next CRAN submission: clear the 'selectable' spelling NOTE and keep internal notes and false passes out of cran-comments
 
@@ -143,6 +141,8 @@ PUNY-pvktvetp [done] [low] Add a description and topics to the GitLab project
 PUNY-zzmwbtop [done] [low] OSS Index comments say OSSINDEX_USER is the account email; the working value is x
 
 PUNY-pxdhoaov [done] [low] GitLab CI valgrind job cannot start on the arm64 runner
+
+PUNY-eqobxzex [done] [low] Refresh .bestpractices.json dynamic-analysis claims after the sanitizers changes
 
 PUNY-qfcyvqbv [done] Pkgdown site for this library
 
@@ -1483,7 +1483,7 @@ Superseded by PSLR-hrpalwzo in ../pslr. The new dependency-aware DAG uses packag
 
 ## PUNY-eqobxzex: Refresh .bestpractices.json dynamic-analysis claims after the sanitizers changes
 
-**Status:** in-progress | **Revisions:** `5d3e25bd`, `073855e3`
+**Status:** done | **Revisions:** `5d3e25bd`, `073855e3`
 
 ### Description
 
@@ -1512,6 +1512,10 @@ Starting: read the OpenSSF dynamic_analysis criteria and the current sanitizers 
 #### 2026-09-30 — bartek@turczynski.pl
 
 BLOCKED: waits on the maintainer saving the bestpractices.dev proposal (acceptance item 3). The file change landed in !54 (5d3e25b, merge 073855e): dynamic_analysis Unmet->Met (the release checklist requires clang-ASAN/UBSAN and R-hub valgrind before every submission, and both ran on 1.3.0); dynamic_analysis_unsafe stays Unmet ('routinely' is not met: no pipeline schedule runs sanitizers, see PUNY-pxfqjjgg; the premise that a weekly deep-check schedule exists was false); dynamic_analysis_fixed N/A->Met. The site ignores the file for a GitLab project, so run 'python3 scripts/bestpractices-url.py', open the one link it prints (5 fields), review and click Save, then run 'python3 scripts/bestpractices-url.py --check' and close this issue.
+
+#### 2026-09-30 — bartek@turczynski.pl
+
+Done. !54 (5d3e25b, merge 073855e) rewrote the dynamic_analysis, dynamic_analysis_unsafe and dynamic_analysis_fixed answers; the maintainer saved the proposal on bestpractices.dev 2026-09-30 and 'bestpractices-url.py --check' reports 0 differing fields. Note: the save was made from the working tree of PUNY-pxfqjjgg's branch, so the site already carries its next revision (dynamic_analysis_unsafe Met on the new weekly deep-check schedule, evidence job 16831530748). If that job does not pass, the site must be corrected under PUNY-pxfqjjgg.
 
 
 
@@ -3047,6 +3051,10 @@ After publication, as before: tag v1.3.0 on f217513, do the Zenodo release and t
 
 Addendum: DEEP_CHECK pipeline 2895219034 (main 6ee0bb6, before !52) shows the same false pass on full-check 4.6.1 (job 16822455956) and 4.5 (job 16822455957): Execution halted at incoming feasibility, then 0/0/0. R-devel ran through (2 NOTEs). !52 (96ca8d3) is not yet verified by a pipeline run. The next DEEP_CHECK=1 run on main should show both legs getting past 'checking CRAN incoming feasibility'.
 
+#### 2026-09-30 — bartek@turczynski.pl
+
+!52 (96ca8d3) verified. Owner-started DEEP_CHECK pipeline 2896551800 on main 2f99950 (2026-09-30), logs read directly: full-check R 4.6.1 (job 16831530745), 4.5 (16831530746) and devel (16831530747) each report 'checking CRAN incoming feasibility ... NOTE' (the BugReports /-/issues 404 only), run testthat.R, and contain no 'Execution halted'. Other NOTEs are environmental: image compile flags on all three, 'unable to verify current time' on 4.5. sanitizers (16831530748): Status: OK. Also new: weekly deep-check schedule 4466444 (PUNY-pxfqjjgg), so full-check runs unattended from 2026-10-05. CRAN: still in incoming/inspect/ as of 2026-09-30 ~09:00 UTC, 51st of 68 by upload time.
+
 
 
 
@@ -3567,9 +3575,9 @@ CI proof: DEEP_CHECK pipeline 2895219034 on main 6ee0bb6 (started by the owner).
 
 
 
-## PUNY-pxfqjjgg: [USER] Create the weekly deep-check pipeline schedule CONTRIBUTING.md describes, or stop describing it
+## PUNY-pxfqjjgg: Create the weekly deep-check pipeline schedule CONTRIBUTING.md describes
 
-**Status:** todo
+**Status:** in-progress | **Revisions:** `57d22150`, `0023db2f`
 
 ### Description
 
@@ -3591,6 +3599,17 @@ Either create the schedule (Build > Pipeline schedules on main, weekly cron, var
 
 - [ ] The schedule exists and its first run's full-check 4.6.1 and 4.5 logs get past "checking CRAN incoming feasibility" without "Execution halted"; or the docs and CI rules no longer mention it.
 - [ ] If it exists: CONTRIBUTING.md's "Pipeline schedule" list names it (id, cron, variable), and .bestpractices.json dynamic_analysis_unsafe is re-evaluated as Met.
+
+
+### Comments
+
+#### 2026-09-30 — bartek@turczynski.pl
+
+Maintainer decided 2026-09-30: create it, at 21:00. Created schedule 4466444, '0 21 * * 1' Europe/Warsaw on main, SCHEDULE_KIND=deep-check, next run 2026-10-05 19:00 UTC (read back). Owner also started DEEP_CHECK pipeline 2896551800 to verify !52. Next: CONTRIBUTING.md entry and dynamic_analysis_unsafe -> Met, once the pipeline's sanitizers job is green.
+
+#### 2026-09-30 — bartek@turczynski.pl
+
+BLOCKED: waits on the schedule's first run, Monday 2026-10-05 21:00 Europe/Warsaw (19:00 UTC). Landed in !56 (57d2215, merge 0023db2): CONTRIBUTING.md lists schedule 4466444; .bestpractices.json dynamic_analysis_unsafe is Met, evidence job 16831530748 (DEEP_CHECK pipeline 2896551800: full-check 4.6.1/4.5/devel past incoming feasibility with no 'Execution halted', sanitizers Status: OK). The maintainer saved it on bestpractices.dev; --check reports 0 differences against main 0023db2. To close: confirm a pipeline with source=schedule ran full-check (3 legs) and sanitizers, and read those logs the same way.
 
 
 
