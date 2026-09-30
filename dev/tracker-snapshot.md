@@ -1703,6 +1703,14 @@ Starting (maintainer approved 2026-09-30): acceptance items 2 and 3 now, as CONT
 
 BLOCKED: acceptance item 1 waits on PUNY-lzuolvgp (already a dependency). Items 2 and 3 landed in !58 (3d68568, merge c8e91c1): CONTRIBUTING.md release checklist step 3 now says internal notes go in the release's fp issue, not HTML comments in cran-comments.md, and that a GitLab full-check result is cited only after reading its log for 'Execution halted', until SEOR-maavnxdm. Package source unchanged (CONTRIBUTING.md is .Rbuildignored). Remaining: reword 'selectable' in DESCRIPTION line 16 and verify no 'Possibly misspelled words' under --as-cran with _R_CHECK_CRAN_INCOMING_=true; then close. If CRAN requests changes to 1.3.0, do item 1 in that resubmission instead.
 
+#### 2026-09-30 — bartek@turczynski.pl
+
+SEOR-maavnxdm (fleet sweep, from the seor session, with the owner's go-ahead since no punycoder session was live): branch fix/rcmdcheck-status-guard adds the exit-status guard to CI `check`, CI `full-check` and scripts/verify-on-push.sh. CONTRIBUTING.md release step 3 now says the job fails on a halted check from that change on, and that the log read is still needed for older runs. None of this touches package source.
+
+The NEWS bullet is deferred while 1.3.0 is in CRAN review. Add it under the next dev heading's `## Internal`:
+
+    * The pre-push gate (`scripts/verify-on-push.sh`) and CI's `check` and `full-check` jobs also fail when `R CMD check` exits non-zero. `rcmdcheck` reads a check that halted partway as 0 errors, 0 warnings and 0 notes, which is how two halted `full-check` runs were cited as passes for 1.3.0 (`SEOR-maavnxdm`).
+
 
 
 
