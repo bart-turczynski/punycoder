@@ -328,7 +328,9 @@ test_that("every ASCII code point maps per UTS-46 (IDNA_ASCII direct index)", {
 
   # Under the strict profile ASCII is LDH-only, with A-Z case-folded by
   # mapping and U+002E splitting the label.
-  lower <- tolower(mid)
+  lower <- chartr(
+    paste(LETTERS, collapse = ""), paste(letters, collapse = ""), mid
+  )
   ldh <- grepl("^[a-z0-9-]$", lower)
   expected <- ifelse(ldh, paste0("a", lower, "b.com"), NA_character_)
   expected[cps == utf8ToInt(".")] <- "a.b.com"
@@ -339,7 +341,7 @@ test_that("every ASCII code point maps per UTS-46 (IDNA_ASCII direct index)", {
   upper <- LETTERS
   expect_identical(
     host_normalize(paste0("a", upper, "b.com")),
-    paste0("a", tolower(upper), "b.com")
+    paste0("a", letters, "b.com")
   )
 })
 
