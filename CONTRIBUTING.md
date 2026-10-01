@@ -226,132 +226,48 @@ appear when a new dependency is added or an existing one relicenses.
 
 ## CRAN release checklist
 
-Follow these steps in order for every CRAN release. The first three and the
-fast-forward are the ones we have missed before — skipping them leaves
-`NEWS.md`, the published version, and `main` out of sync.
+Follow the fleet checklist,
+[seor `design/release-checklist.md`](https://gitlab.com/bart-turczynski/seor/-/blob/main/design/release-checklist.md).
+punycoder's deltas:
 
-1. **Rename the NEWS heading.** Change the top `# punycoder (development version)`
-   heading to the release version (e.g. `# punycoder 1.2.0`) and fold any items
-   currently under it into that section. The `news-version` CI check enforces
-   that the top NEWS heading is either `(development version)` or the
-   `DESCRIPTION` Version.
-2. **Set the release version** in `DESCRIPTION` (drop the `.9000` dev suffix).
-3. Update `cran-comments.md` for this submission. `devtools::submit_cran()`
-   sends the file verbatim as the submission comment, and the CRAN reviewer
-   reads all of it as plain text, HTML comments included. Keep it to what the
-   reviewer needs. Notes to ourselves (what was checked against which
-   tarball, what to re-run if the tree changes) go in the release's fp issue,
-   not in an HTML comment here.
+- **Step 1: the calendar gates the ship date, not the code.** The next
+  submission window opens about a month after the last accepted version,
+  however ready the code is. Landing behavior changes on `main` early costs
+  nothing: only the submission is irreversible, and merging early avoids
+  rebase drift. Don't hold work back to match a release date. When a release
+  is already breaking, bundle further behavior changes into it: users must
+  read that release's NEWS anyway, and bundling avoids a second release where
+  behavior shifts under them. While the version carries `.9000`,
+  `R CMD check --as-cran` reports a standing 2-part NOTE, `Days since last
+  update: N` and `Version contains large components`. It is expected, not a
+  defect.
+- **Step 2: check that a reverse dependency calls what changed before
+  assuming a coupled release.** The CRAN reverse imports are `pslr` and
+  `rurl`. The 2026-06 train was real: punycoder 1.2.0 dropped
+  `host_normalize()`'s inert `strict` argument while published `pslr` called
+  `host_normalize(strict = TRUE)`, so `pslr` had to be fixed on CRAN first or
+  1.2.0's revdep check would have broken it. The predicate-contract change
+  (PUNY-cewysjxi) looked similar and was not: neither revdep called
+  `is_punycode` or `is_idn`, so no ordering constraint existed.
+- **Step 5: `full-check` and `sanitizers` must be green on the release
+  commit.** Start both with `glab ci run --branch main --variables
+  DEEP_CHECK:1` (agent+go), or from **Build > Pipelines > Run pipeline** on
+  GitLab. The release tag starts `full-check` by itself, but only after the
+  submission. `sanitizers` runs clang-ASAN/UBSAN only.
+- **Step 6: add valgrind on R-hub.** R-hub's valgrind image cannot start any
+  R process on this project's arm64 runner (its GCC-built R uses an x87
+  instruction Rosetta 2 does not implement; the `sanitizers` job comment has
+  the detail), so valgrind is not in CI. Run it on R-hub's x86_64 runners
+  before every submission and after any substantial change under `src/`:
 
-   Cite a GitLab `full-check` result only after reading its job log: look for
-   `Execution halted` before the check summary. A green job and rcmdcheck's
-   `0 errors | 0 warnings | 0 notes` do not show that the check finished.
-   When `R CMD check` halts part-way, rcmdcheck still prints a clean summary
-   of the steps that ran, and the job passes (1.3.0's cran-comments cited two
-   such false passes, PUNY-lzuolvgp). Since SEOR-maavnxdm the job also fails
-   when `R CMD check` exits non-zero, so a halted check turns it red. The log
-   read is still needed for any `full-check` run from before that change.
-4. Run `R CMD build . && R CMD check --as-cran punycoder_*.tar.gz` clean; confirm
-   the `full-check` and `sanitizers` jobs are green, before submitting (run
-   both with `glab ci run --branch main --variables DEEP_CHECK:1`, or from
-   **Build > Pipelines > Run pipeline** on GitLab; the release tag triggers
-   `full-check` automatically, but that is after the submission).
+  ```r
+  rhub::rc_submit(platforms = "valgrind")
+  ```
 
-   **Valgrind is not in CI.** R-hub's valgrind image cannot start any R
-   process on this project's arm64 runner (its GCC-built R uses an x87
-   instruction Rosetta 2 does not implement; the `sanitizers` job comment has
-   the detail), so `sanitizers` runs clang-ASAN/UBSAN only. Run valgrind on
-   R-hub's own x86_64 runners instead, before every submission and after any
-   substantial change under `src/`:
-
-   ```r
-   rhub::rc_submit(platforms = "valgrind")
-   ```
-
-   It needs no GitHub repository of ours, only a token (`rhub::rc_new_token()`
-   once). No email comes back: the build runs in R-hub's shared `r-hub2`
-   organization on GitHub, and `rc_submit()` returns its `actions_url`. Read
-   the valgrind output in the test `.Rout` files there for `ERROR SUMMARY: 0
-   errors` and `definitely lost: 0 bytes`, not just a green status: valgrind
-   findings do not fail `R CMD check` on their own.
-
-   **Cross-platform coverage is not in CI any more.** The GitLab side is a
-   Linux R-version matrix only; macOS and Windows checking left with GitHub
-   Actions and has no GitLab equivalent on this plan. Use R's own
-   forge-independent pre-submission services instead, and do it before every
-   submission, not only when something looks suspect:
-
-   - Windows: `devtools::check_win_devel()` (also `check_win_release()`).
-   - macOS: upload the tarball to <https://mac.r-project.org/macbuilder/submit.html>.
-
-   Both mail the result back; neither needs an account. These are the services
-   CRAN's own incoming checks mirror, so a green result there is closer to the
-   real gate than the old matrix was.
-5. Submit to CRAN. Once accepted, **tag the released commit** (`git tag -a vX.Y.Z`)
-   and push the tag.
-6. **Fast-forward `main` to the released/tagged commit** so the default branch
-   always reflects what shipped (`git merge --ff-only vX.Y.Z && git push`).
-   Verify: `git merge-base vX.Y.Z main` equals the tag.
-7. Create the GitLab Release from the tag
-   (<https://gitlab.com/bart-turczynski/punycoder/-/releases/new>), using the
-   NEWS.md section for that version as the release notes.
-8. Open a post-release merge request that bumps `DESCRIPTION` to the next
-   `.9000` dev version and adds a fresh `# punycoder (development version)`
-   NEWS heading.
-9. Sanity check: diff the published CRAN tarball
-   (`cran.r-project.org/src/contrib/punycoder_X.Y.Z.tar.gz`) against the tag —
-   only CRAN's auto-added `DESCRIPTION` fields should differ.
-10. **Archive the release on Zenodo and record its version DOI.** Zenodo
-    deposits on a GitHub Release on the read-only mirror, not on the tag.
-    Skip this and `CITATION.cff` keeps naming the previous version's DOI.
-    Details and stall recovery:
-    [seor `design/github-mirror.md` §5](https://gitlab.com/bart-turczynski/seor/-/blob/main/design/github-mirror.md).
-
-    - Confirm the tag object matches on both forges:
-      `git ls-remote --tags origin 'refs/tags/vX.Y.Z'`, then the same against
-      `https://github.com/bart-turczynski/punycoder.git`.
-    - Create the GitHub Release from that tag, never letting GitHub create one:
-      `gh release create vX.Y.Z --verify-tag -R bart-turczynski/punycoder`.
-    - Wait for the record under the concept DOI `10.5281/zenodo.20973629`. It
-      takes minutes, not seconds. A release stuck at "Received" on Zenodo's
-      GitHub page needs the §5.1 recovery.
-    - Check the record's version and title against the release. Zenodo reads
-      both from `.zenodo.json` in the tagged archive:
-      `curl -s 'https://zenodo.org/api/records?q=conceptrecid:20973629&allversions=true' | jq '.hits.hits[].metadata | [.version, .title]'`.
-      Compare the archived zip with the tag by content, not checksum (§5.2).
-    - Check that doi.org resolves both the concept DOI and the new version DOI:
-      `curl -s -o /dev/null -w '%{http_code}\n' https://doi.org/<doi>` prints
-      `302`. A `404` means DataCite has not registered it yet: wait, and don't
-      commit it (§5.3).
-    - In a follow-up commit, set the version DOI entry in `CITATION.cff`
-      `identifiers:` (value and description) and `date-released` to this
-      release. `python3 scripts/check-citation.py` (the pre-push
-      `check-citation` hook) must still pass.
-
-### Cadence: the calendar gates the ship date, not the code
-
-CRAN policy is *"no more than every 1–2 months seems appropriate"*, so the next
-submission window opens roughly a month after the last accepted version, however
-ready the code is. Two consequences worth internalizing:
-
-- **Landing behavior changes on `main` early costs nothing.** Only the CRAN
-  submission is irreversible; merging early avoids rebase drift on a fast-moving
-  branch. Do not hold work back to match a release date.
-- **When a release is already breaking, bundle further behavior changes into
-  it.** Users must read that release's NEWS anyway, and bundling avoids a second
-  release where behavior shifts under them.
-
-While the dev version carries a `.9000` suffix, `R CMD check --as-cran` reports
-a standing 2-part NOTE — `Days since last update: N` and `Version contains large
-components` — which is expected, not a defect.
-
-### Check the reverse dependencies before assuming a coupled release
-
-The CRAN reverse imports are `pslr` and `rurl`. Before concluding that a change
-forces an ordered, coupled release, **verify the revdeps actually call the
-function that changed.** The 2026-06 train was real — punycoder 1.2.0 dropped
-`host_normalize()`'s inert `strict` argument while published `pslr` was calling
-`host_normalize(strict = TRUE)`, so `pslr` had to be fixed on CRAN first or
-1.2.0's revdep check would have broken it. The predicate-contract change
-(PUNY-cewysjxi) looked similar and was not: neither revdep called `is_punycode`
-or `is_idn` at all, so no ordering constraint existed.
+  No email comes back: the build runs in R-hub's shared `r-hub2`
+  organization on GitHub, and `rc_submit()` returns its `actions_url`. Read
+  the valgrind output in the test `.Rout` files there for `ERROR SUMMARY: 0
+  errors` and `definitely lost: 0 bytes`, not just a green status: valgrind
+  findings do not fail `R CMD check` on their own.
+- **Step 14: the concept DOI is `10.5281/zenodo.20973629`.** Its
+  `<concept-recid>` in the Zenodo API query is `20973629`.
