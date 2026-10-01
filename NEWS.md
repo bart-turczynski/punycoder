@@ -1,5 +1,12 @@
 # punycoder (development version)
 
+## Internal
+
+* The lint gate bans `tolower()`, `toupper()` and `casefold()`, which follow
+  the locale: a Turkish locale folds `I` to `ı` (U+0131), not `i`. The three
+  calls in tests and `data-raw/` now map ASCII letters with `chartr()` or
+  `letters`, with unchanged results (SEOR-rxxuzhmc).
+
 # punycoder 1.3.0
 
 ## Breaking changes

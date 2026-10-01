@@ -75,7 +75,10 @@ version_tag <- gsub(".", "_", unicode_version, fixed = TRUE)  # 16.0.0 -> 16_0_0
 version_major <- sub("\\..*$", "", unicode_version)           # 16.0.0 -> 16
 table_stem <- sprintf("unicode_tables_%s", version_tag)
 table_ns <- sprintf("u%s", version_major)
-guard <- sprintf("PUNYCODER_%s_H", toupper(table_stem))
+stem_upper <- chartr(
+  paste(letters, collapse = ""), paste(LETTERS, collapse = ""), table_stem
+)
+guard <- sprintf("PUNYCODER_%s_H", stem_upper)
 
 ucd_base <- sprintf("https://www.unicode.org/Public/%s/ucd", unicode_version)
 

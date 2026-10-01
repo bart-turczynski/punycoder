@@ -64,6 +64,13 @@ reasons a real package hits as it grows:
   legitimately call `library()`.
 - `undesirable_operator_linter`: configured to keep flagging `<<-`/`->>` but
   allow `:::`, which tests use to reach internal (unexported) functions.
+- `case_folding_linter`: an addition (fleet sweep SEOR-rxxuzhmc). It bans
+  `tolower()`, `toupper()` and `casefold()`, which follow `LC_CTYPE`: a Turkish
+  or Azeri locale maps `I` to a dotless `ı`. Map ASCII letters with `chartr()`
+  over `paste(LETTERS, collapse = "")` and `paste(letters, collapse = "")`
+  instead, or use `letters`/`LETTERS` directly. Tests and `data-raw/` are not
+  exempt: lintr 3.4 turns a directory key in `exclusions` into a whole-file
+  exclusion for every linter.
 - `strings_as_factors_linter`: **on**, although goodpractice 1.2.0 dropped it
   (ropensci-review-tools/goodpractice#321) and the rest of the fleet has it off.
   punycoder Depends on R >= 3.5.0, where `data.frame()` still defaults to
