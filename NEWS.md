@@ -6,6 +6,11 @@
   the locale: a Turkish locale folds `I` to `ı` (U+0131), not `i`. The three
   calls in tests and `data-raw/` now map ASCII letters with `chartr()` or
   `letters`, with unchanged results (SEOR-rxxuzhmc).
+* The pre-push gate (`scripts/verify-on-push.sh`) and CI's `check` and
+  `full-check` jobs also fail when `R CMD check` exits non-zero. `rcmdcheck`
+  reads a check that halted partway as 0 errors, 0 warnings and 0 notes, which
+  is how two halted `full-check` runs were cited as passes for 1.3.0
+  (SEOR-maavnxdm).
 
 # punycoder 1.3.0
 
