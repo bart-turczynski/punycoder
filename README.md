@@ -7,10 +7,20 @@
 
 [![CRAN status](https://www.r-pkg.org/badges/version/punycoder)](https://CRAN.R-project.org/package=punycoder)
 [![CRAN downloads](https://cranlogs.r-pkg.org/badges/punycoder)](https://CRAN.R-project.org/package=punycoder)
+[![CRAN checks](https://badges.cranchecks.info/worst/punycoder.svg)](https://cran.r-project.org/web/checks/check_results_punycoder.html)
+[![r-universe](https://bart-turczynski.r-universe.dev/punycoder/badges/version)](https://bart-turczynski.r-universe.dev/punycoder)
+[![Pipeline](https://gitlab.com/bart-turczynski/punycoder/badges/main/pipeline.svg)](https://gitlab.com/bart-turczynski/punycoder/-/pipelines)
+[![Coverage](https://gitlab.com/bart-turczynski/punycoder/badges/main/coverage.svg)](https://gitlab.com/bart-turczynski/punycoder/-/pipelines)
+[![Docs](https://img.shields.io/website?url=https%3A%2F%2Fbart-turczynski.gitlab.io%2Fpunycoder%2F&label=docs&logo=gitlab&logoColor=white&up_message=pkgdown&up_color=1f75cb)](https://bart-turczynski.gitlab.io/punycoder/)
+[![Latest release](https://img.shields.io/gitlab/v/release/bart-turczynski%2Fpunycoder)](https://gitlab.com/bart-turczynski/punycoder/-/releases)
 [![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
+[![Project Status: Active](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20973629.svg)](https://doi.org/10.5281/zenodo.20973629)
 [![Zenodo](https://img.shields.io/badge/Zenodo-all_software-1682D4?logo=zenodo&logoColor=white)](https://zenodo.org/search?q=metadata.creators.person_or_org.identifiers.identifier:0000-0002-8788-7980)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/13429/badge)](https://www.bestpractices.dev/projects/13429)
+[![License](https://img.shields.io/gitlab/license/bart-turczynski%2Fpunycoder)](https://gitlab.com/bart-turczynski/punycoder/-/blob/main/LICENSE.md)
+[![Dependencies](https://tinyverse.netlify.app/badge/punycoder)](https://CRAN.R-project.org/package=punycoder)
+[![Last commit](https://img.shields.io/gitlab/last-commit/bart-turczynski%2Fpunycoder)](https://gitlab.com/bart-turczynski/punycoder/-/commits/main)
 <!-- badges: end -->
 
 High-performance Unicode and Punycode encoding/decoding for internationalized domain names (IDNs) in R.
@@ -30,7 +40,7 @@ Normalization runs against vendored Unicode data, and a build ships a *set* of U
 
 `punycoder` has a small dependency footprint:
 
-- Runtime dependencies: `R (>= 3.5.0)`, `Rcpp`
+- Runtime dependencies: `R (>= 4.1.0)`, `Rcpp`
 - Optional system dependency: `libidn2` (detected at compile time)
 - Optional build helper: `pkg-config` (used by `configure` to detect `libidn2`)
 - Development dependencies: `testthat`, `knitr`, `rmarkdown`

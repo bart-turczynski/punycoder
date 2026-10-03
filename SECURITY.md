@@ -6,31 +6,31 @@
 latest released version; please upgrade to the most recent release before
 reporting.
 
-| Version                     | Supported          |
-| --------------------------- | ------------------ |
-| Latest CRAN release (1.2.x) | :white_check_mark: |
-| Older releases              | :x:                |
+| Version              | Supported          |
+| -------------------- | ------------------ |
+| Latest CRAN release  | :white_check_mark: |
+| Older releases       | :x:                |
 
 ## Reporting a vulnerability
 
 **Please do not report security vulnerabilities through public issues.**
 
-Preferred channel — **email the maintainer** at **bartek@turczynski.pl**.
-Include the affected version, a reproducer if you have one, and how you would
-like to be credited.
+Preferred channel — **email the maintainer at bartek@turczynski.pl.**
 
-If you would rather use the tracker, open a **confidential issue** on GitLab:
+Alternatively, open a **confidential issue** on the GitLab project:
 
-1. Go to <https://gitlab.com/bart-turczynski/punycoder/-/work_items/new>.
+1. Go to [Issues](https://gitlab.com/bart-turczynski/punycoder/-/work_items) and click
+   **New issue**.
 2. Tick **This issue is confidential** before submitting.
 
-A confidential issue is visible only to the project maintainers, not to other
-users or to the public.
+A confidential issue is visible only to you, its assignees and the project
+members whose role lets them see confidential issues.
 
-> This project moved off GitHub, so GitHub's private vulnerability reporting
-> (private security advisories) is no longer a channel for it. GitLab's own
-> private-vulnerability-reporting feature is not available on this project's
-> plan; confidential issues are the equivalent confidential channel here.
+Email is listed first deliberately: it works whether or not you have a GitLab
+account, and it is the channel the maintainer monitors.
+
+Do not include secrets, credentials, tokens, or private customer data in a
+report, an issue, a merge request or a log.
 
 ## What to expect
 

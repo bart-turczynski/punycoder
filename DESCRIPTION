@@ -3,7 +3,7 @@ Type: Package
 Title: Unicode and Punycode Domain Name Processing
 Version: 1.3.0.9000
 Authors@R: person("Bart", "Turczynski", email = "bartek@turczynski.pl",
-                  role = c("aut", "cre"),
+                  role = c("aut", "cre", "cph"),
                   comment = c(ORCID = "0000-0002-8788-7980"))
 Description: High-performance Unicode and Punycode processing for
     internationalized domain names. The 'puny_encode()' / 'puny_decode()'
@@ -17,13 +17,14 @@ Description: High-performance Unicode and Punycode processing for
     any version the build ships). Aimed at host normalization and data
     analysis workflows. Used as the Punycode and IDNA engine by the 'pslr'
     and 'rurl' packages.
-Depends: R (>= 3.5.0)
+Depends: R (>= 4.1.0)
 Imports: Rcpp (>= 1.0.0)
 LinkingTo: Rcpp
 SystemRequirements: GNU libidn2 (optional, for native punycode backend)
 License: MIT + file LICENSE
-URL: https://gitlab.com/bart-turczynski/punycoder,
-    https://bart-turczynski.gitlab.io/punycoder/,
+URL: https://bart-turczynski.gitlab.io/punycoder/,
+    https://gitlab.com/bart-turczynski/punycoder,
+    https://bart-turczynski.r-universe.dev/punycoder,
     https://CRAN.R-project.org/package=punycoder
 BugReports: https://gitlab.com/bart-turczynski/punycoder/-/issues
 Encoding: UTF-8

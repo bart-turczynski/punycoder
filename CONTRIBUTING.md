@@ -1,5 +1,21 @@
 # Contributing
 
+Report bugs and request features in the GitLab issue tracker:
+<https://gitlab.com/bart-turczynski/punycoder/-/work_items>. Report security issues
+privately as described in `SECURITY.md`. Send changes as merge requests on
+GitLab; the GitHub repository is a read-only mirror.
+
+New code needs tests, and each user-facing change needs one `NEWS.md` bullet.
+A merge request must pass the verification command below.
+
+Run verification (the pre-push chain: the hygiene hooks, citation and
+BugReports checks, the toolchain check, the URL check, spelling, then lintr
+and `R CMD check --as-cran` in the `verify` hook):
+
+```sh
+pre-commit run --hook-stage pre-push --all-files
+```
+
 ## Orientation
 
 Before making changes, skim [ARCHITECTURE.md](ARCHITECTURE.md) (how the package
@@ -73,9 +89,10 @@ reasons a real package hits as it grows:
   exclusion for every linter.
 - `strings_as_factors_linter`: **on**, although goodpractice 1.2.0 dropped it
   (ropensci-review-tools/goodpractice#321) and the rest of the fleet has it off.
-  punycoder Depends on R >= 3.5.0, where `data.frame()` still defaults to
-  `stringsAsFactors = TRUE`, so the `stringsAsFactors = FALSE` arguments this
-  linter enforces are load-bearing here.
+  It was turned on while punycoder declared R >= 3.5.0, where `data.frame()`
+  still defaulted to `stringsAsFactors = TRUE`. The floor is now R >= 4.1.0,
+  where it defaults to `FALSE`, so the arguments it enforces are redundant but
+  harmless; the linter stays on until someone decides otherwise.
 
 ### Doc-only changes skip the heavy gate
 
@@ -104,9 +121,10 @@ workflows when the project went GitLab-only; `.github/` no longer exists.
 
 The **gate** is `gates`, `check`, `coverage`. `gates` runs `scripts/gates.R`,
 which folds the `lint`, `readme` and `news-version` checks that `verify.yml` and
-`news-version.yaml` used to run into one job: it runs all three, prints a
-PASS/FAIL line for each, and fails if any failed (SEOR-pgammbgo, ADR 0005 in
-seor).
+`news-version.yaml` used to run, plus `spelling`, into one job: it runs all of
+them, prints a PASS/FAIL line for each, and fails if any failed (SEOR-pgammbgo,
+ADR 0005 in seor). `check` runs `R CMD check --as-cran` and fails on a WARNING;
+`coverage` fails below 95% total coverage, the fleet minimum.
 
 Read "gate" carefully: **it does not run on your merge request.** A top-level
 `workflow:` block admits only a tag, a push to `main`, or a pipeline a human
@@ -138,6 +156,7 @@ Everything else is opt-in:
 | Job | When |
 | --- | --- |
 | `full-check` | release tags `v*`; the `deep-check` schedule; an API pipeline on `main` with `DEEP_CHECK=1`; manual from a hand-started pipeline, on any ref |
+| `floor-check` | `R CMD check --as-cran` on R 4.1.3, the declared floor, with dependencies from a dated Posit Package Manager snapshot; same triggers as `full-check` |
 | `sanitizers` | R-hub's clang-ASAN/UBSAN container (no valgrind: see the release checklist): the `deep-check` schedule; an API pipeline on `main` with `DEEP_CHECK=1`; manual on a release tag or a hand-started pipeline |
 | `pages` | every push to `main` — builds pkgdown, publishes to GitLab Pages. Pinned to `main`: a hand-started branch pipeline cannot reach it. Strips agent instruction files first, see below |
 | `codemeta` | manual, artifact-only (see below) |

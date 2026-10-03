@@ -1,5 +1,11 @@
 # punycoder (development version)
 
+## Breaking changes
+
+* punycoder now requires R >= 4.1.0 (was R >= 3.5.0). The fleet declares the
+  oldest R minor version its weekly `deep-check` pipeline tests, and that
+  pipeline now carries a leg on R 4.1.3 (`SEOR-wxelnnmt`).
+
 ## Internal
 
 * The lint gate bans `tolower()`, `toupper()` and `casefold()`, which follow

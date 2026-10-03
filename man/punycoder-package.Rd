@@ -37,19 +37,20 @@ host_normalize(c("Example.COM", "M\u00DCNCHEN.de"))
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://gitlab.com/bart-turczynski/punycoder}
   \item \url{https://bart-turczynski.gitlab.io/punycoder/}
+  \item \url{https://gitlab.com/bart-turczynski/punycoder}
+  \item \url{https://bart-turczynski.r-universe.dev/punycoder}
   \item \url{https://CRAN.R-project.org/package=punycoder}
   \item Report bugs at \url{https://gitlab.com/bart-turczynski/punycoder/-/issues}
 }
 
 }
 \author{
-\strong{Maintainer}: Bart Turczynski \email{bartek@turczynski.pl} (\href{https://orcid.org/0000-0002-8788-7980}{ORCID})
+\strong{Maintainer}: Bart Turczynski \email{bartek@turczynski.pl} (\href{https://orcid.org/0000-0002-8788-7980}{ORCID}) [copyright holder]
 
 Authors:
 \itemize{
-  \item Bart Turczynski \email{bartek@turczynski.pl} (\href{https://orcid.org/0000-0002-8788-7980}{ORCID})
+  \item Bart Turczynski \email{bartek@turczynski.pl} (\href{https://orcid.org/0000-0002-8788-7980}{ORCID}) [copyright holder]
 }
 
 }
