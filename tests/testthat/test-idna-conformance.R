@@ -122,9 +122,13 @@ test_that("relaxing a UTS-46 flag stays bounded against IdnaTestV2", {
         function(codes) length(codes) > 0L && all(codes %in% tolerated),
         logical(1)
       )
+      # Explicit null default: base R's null-coalescing operator arrived in
+      # 4.4.0, and the package floor is R 4.1.
+      known <- .idna_known_divergence[[flag]]
+      if (is.null(known)) known <- character(0)
       expect_identical(
         sort(df$source[newly[!bounded]]),
-        sort(.idna_known_divergence[[flag]] %||% character(0)),
+        sort(known),
         info = label
       )
       expect_identical(
