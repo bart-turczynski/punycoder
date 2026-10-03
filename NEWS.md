@@ -6,6 +6,15 @@
   oldest R minor version its weekly `deep-check` pipeline tests, and that
   pipeline now carries a leg on R 4.1.3 (`SEOR-wxelnnmt`).
 
+## Bug fixes
+
+* punycoder installs again on systems whose libidn2 is older than 2.3.5, such
+  as Ubuntu 20.04 and 22.04 or Debian 12. `configure` enabled the native
+  backend whenever `pkg-config` found any libidn2, but `idn2_punycode_encode()`
+  and `idn2_punycode_decode()` are public only from libidn2 2.3.5, so the build
+  failed to compile. Older versions now get the in-tree fallback backend, and
+  `configure` says why (`SEOR-wxelnnmt`).
+
 ## Internal
 
 * The lint gate bans `tolower()`, `toupper()` and `casefold()`, which follow

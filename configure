@@ -4,11 +4,18 @@ set -e
 
 LIBIDN2_CFLAGS=""
 LIBIDN2_LIBS=""
+# idn2_punycode_encode() and idn2_punycode_decode() are public API only from
+# libidn2 2.3.5 (upstream NEWS); older headers do not declare them.
+LIBIDN2_MIN_VERSION="2.3.5"
 
 if command -v pkg-config >/dev/null 2>&1 && pkg-config --exists libidn2; then
-  LIBIDN2_CFLAGS="$(pkg-config --cflags libidn2) -DPUNYCODER_USE_LIBIDN2"
-  LIBIDN2_LIBS="$(pkg-config --libs libidn2)"
-  echo "configure: libidn2 detected; enabling native backend"
+  if pkg-config --atleast-version="$LIBIDN2_MIN_VERSION" libidn2; then
+    LIBIDN2_CFLAGS="$(pkg-config --cflags libidn2) -DPUNYCODER_USE_LIBIDN2"
+    LIBIDN2_LIBS="$(pkg-config --libs libidn2)"
+    echo "configure: libidn2 detected; enabling native backend"
+  else
+    echo "configure: libidn2 $(pkg-config --modversion libidn2) is older than $LIBIDN2_MIN_VERSION; using fallback punycode backend"
+  fi
 else
   echo "configure: libidn2 not detected; using fallback punycode backend"
 fi
