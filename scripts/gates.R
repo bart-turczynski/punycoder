@@ -98,6 +98,20 @@ results[["news-version"]] <- run_check(
   function() run_cmd("sh", "scripts/gates-news-version.sh")
 )
 
+# --- spelling ---------------------------------------------------------------
+# The fleet standard puts a spelling gate on every push to main (seor
+# design/fleet-standard.md). Same command as the pre-push `spelling` hook in
+# .pre-commit-config.yaml; genuine terms go in inst/WORDLIST.
+results$spelling <- run_check(
+  "spelling",
+  function() {
+    run_cmd("Rscript", c("-e", shQuote(paste(
+      "bad <- spelling::spell_check_package();",
+      "if (nrow(bad)) { print(bad); quit(status = 1) }"
+    ))))
+  }
+)
+
 for (r in results) {
   cat(sprintf("=== [%s] %s ===\n", if (r$ok) "PASS" else "FAIL", r$label))
   if (length(r$log)) {

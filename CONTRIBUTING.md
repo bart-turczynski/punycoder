@@ -121,9 +121,10 @@ workflows when the project went GitLab-only; `.github/` no longer exists.
 
 The **gate** is `gates`, `check`, `coverage`. `gates` runs `scripts/gates.R`,
 which folds the `lint`, `readme` and `news-version` checks that `verify.yml` and
-`news-version.yaml` used to run into one job: it runs all three, prints a
-PASS/FAIL line for each, and fails if any failed (SEOR-pgammbgo, ADR 0005 in
-seor).
+`news-version.yaml` used to run, plus `spelling`, into one job: it runs all of
+them, prints a PASS/FAIL line for each, and fails if any failed (SEOR-pgammbgo,
+ADR 0005 in seor). `check` runs `R CMD check --as-cran` and fails on a WARNING;
+`coverage` fails below 95% total coverage, the fleet minimum.
 
 Read "gate" carefully: **it does not run on your merge request.** A top-level
 `workflow:` block admits only a tag, a push to `main`, or a pipeline a human
@@ -155,6 +156,7 @@ Everything else is opt-in:
 | Job | When |
 | --- | --- |
 | `full-check` | release tags `v*`; the `deep-check` schedule; an API pipeline on `main` with `DEEP_CHECK=1`; manual from a hand-started pipeline, on any ref |
+| `floor-check` | `R CMD check --as-cran` on R 4.1.3, the declared floor, with dependencies from a dated Posit Package Manager snapshot; same triggers as `full-check` |
 | `sanitizers` | R-hub's clang-ASAN/UBSAN container (no valgrind: see the release checklist): the `deep-check` schedule; an API pipeline on `main` with `DEEP_CHECK=1`; manual on a release tag or a hand-started pipeline |
 | `pages` | every push to `main` — builds pkgdown, publishes to GitLab Pages. Pinned to `main`: a hand-started branch pipeline cannot reach it. Strips agent instruction files first, see below |
 | `codemeta` | manual, artifact-only (see below) |
