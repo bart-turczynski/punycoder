@@ -161,8 +161,8 @@ multi-script domains; those tests `skip_if` libidn2 is unavailable.
 ```
 ./configure                         # detects libidn2 via pkg-config
    └─ generates src/Makevars from src/Makevars.in
-        ├─ libidn2 found  → -DPUNYCODER_USE_LIBIDN2 + link flags (Unix)
-        └─ not found      → in-tree fallback only
+        ├─ libidn2 >= 2.3.5 found → -DPUNYCODER_USE_LIBIDN2 + link flags (Unix)
+        └─ older or not found     → in-tree fallback only
 src/Makevars.win                    # Windows: fallback only, never sets the flag
 ./cleanup                           # removes generated src/Makevars
 ```
