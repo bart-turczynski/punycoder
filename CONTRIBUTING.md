@@ -1,5 +1,21 @@
 # Contributing
 
+Report bugs and request features in the GitLab issue tracker:
+<https://gitlab.com/bart-turczynski/punycoder/-/work_items>. Report security issues
+privately as described in `SECURITY.md`. Send changes as merge requests on
+GitLab; the GitHub repository is a read-only mirror.
+
+New code needs tests, and each user-facing change needs one `NEWS.md` bullet.
+A merge request must pass the verification command below.
+
+Run verification (the pre-push chain: the hygiene hooks, citation and
+BugReports checks, the toolchain check, spelling, then lintr and
+`R CMD check --as-cran` in the `verify` hook):
+
+```sh
+pre-commit run --hook-stage pre-push --all-files
+```
+
 ## Orientation
 
 Before making changes, skim [ARCHITECTURE.md](ARCHITECTURE.md) (how the package
@@ -73,9 +89,10 @@ reasons a real package hits as it grows:
   exclusion for every linter.
 - `strings_as_factors_linter`: **on**, although goodpractice 1.2.0 dropped it
   (ropensci-review-tools/goodpractice#321) and the rest of the fleet has it off.
-  punycoder Depends on R >= 3.5.0, where `data.frame()` still defaults to
-  `stringsAsFactors = TRUE`, so the `stringsAsFactors = FALSE` arguments this
-  linter enforces are load-bearing here.
+  It was turned on while punycoder declared R >= 3.5.0, where `data.frame()`
+  still defaulted to `stringsAsFactors = TRUE`. The floor is now R >= 4.1.0,
+  where it defaults to `FALSE`, so the arguments it enforces are redundant but
+  harmless; the linter stays on until someone decides otherwise.
 
 ### Doc-only changes skip the heavy gate
 
