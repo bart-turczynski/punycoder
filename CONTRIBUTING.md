@@ -9,8 +9,8 @@ New code needs tests, and each user-facing change needs one `NEWS.md` bullet.
 A merge request must pass the verification command below.
 
 Run verification (the pre-push chain: the hygiene hooks, citation and
-BugReports checks, the toolchain check, spelling, then lintr and
-`R CMD check --as-cran` in the `verify` hook):
+BugReports checks, the toolchain check, the URL check, spelling, then lintr
+and `R CMD check --as-cran` in the `verify` hook):
 
 ```sh
 pre-commit run --hook-stage pre-push --all-files
