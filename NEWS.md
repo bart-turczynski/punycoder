@@ -17,6 +17,10 @@
 
 ## Documentation
 
+* punycoder has a logo, the fleet's black hex, in `man/figures/logo.svg` and
+  `logo.png`. r-universe shows it on the package card and pkgdown in the site
+  header, and the README heading carries it (SEOR-wxjuxbtu).
+
 * The README now covers what a user needs. Installation gives the r-universe
   command next to the CRAN one, and lists the system requirements a source
   install needs. The comparison with other Punycode libraries moved to a new
