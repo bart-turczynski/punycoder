@@ -194,9 +194,10 @@ workflow:
     # and pandoc's markdown writer reflows text and pads tables differently
     # between versions -- the committed README carries compact pipe tables,
     # while Ubuntu's apt pandoc (3.1.x) rewrites every table column-padded.
-    # `check`, `coverage` and `pages` render the vignette and the site with it
-    # too. Until SEOR-dpjdwhbi those four jobs each spliced a hand-pinned,
-    # unchecked install of their own; it lives here now, once.
+    # `check`, `full-check` and `pages` render the vignette and the site with
+    # it too. Until SEOR-dpjdwhbi `gates`, `check`, `full-check` and `pages`
+    # each spliced a hand-pinned, unchecked install of their own; it lives
+    # here now, once.
     #
     # rocker/r-ver ships neither pandoc nor curl (verified with `docker run
     # --rm rocker/r-ver:<tag> sh -c 'command -v curl pandoc'` on latest, 4.1.3
