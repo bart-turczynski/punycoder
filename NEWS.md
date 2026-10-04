@@ -40,6 +40,13 @@
   `rcmdcheck` reads a check that halted partway as 0 errors, 0 warnings and 0
   notes, which is how two halted `full-check` runs were cited as passes for
   1.3.0 (`SEOR-maavnxdm`).
+* Every CI job that runs R installs pandoc 3.10 from one pin, the
+  `PANDOC_VERSION` variable of the shared R setup, and checks the download
+  against the release's published `sha256` digest before installing it. Four
+  jobs used to install their own unchecked copy. The pre-push gate's
+  `scripts/check-toolchain.R` now also fails when the local pandoc is not that
+  pin, since `README.md` is byte-stable only under the pandoc that knit it
+  (`SEOR-dpjdwhbi`).
 
 # punycoder 1.3.0
 

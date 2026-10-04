@@ -109,7 +109,7 @@ workflow:
 # distro, installs each package's declared system requirements itself, so the
 # apt lines below are only for things no R package declares (libidn2 for this
 # package's optional backend, qpdf/ghostscript for --compact-vignettes).
-# Pandoc is separate and pinned -- see the .pandoc block.
+# Pandoc is separate and pinned -- see the end of `.r`'s before_script.
 #
 # `dependencies = TRUE` on the `deps::.` ref is not optional: without it pak
 # resolves hard dependencies only, and `R CMD build` then dies with "vignette
@@ -124,6 +124,21 @@ workflow:
     # Never set NOT_CRAN globally: it would un-skip test-osv.R and
     # test-security.R inside R CMD check, where their network access and
     # credentials are absent. The two audit jobs set it deliberately.
+    # The pandoc every R job runs, installed at the end of before_script
+    # below. scripts/check-toolchain.R reads this line and fails the pre-push
+    # gate when the local pandoc differs; seor's scripts/check-fleet-standard.py
+    # checks it against the fleet's version (seor design/fleet-standard.md,
+    # "CI on every push to `main`"; SEOR-egfbijyi, SEOR-dpjdwhbi). It is not
+    # the only place the version lives. A bump moves these together, in one
+    # change:
+    #   - this PANDOC_VERSION;
+    #   - both sha256 digests in before_script below (amd64, arm64), the
+    #     release's own published values;
+    #   - README.md, re-knit under the new pandoc.
+    # Never assign it a second time anywhere in this file: a shell assignment
+    # overrides `variables:` at run time, so which value a job installed would
+    # depend on where each sits.
+    PANDOC_VERSION: "3.10"
   cache:
     key: "rlibs-$CI_JOB_NAME_SLUG"
     paths:
@@ -172,53 +187,59 @@ workflow:
     # the R_LIBS_USER variable above looking like it does the job on its own.
     - echo '.libPaths(c(Sys.getenv("R_LIBS_USER"), .libPaths()))' >> "${R_HOME}/etc/Rprofile.site"
     - Rscript -e 'cat("Library paths:\n"); print(.libPaths())'
-
-# Pandoc is PINNED, and the pin is load-bearing rather than tidiness.
-#
-# The `readme` job asserts that README.md is byte-identical to a fresh knit of
-# README.Rmd, and pandoc's markdown writer changes its table layout between
-# versions: the committed README carries compact pipe tables, while Ubuntu's
-# apt pandoc (3.1.x) rewrites every table column-padded. The job then fails on
-# whitespace, reporting "out of sync" for a reason that has nothing to do with
-# the content. The GitHub workflow this replaced hid the problem by using
-# setup-pandoc, which installs a pinned build.
-#
-# 3.10 is the version that reproduces the committed README.md byte for byte
-# (verified locally). If you bump it, re-knit README.md in the same change and
-# check that a maintainer's local pandoc matches, or the job goes red for
-# everyone.
-#
-# The download is from pandoc's own release host. That is upstream software
-# distribution, not a forge dependency -- the same category as the R-hub
-# container images below.
-#
-# Written as a plain YAML anchor rather than `!reference`, deliberately: the
-# pre-commit `check-yaml` hook parses this file with a safe loader and cannot
-# construct GitLab's custom `!reference` tag, so using it makes every commit
-# fail on an unresolvable constructor. GitLab flattens a nested array in
-# `script`, so an anchor splices in exactly the same way.
-#
-# The ARCHITECTURE is derived, never asserted. pandoc ships one .deb per
-# architecture (3.10 publishes both amd64 and arm64) and `dpkg -i` refuses a
-# package built for another one, so a hardcoded `-amd64` takes out every job
-# that splices this anchor the moment the runner is not x86_64 -- which is what
-# happened the first time this pipeline ran on the project's own runner, a
-# local gitlab-runner on Apple Silicon where Docker resolves rocker/r-ver to
-# arm64. `dpkg --print-architecture` spells the value exactly as pandoc names
-# its assets. It is command substitution rather than a variable on purpose:
-# GitLab expands $VAR itself before the shell ever runs, but leaves $( ) alone,
-# so this is evaluated in the container it has to describe.
-#
-# `dpkg -i` is bare, with no `|| apt-get install -f -y` fallback: the .deb is a
-# self-contained binary with nothing to fix up, and the fallback only swallowed
-# dpkg's exit status so the job died 200 lines later at `pandoc: command not
-# found` instead of at the install that actually failed.
-.pandoc_script: &pandoc_script
-  - PANDOC_VERSION=3.10
-  - apt-get update -qq && apt-get install -y --no-install-recommends curl ca-certificates
-  - curl -fsSL -o /tmp/pandoc.deb "https://github.com/jgm/pandoc/releases/download/${PANDOC_VERSION}/pandoc-${PANDOC_VERSION}-1-$(dpkg --print-architecture).deb"
-  - dpkg -i /tmp/pandoc.deb
-  - pandoc --version | head -n1
+    # pandoc is PINNED, in every job that extends `.r`, as the fleet standard
+    # requires (seor design/fleet-standard.md, "CI on every push to `main`";
+    # SEOR-egfbijyi). The pin is load-bearing rather than tidiness: `gates`
+    # asserts that README.md is byte-identical to a fresh knit of README.Rmd,
+    # and pandoc's markdown writer reflows text and pads tables differently
+    # between versions -- the committed README carries compact pipe tables,
+    # while Ubuntu's apt pandoc (3.1.x) rewrites every table column-padded.
+    # `check`, `full-check` and `pages` render the vignette and the site with
+    # it too. Until SEOR-dpjdwhbi `gates`, `check`, `full-check` and `pages`
+    # each spliced a hand-pinned, unchecked install of their own; it lives
+    # here now, once.
+    #
+    # rocker/r-ver ships neither pandoc nor curl (verified with `docker run
+    # --rm rocker/r-ver:<tag> sh -c 'command -v curl pandoc'` on latest, 4.1.3
+    # and devel), so curl comes from apt first. The download is from pandoc's
+    # own release host, upstream software distribution rather than a forge
+    # dependency -- the same category as the R-hub container images below.
+    #
+    # The ARCHITECTURE is derived, never asserted: pandoc ships one .deb per
+    # architecture and `dpkg -i` refuses one built for another. The project's
+    # runner is a local gitlab-runner on Apple Silicon, where Docker resolves
+    # rocker/r-ver to arm64, and a hardcoded `-amd64` took out every job the
+    # first time this pipeline ran there. `dpkg --print-architecture` spells
+    # the value exactly as pandoc names its assets.
+    #
+    # The two sha256 values are the release's own published digests (checked
+    # 2026-10-04, the values seor's `.r` pins); what else moves with them on a
+    # bump is listed at PANDOC_VERSION above. Nothing unverified is ever
+    # installed. A failed or mismatched download only warns and leaves the job
+    # without pandoc -- these images carry none -- so `gates` still runs its
+    # other checks and reports (seor ADR 0005), and a red README check or
+    # vignette build after that warning is the download, not the change. The
+    # download retries and has a ceiling: --max-time (which the fleet checker
+    # requires) bounds each attempt and --retry-max-time the retries, so a
+    # stalled CDN reaches that warning in about seven minutes at most instead
+    # of hanging every R job.
+    - apt-get update -qq && apt-get install -y --no-install-recommends curl ca-certificates
+    - |
+      ARCH=$(dpkg --print-architecture)
+      case "$ARCH" in
+        amd64) PANDOC_SHA256=d502599878eb29af3ae5f0cb5d559134df96534125d452c7a0674a5bad2c5ecf ;;
+        arm64) PANDOC_SHA256=b651c8bfd5a0a2f6650d6c0830131747ef67a1d9c0475b1399626611419e2205 ;;
+        *) PANDOC_SHA256=unknown ;;
+      esac
+      if curl -fsSL --retry 3 --retry-delay 5 --retry-max-time 300 --connect-timeout 20 --max-time 120 \
+        -o /tmp/pandoc.deb "https://github.com/jgm/pandoc/releases/download/${PANDOC_VERSION}/pandoc-${PANDOC_VERSION}-1-${ARCH}.deb" \
+        && echo "${PANDOC_SHA256}  /tmp/pandoc.deb" | sha256sum -c - \
+        && dpkg -i /tmp/pandoc.deb; then
+        echo "pandoc ${PANDOC_VERSION} installed"
+      else
+        echo "WARNING: pandoc ${PANDOC_VERSION} not installed; this job runs without pandoc"
+      fi
+      pandoc --version 2>/dev/null | sed -n 1p || true
 
 # ---------------------------------------------------------------------------
 # Stage: lint — the fast checks, run on every push and merge request
@@ -282,10 +303,11 @@ workflow:
 # silently out of sync with a later edit to either side.
 #
 # What moved into this job's own script (below) vs. scripts/gates.R: package
-# installation, apt packages, and pandoc are one-time SETUP shared by more
-# than one of the three checks (lintr for lint; devtools + pandoc + git for
-# readme; grep/sed/head -- all base-image tools, verified present -- for
-# news-version) and are not themselves a gate, so they run here, once,
+# installation and apt packages are one-time SETUP shared by more than one of
+# the three checks (lintr for lint; devtools + git for readme, with the pinned
+# pandoc that `.r`'s before_script installs; grep/sed/head -- all base-image
+# tools, verified present -- for news-version) and are not themselves a gate,
+# so they run here, once,
 # exactly as rurl's `.r` template/before_script installs packages before
 # `Rscript tools/verify.R` ever runs. scripts/gates.R contains only the
 # three checks themselves.
@@ -299,7 +321,6 @@ gates:
     LINTR_ERROR_ON_LINT: "true"
   script:
     - apt-get update -qq && apt-get install -y --no-install-recommends git
-    - *pandoc_script
     - >
       Rscript -e 'pak::pak("deps::.", dependencies = TRUE);
       pak::pak(c("any::lintr", "any::devtools", "any::spelling"))'
@@ -355,7 +376,6 @@ check:
   # libidn2-vs-fallback parity tests actually exercise on CI.
   script:
     - apt-get update -qq && apt-get install -y --no-install-recommends libidn2-0-dev pkg-config qpdf ghostscript
-    - *pandoc_script
     - Rscript -e 'pak::pak("deps::.", dependencies = TRUE); pak::pak("any::rcmdcheck")'
     # rcmdcheck reads a check that halted partway as 0/0/0 and returns normally,
     # so error_on never fires; the guard also fails on R CMD check's own exit
@@ -432,7 +452,6 @@ full-check:
           - "rocker/r-ver:devel"
   script:
     - apt-get update -qq && apt-get install -y --no-install-recommends libidn2-0-dev pkg-config qpdf ghostscript
-    - *pandoc_script
     - Rscript -e 'pak::pak("deps::.", dependencies = TRUE); pak::pak("any::rcmdcheck")'
     # The strict CRAN-grade pass: --as-cran. This is what CRAN itself runs, so
     # it is the gate before a release.
@@ -470,8 +489,10 @@ full-check:
 #   scheduled audits, whose tests skip without them, so
 #   _R_CHECK_FORCE_SUGGESTS_=false lets --as-cran report them as a NOTE
 #   instead of stopping.
-# - Vignettes are neither built nor checked, as in `sanitizers`: no pandoc in
-#   this job, and the vignette exercises the same functions the tests do.
+# - Vignettes are neither built nor checked, as in `sanitizers`: the vignette
+#   exercises the same functions the tests do. `.r`'s before_script installs
+#   the pinned pandoc here as in every job extending it; this job just does not
+#   use it.
 #
 # Same triggers as full-check.
 floor-check:
@@ -636,7 +657,6 @@ pages:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   script:
     - apt-get update -qq && apt-get install -y --no-install-recommends git
-    - *pandoc_script
     - Rscript -e 'pak::pak("deps::.", dependencies = TRUE); pak::pak("any::pkgdown")'
     # pkgdown renders EVERY top-level .md into the site --
     # pkgdown:::package_mds() hardcodes a skip list of README/NEWS/LICENSE,
