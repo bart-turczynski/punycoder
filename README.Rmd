@@ -259,9 +259,9 @@ These opinions belong in higher layers that consume punycoder's host functions.
 
 `punycoder` descends from the libidn-based
 [`hrbrmstr/punycode`](https://github.com/hrbrmstr/punycode) and follows
-IDNA2008 / UTS #46 rather than IDNA2003. The *Prior art and comparison*
-article, `vignette("comparison", package = "punycoder")` or Articles on the
-[package site](https://bart-turczynski.gitlab.io/punycoder/), compares it with
+IDNA2008 / UTS #46 rather than IDNA2003. The
+[Prior art and comparison](https://bart-turczynski.gitlab.io/punycoder/articles/comparison.html)
+article compares it with
 Punycode libraries in other ecosystems and with the comparable R packages, on
 the same inputs.
 
