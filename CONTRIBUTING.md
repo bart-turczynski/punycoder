@@ -24,6 +24,13 @@ is layered and where each responsibility lives) and [DECISIONS.md](DECISIONS.md)
 profile, backend model, error policy, deprecations). Normalization behavior is
 specified normatively in [dev/normalization-contract.md](dev/normalization-contract.md).
 
+## Development dependencies
+
+Beyond the runtime requirements in the README (R >= 4.1.0, `Rcpp`, and a C++
+compiler), development uses `testthat`, `knitr` and `rmarkdown`, all in
+`Suggests`. Install `libidn2` and `pkg-config` too, so the native backend is
+built and the backend parity tests in `test-backends` run against it.
+
 ## Workflow
 
 - Open an issue or discussion before large behavioral changes.

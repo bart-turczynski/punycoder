@@ -36,15 +36,6 @@ The `punycoder` package provides fast, standards-based conversion between Unicod
 
 Normalization runs against vendored Unicode data, and a build ships a *set* of Unicode versions with one pinned as the default (currently 17.0.0, with 16.0.0 also shipped). `unicode_versions()` reports what the installed build carries, and `host_normalize(x, unicode_version = "16.0.0")` selects another one for a single call — which `normalization_profile_info()` reflects by appending `+unicode-<version>` to the reported profile token.
 
-## Dependencies
-
-`punycoder` has a small dependency footprint:
-
-- Runtime dependencies: `R (>= 4.1.0)`, `Rcpp`
-- Optional system dependency: `libidn2` (detected at compile time)
-- Optional build helper: `pkg-config` (used by `configure` to detect `libidn2`)
-- Development dependencies: `testthat`, `knitr`, `rmarkdown`
-
 ## Installation
 
 Install the released version of punycoder from
@@ -55,12 +46,30 @@ install.packages("punycoder")
 ```
 
 Or install the development version from
-[GitLab](https://gitlab.com/bart-turczynski/punycoder) with:
+[r-universe](https://bart-turczynski.r-universe.dev/punycoder) with:
+
+``` r
+install.packages(
+  "punycoder",
+  repos = c("https://bart-turczynski.r-universe.dev", "https://cloud.r-project.org")
+)
+```
+
+To build it from source on
+[GitLab](https://gitlab.com/bart-turczynski/punycoder) instead:
 
 ``` r
 # install.packages("remotes")
 remotes::install_gitlab("bart-turczynski/punycoder")
 ```
+
+### System requirements
+
+`punycoder` needs R 4.1.0 or later and `Rcpp`, which `install.packages()` pulls
+in. A binary install needs nothing else. A source install needs a C++ compiler,
+which the standard R build tools for each platform provide. `libidn2` 2.3.5 or
+later and `pkg-config` are optional: `configure` uses them for a native backend
+when it finds both.
 
 ### Optional native backend (`libidn2`)
 
@@ -218,17 +227,6 @@ is_idn(c("café.com", "example.com", "москва.рф"))
 validate_domain(c("valid.com", "invalid..domain"))
 ```
 
-## Current State
-
-`punycoder` currently provides:
-
-- Low-level Punycode codec: `puny_encode()`, `puny_decode()`
-- IDNA/UTS-46 host normalization: `host_normalize()`, `normalization_profile_info()`, `unicode_versions()`
-- Domain validation utilities: `is_punycode()`, `is_idn()`, `validate_domain()`
-- Vectorized operations and strict/non-strict handling for malformed input
-- Build-time backend selection (`libidn2` when present, built-in fallback otherwise)
-- Best-effort structured host extraction where invalid inputs are returned as missing components
-
 ## Non-goals
 
 `punycoder` is a standards primitive for Punycode and host normalization. It is
@@ -254,72 +252,15 @@ part of its acceptance criteria:
 
 These opinions belong in higher layers that consume punycoder’s host functions.
 
-## Prior art and comparison
+## How it compares
 
-Punycode/IDN libraries exist in most ecosystems. `punycoder` is most directly a
-maintained, IDNA2008-era successor to the libidn-based R tooling — its public
-API (`puny_encode()` / `puny_decode()` / `is_punycode()`) descends from
-[`hrbrmstr/punycode`](https://github.com/hrbrmstr/punycode). The table below
-situates it against representative libraries.
-
-|  | **punycoder** (R) | [hrbrmstr/punycode](https://github.com/hrbrmstr/punycode) (R) | [punycoder](https://pub.dev/packages/punycoder) (Dart) | [simonmittag/punycoder](https://github.com/simonmittag/punycoder) (Go) |
-|----|----|----|----|----|
-| Form | library | library | library | CLI tool |
-| RFC 3492 codec | yes | yes | yes | yes |
-| Engine | `libidn2` + in-tree fallback | GNU `libidn` | pure Dart | Go `x/net/idna` |
-| IDNA standard | 2008 / UTS #46 (non-transitional) | 2003 (nameprep) | RFC 3492 + IDNA helpers | UTS #46 (via `x/net`) |
-| Unicode NFC | explicit (UAX #15) | implicit in nameprep | not documented | via `x/net` |
-| Pinned Unicode version | yes — 17.0.0, regenerable; 16.0.0 also selectable | no (frozen at build) | no | tracks Go release |
-| CheckBidi / CheckJoiners | always on | not surfaced | not documented | partial |
-| UTS #46 conformance corpus (`IdnaTestV2`) | yes — one per shipped Unicode version | no | no | — |
-| Strict / `NA` per-element policy | yes | undocumented | `validate` flag | n/a (CLI) |
-| Vectorized | yes | yes | n/a | n/a |
-| Maintenance | active | last commit 2015 | maintained | maintained |
-
-> The most consequential row is **IDNA standard**. IDNA2003 (GNU `libidn`,
-> nameprep) and IDNA2008 / UTS #46 disagree on real domains: the *deviation
-> characters* `ß`, `ς`, and the joiners ZWJ/ZWNJ. Under IDNA2003 `faß.de` is
-> mapped to `fass.de` — a **different host** — whereas `punycoder`’s pinned
-> UTS #46 non-transitional profile preserves it as `xn--fa-hia.de`. A
-> libidn-era pipeline therefore silently rewrites some hosts rather than
-> erroring, which is the class of bug `punycoder` exists to remove.
-
-> Comparisons reflect each project’s public documentation as of this writing and
-> describe documented behavior, not an independent audit.
-
-### Observed behavior on the comparable R packages
-
-Running the same inputs through the comparable R packages surfaces concrete
-behavioral differences (observed against `punycode` 0.2.5, `urltools` 1.7.3.1,
-and the author’s own upstack toolkit [`rurl`](https://CRAN.R-project.org/package=rurl)
-1.4.0). The raw RFC 3492 codec output agrees byte-for-byte across the codecs
-once direction is aligned — the divergences are in multi-label handling,
-idempotency, validity philosophy, and input scope. `rurl` is a URL
-parser/normalizer rather than a Punycode codec; it is included to show where the
-URL-shaped inputs `punycoder` deliberately rejects are actually handled (it
-delegates IDNA host conversion to `punycoder`), so `—` below means “out of
-scope for that layer,” not a defect:
-
-| Behavior | **punycoder** | hrbrmstr/punycode | urltools | rurl |
-|----|----|----|----|----|
-| Primary role | Punycode/IDNA host codec | Punycode codec (IDNA2003) | URL + punycode utilities | URL parser / normalizer |
-| `puny_encode()` direction | Unicode → ASCII | **ASCII → Unicode** (names inverted) | Unicode → ASCII | — (no codec; IDNA via `punycoder`) |
-| Decode multi-label `xn--hxakfddc2amo8b.xn--qxam` | `ελράδειγμα.ελ` ✓ | `ελράδειγμα.ελ` ✓ | `ελράδειγμα.ελράδειγμα` ✗ (second label corrupted) | — (no `xn--` → Unicode decoder) |
-| Re-encode an already-`xn--` label | unchanged — idempotent ✓ | unchanged ✓ | `xn--xn--…-.xn--xn--…-` ✗ (double-encoded) | — |
-| Round-trip `decode(encode(x)) == x` | yes | yes | no (from the decode bug above) | — |
-| `gr€€n.no` — EURO SIGN, valid under UTS #46 | accepted → `xn--grn-l50aa.no` | rejected by `puny_tld_check` (IDNA2008) | — | parses; host preserved |
-| Full-URL input (`http://…`) | rejected with an actionable error pointing at a URL parser (`rurl`) | n/a (domain-only) | passed through unchanged | **parsed** — scheme/host/domain/TLD extracted; `get_clean_url()` lowercases the host and resolves dot-segments |
-| Required system library | none (`libidn2` optional) | GNU `libidn` (v1) required to build | none | none |
-
-> `punycode` names its functions opposite to the usual convention:
-> `punycode::puny_encode()` maps `xn--` → Unicode and
-> `punycode::puny_decode()` maps Unicode → `xn--`. The rows above align
-> by transform direction, not by function name.
->
-> `punycoder` + `rurl` (+ [`pslr`](https://CRAN.R-project.org/package=pslr) for
-> the public-suffix/TLD truth) are designed to compose: `rurl` parses the URL and
-> hands the host to `punycoder` for IDNA canonicalization, each package owning a
-> single concern.
+`punycoder` descends from the libidn-based
+[`hrbrmstr/punycode`](https://github.com/hrbrmstr/punycode) and follows
+IDNA2008 / UTS \#46 rather than IDNA2003. The *Prior art and comparison*
+article, `vignette("comparison", package = "punycoder")` or Articles on the
+[package site](https://bart-turczynski.gitlab.io/punycoder/), compares it with
+Punycode libraries in other ecosystems and with the comparable R packages, on
+the same inputs.
 
 ## Acknowledgments
 
