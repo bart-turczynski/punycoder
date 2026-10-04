@@ -15,6 +15,15 @@
   failed to compile. Older versions now get the in-tree fallback backend, and
   `configure` says why (`SEOR-wxelnnmt`).
 
+## Documentation
+
+* The README now covers what a user needs. Installation gives the r-universe
+  command next to the CRAN one, and lists the system requirements a source
+  install needs. The comparison with other Punycode libraries moved to a new
+  article, `vignette("comparison")`. The development dependencies moved to
+  `CONTRIBUTING.md`, and the list of functions was dropped: the reference index
+  already has it (`SEOR-kqmqosji`).
+
 ## Internal
 
 * The lint gate bans `tolower()`, `toupper()` and `casefold()`, which follow
