@@ -64,7 +64,7 @@
 # then `R CMD check --as-cran` failing on any WARNING, mirroring CI.
 #
 # THE DOCS-DRIFT STEP runs first (SEOR-nwfmerhu): scripts/check-docs-drift.R
-# regenerates man/ and NAMESPACE with roxygen2 and fails, printing the diff,
+# regenerates man/, NAMESPACE and DESCRIPTION with roxygen2 and fails, printing the diff,
 # when they differ from what is committed. A stale .Rd is still valid .Rd, so
 # neither lintr nor R CMD check can see it. It runs on its OWN `git archive`
 # export of the commit being pushed, never on this working tree: roxygen loads
@@ -97,10 +97,14 @@ fi
 
 # The export is removed by hand before `exec`, which replaces this shell and so
 # never fires an EXIT trap; the trap covers a failing step, the ref check
-# included.
+# included. The INT/TERM/HUP traps turn a signal into an ordinary exit, which
+# is what runs the EXIT trap.
 docs_ref="${PRE_COMMIT_TO_REF:-HEAD}"
 docsdir="$(mktemp -d)"
 trap 'rm -rf "$docsdir"' EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
 if ! docs_sha="$(git rev-parse --verify --quiet "${docs_ref}^{commit}")"; then
   echo "verify: docs-drift cannot export '$docs_ref': not a commit in this repository." >&2
   exit 1
@@ -109,6 +113,6 @@ echo "verify: docs-drift on $docs_sha ($docs_ref)"
 git archive "$docs_sha" | tar -x -C "$docsdir"
 Rscript scripts/check-docs-drift.R "$docsdir"
 rm -rf "$docsdir"
-trap - EXIT
+trap - EXIT INT TERM HUP
 
 exec Rscript -e 'lints <- lintr::lint_package(); if (length(lints)) { print(lints); quit(status = 1) }; res <- rcmdcheck::rcmdcheck(args = "--as-cran", error_on = "warning"); if (!identical(as.integer(res$status), 0L)) stop("R CMD check exited with status ", res$status, "; the run did not complete.", call. = FALSE)'
