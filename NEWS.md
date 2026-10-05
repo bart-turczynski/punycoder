@@ -56,6 +56,12 @@
   `scripts/check-toolchain.R` now also fails when the local pandoc is not that
   pin, since `README.md` is byte-stable only under the pandoc that knit it
   (`SEOR-dpjdwhbi`).
+* The pre-push gate and the `gates` CI job also fail when `man/` or
+  `NAMESPACE` differ from what `roxygen2` regenerates from the pushed commit
+  (`scripts/check-docs-drift.R`). A stale `.Rd` file is still valid `.Rd`, so
+  neither `lintr` nor `R CMD check` notices it, and the logo sweep left the
+  package help pages of two other packages stale with every gate green
+  (`SEOR-nwfmerhu`).
 
 # punycoder 1.3.0
 

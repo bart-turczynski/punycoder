@@ -100,8 +100,9 @@ repos:
         pass_filenames: false
         files: ^scripts/bestpractices-url\.py$
         stages: [pre-push]
-      # Mirrors the CI verify gate: lintr then R CMD check --as-cran, failing on
-      # any WARNING. Runs on push (not per commit) since a full check is slow.
+      # Mirrors the CI verify gate: the docs-drift check, lintr, then R CMD
+      # check --as-cran, failing on any WARNING. Runs on push (not per commit)
+      # since a full check is slow.
       # Toolchain drift makes the gate red on a tree nobody changed, and it
       # arrives disguised as a code defect: a roxygen2 skew aborts the docs
       # guard, and a package built under a newer R than this one surfaces as an
@@ -146,11 +147,14 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-push]
-      # `entry` is scripts/verify-on-push.sh, which runs the lintr + rcmdcheck
-      # command this hook used to spell inline, unchanged, except when the
-      # push DESTINATION is a directory on this filesystem -- the local
-      # archival mirror `backup`, where the gate verifies nothing because that
-      # history already passed on its way to origin (PUNY-dopcsyjw, ported
+      # `entry` is scripts/verify-on-push.sh. It first runs
+      # scripts/check-docs-drift.R on a `git archive HEAD` export, failing when
+      # man/ or NAMESPACE differ from what roxygen2 regenerates (SEOR-nwfmerhu),
+      # then the lintr + rcmdcheck command this hook used to spell inline,
+      # unchanged. It skips both when the push DESTINATION is a directory on
+      # this filesystem -- the local archival mirror `backup`, where the gate
+      # verifies nothing because that history already passed on its way to
+      # origin (PUNY-dopcsyjw, ported
       # from rurl's RURL-qkowfsdt). It reads the URL pre-commit re-exports as
       # $PRE_COMMIT_REMOTE_URL; anything it cannot positively identify as a
       # local mirror, origin included, runs the gate. Read the wrapper's header

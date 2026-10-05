@@ -284,15 +284,16 @@ workflow:
 # would also silently change it from manual-only to running (and gating) on
 # every push.
 #
-# BINDING CONDITION: scripts/gates.R runs every one of the three folded
-# checks regardless of an earlier one failing, gives each its own PASS/FAIL,
-# prints ONE summary naming every check's verdict, and only THEN exits
-# nonzero if any failed -- ported from rurl's tools/verify.R
+# BINDING CONDITION: scripts/gates.R runs every one of its checks (the three
+# folded jobs, plus `spelling` and `docs-drift`, added since) regardless of
+# an earlier one failing, gives each its own PASS/FAIL, prints ONE summary
+# naming every check's verdict, and only THEN exits nonzero if any failed --
+# ported from rurl's tools/verify.R
 # (gitlab.com/bart-turczynski/rurl, tools/verify.R): it accumulates into a
 # `results` list across every stage regardless of earlier failures and
 # prints a single `VERDICT: FAIL -- <labels>` line before exiting. A
 # fail-fast harness that stopped at the first red check would gut the point
-# of this fold: three independent signals collapsed into one that still
+# of this fold: independent signals collapsed into one that still
 # needed N re-runs to find the Nth failure. Proved by mutation: see the
 # commit that introduced scripts/gates.R for what was broken, what the
 # summary printed, and that it was restored afterwards.
@@ -304,13 +305,14 @@ workflow:
 #
 # What moved into this job's own script (below) vs. scripts/gates.R: package
 # installation and apt packages are one-time SETUP shared by more than one of
-# the three checks (lintr for lint; devtools + git for readme, with the pinned
+# its checks (lintr for lint; devtools + git for readme, with the pinned
 # pandoc that `.r`'s before_script installs; grep/sed/head -- all base-image
-# tools, verified present -- for news-version) and are not themselves a gate,
+# tools, verified present -- for news-version; spelling for spelling; git and
+# the pinned roxygen2 for docs-drift) and are not themselves a gate,
 # so they run here, once,
 # exactly as rurl's `.r` template/before_script installs packages before
 # `Rscript tools/verify.R` ever runs. scripts/gates.R contains only the
-# three checks themselves.
+# checks themselves.
 gates:
   extends: .r
   stage: lint

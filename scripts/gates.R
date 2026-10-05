@@ -31,17 +31,19 @@
 # records its own PASS/FAIL. Only after every check has run does this script
 # print ONE summary naming every check's verdict, and only THEN does it
 # exit nonzero if any failed. A fail-fast harness that stopped at the first
-# red check would gut the point of the fold: three independent signals
+# red check would gut the point of the fold: independent signals
 # collapsed into one that still needed N re-runs to find the Nth failure.
 #
-# Every check below reproduces, as close to verbatim as an R harness allows,
-# the `script:` lines the corresponding standalone CI job ran before this
-# fold. The before/after command enumeration lives in the commit message
-# that introduced this file, not here, so it cannot drift out of sync with
-# what actually landed. This script does not install any dependency itself
-# -- that is the `gates` CI job's own `before_script`/`script` setup (pak,
-# apt packages, pandoc), same as none of rurl's tools/verify.R stages
-# install packages either. Run from the package root.
+# Every check below that was once a standalone CI job reproduces, as close to
+# verbatim as an R harness allows, the `script:` lines that job ran before
+# this fold. `spelling` and `docs-drift` never were jobs; each runs the same
+# command as its pre-push counterpart. The before/after command enumeration
+# lives in the commit message that introduced this file, not here, so it
+# cannot drift out of sync with what actually landed. This script does not
+# install any dependency itself -- that is the `gates` CI job's own
+# `before_script`/`script` setup (pak, apt packages, pandoc), same as none of
+# rurl's tools/verify.R stages install packages either. Run from the package
+# root.
 
 Sys.setenv(LINTR_ERROR_ON_LINT = "true")
 
