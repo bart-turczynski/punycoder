@@ -24,7 +24,7 @@
 <dc:relation>https://bart-turczynski.r-universe.dev/punycoder</dc:relation>
 <dc:relation>https://bart-turczynski.gitlab.io/punycoder/</dc:relation>
 <dc:relation>https://doi.org/10.5281/zenodo.20973629</dc:relation>
-<dc:subject><rdf:Bag><rdf:li>R</rdf:li><rdf:li>rstats</rdf:li><rdf:li>R package</rdf:li><rdf:li>SEO</rdf:li><rdf:li>Punycode</rdf:li><rdf:li>IDNA</rdf:li><rdf:li>internationalized domain names</rdf:li></rdf:Bag></dc:subject>
+<dc:subject><rdf:Bag><rdf:li>R</rdf:li><rdf:li>rstats</rdf:li><rdf:li>R package</rdf:li><rdf:li>punycode</rdf:li><rdf:li>punycode encode</rdf:li><rdf:li>punycode decode</rdf:li><rdf:li>IDNA</rdf:li><rdf:li>IDN</rdf:li><rdf:li>internationalized domain names</rdf:li><rdf:li>UTS-46</rdf:li><rdf:li>RFC 3492</rdf:li><rdf:li>Unicode</rdf:li><rdf:li>host normalization</rdf:li><rdf:li>hostname</rdf:li><rdf:li>domain names</rdf:li><rdf:li>TLD</rdf:li></rdf:Bag></dc:subject>
 <dc:contributor>Name set in IBM Plex Mono (SIL Open Font License 1.1), converted to outlines.</dc:contributor>
 <dcterms:alternative>punycoder logo</dcterms:alternative>
 <dcterms:created>2026-10-04</dcterms:created>
@@ -48,7 +48,7 @@
 <dc:publisher><rdf:Bag><rdf:li>Bart Turczynski</rdf:li></rdf:Bag></dc:publisher>
 <dc:contributor><rdf:Bag><rdf:li>Name set in IBM Plex Mono (SIL Open Font License 1.1), converted to outlines.</rdf:li></rdf:Bag></dc:contributor>
 <dc:rights><rdf:Alt><rdf:li xml:lang="x-default">&#169; 2026 Bart Turczynski. MIT License.</rdf:li></rdf:Alt></dc:rights>
-<dc:subject><rdf:Bag><rdf:li>R</rdf:li><rdf:li>rstats</rdf:li><rdf:li>R package</rdf:li><rdf:li>SEO</rdf:li><rdf:li>Punycode</rdf:li><rdf:li>IDNA</rdf:li><rdf:li>internationalized domain names</rdf:li></rdf:Bag></dc:subject>
+<dc:subject><rdf:Bag><rdf:li>R</rdf:li><rdf:li>rstats</rdf:li><rdf:li>R package</rdf:li><rdf:li>punycode</rdf:li><rdf:li>punycode encode</rdf:li><rdf:li>punycode decode</rdf:li><rdf:li>IDNA</rdf:li><rdf:li>IDN</rdf:li><rdf:li>internationalized domain names</rdf:li><rdf:li>UTS-46</rdf:li><rdf:li>RFC 3492</rdf:li><rdf:li>Unicode</rdf:li><rdf:li>host normalization</rdf:li><rdf:li>hostname</rdf:li><rdf:li>domain names</rdf:li><rdf:li>TLD</rdf:li></rdf:Bag></dc:subject>
 <dc:source>https://gitlab.com/bart-turczynski/punycoder</dc:source>
 <dc:relation><rdf:Bag><rdf:li>https://gitlab.com/bart-turczynski/punycoder</rdf:li><rdf:li>https://github.com/bart-turczynski/punycoder</rdf:li><rdf:li>https://CRAN.R-project.org/package=punycoder</rdf:li><rdf:li>https://bart-turczynski.r-universe.dev/punycoder</rdf:li><rdf:li>https://bart-turczynski.gitlab.io/punycoder/</rdf:li><rdf:li>https://doi.org/10.5281/zenodo.20973629</rdf:li></rdf:Bag></dc:relation>
 <dc:identifier>punycoder</dc:identifier>
@@ -69,7 +69,7 @@
 <xmpRights:Owner><rdf:Bag><rdf:li>Bart Turczynski</rdf:li></rdf:Bag></xmpRights:Owner>
 <xmpMM:DocumentID>uuid:23cb27a3-6bfa-58a0-b437-9c56cf52288c</xmpMM:DocumentID>
 <xmpMM:OriginalDocumentID>uuid:23cb27a3-6bfa-58a0-b437-9c56cf52288c</xmpMM:OriginalDocumentID>
-<xmpMM:InstanceID>uuid:c518c856-5590-5374-bb64-88d45812c54c</xmpMM:InstanceID>
+<xmpMM:InstanceID>uuid:c862f43f-b448-5a3e-9c0f-76d4045b1340</xmpMM:InstanceID>
 <photoshop:Headline>punycoder: Punycode library for R</photoshop:Headline>
 <photoshop:Credit>Bart Turczynski</photoshop:Credit>
 <photoshop:Source>Bart Turczynski</photoshop:Source>

@@ -27,6 +27,10 @@
   screen-reader description and the standard image metadata fields, written by
   `scripts/logo-metadata.py` in the `seor` repository (`SEOR-eyfiidrv`).
 
+* The logo's keywords are this package's `X-schema.org-keywords` tags, the ones
+  r-universe indexes, as written in `DESCRIPTION` and after `R`, `rstats` and
+  `R package` (`SEOR-qoqmestu`).
+
 * The README now covers what a user needs. Installation gives the r-universe
   command next to the CRAN one, and lists the system requirements a source
   install needs. The comparison with other Punycode libraries moved to a new
