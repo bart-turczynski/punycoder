@@ -63,6 +63,16 @@
 # THE GATE ITSELF is the command the inline hook ran, byte for byte: lintr,
 # then `R CMD check --as-cran` failing on any WARNING, mirroring CI.
 #
+# THE DOCS-DRIFT STEP runs first (SEOR-nwfmerhu): scripts/check-docs-drift.R
+# regenerates man/ and NAMESPACE with roxygen2 and fails, printing the diff,
+# when they differ from what is committed. A stale .Rd is still valid .Rd, so
+# neither lintr nor R CMD check can see it. It runs on its OWN `git archive
+# HEAD` export, never on this working tree: roxygen loads the package through
+# pkgload, which runs ./configure and compiles src/ in place, and those build
+# products would land in the directory rcmdcheck builds from below. HEAD, not
+# the working tree, because HEAD is what the push sends. The `docs-drift`
+# check in scripts/gates.R runs the same two commands in CI.
+#
 # THE EXIT-STATUS GUARD after the check: rcmdcheck reads a check that halted
 # partway as 0/0/0 and returns normally, so error_on never fires. The gate
 # also fails on R CMD check's own exit status (SEOR-maavnxdm).
@@ -76,5 +86,14 @@ if [ -n "$REMOTE_URL" ] && [ -d "$REMOTE_URL" ]; then
   echo "verify: skipped -- '${REMOTE_NAME:-?}' is a local path ($REMOTE_URL), i.e. an archival mirror, not a forge; the gate runs on the push to origin. Force it with: scripts/verify-on-push.sh"
   exit 0
 fi
+
+# The export is removed by hand before `exec`, which replaces this shell and so
+# never fires an EXIT trap; the trap covers a failing step.
+docsdir="$(mktemp -d)"
+trap 'rm -rf "$docsdir"' EXIT
+git archive HEAD | tar -x -C "$docsdir"
+Rscript scripts/check-docs-drift.R "$docsdir"
+rm -rf "$docsdir"
+trap - EXIT
 
 exec Rscript -e 'lints <- lintr::lint_package(); if (length(lints)) { print(lints); quit(status = 1) }; res <- rcmdcheck::rcmdcheck(args = "--as-cran", error_on = "warning"); if (!identical(as.integer(res$status), 0L)) stop("R CMD check exited with status ", res$status, "; the run did not complete.", call. = FALSE)'

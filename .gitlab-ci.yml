@@ -324,6 +324,10 @@ gates:
     - >
       Rscript -e 'pak::pak("deps::.", dependencies = TRUE);
       pak::pak(c("any::lintr", "any::devtools", "any::spelling"))'
+    # The docs-drift check refuses to run on any roxygen2 but the one
+    # DESCRIPTION pins, since another version's formatting would read as drift
+    # on a tree nobody touched (SEOR-nwfmerhu). devtools pulls in the newest.
+    - Rscript -e 'pak::pkg_install(paste0("roxygen2@", read.dcf("DESCRIPTION", "Config/roxygen2/version")[[1]]))'
     - Rscript scripts/gates.R
 
 # CITATION.cff and .zenodo.json each duplicate the version and the project

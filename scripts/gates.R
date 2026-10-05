@@ -112,6 +112,30 @@ results$spelling <- run_check(
   }
 )
 
+# --- docs-drift -------------------------------------------------------------
+# The pre-push gate's docs-drift step (SEOR-nwfmerhu): regenerate man/ and
+# NAMESPACE with roxygen2 and fail on any difference from what is committed,
+# since a stale .Rd is valid .Rd and neither lint nor R CMD check sees it. Same
+# `git archive HEAD` export as scripts/verify-on-push.sh, so the pkgload
+# compile roxygen runs never writes build products into this checkout. The
+# roxygen2 pin it needs is installed by the `gates` CI job.
+docs_tar <- tempfile("docs-drift-", fileext = ".tar")
+docs_dir <- tempfile("docs-drift-")
+dir.create(docs_dir)
+results[["docs-drift"]] <- run_check(
+  "docs-drift",
+  function() {
+    run_cmd("git", c("archive", paste0("--output=", shQuote(docs_tar)), "HEAD"))
+  },
+  function() {
+    run_cmd("tar", c("-xf", shQuote(docs_tar), "-C", shQuote(docs_dir)))
+  },
+  function() {
+    run_cmd("Rscript", c("scripts/check-docs-drift.R", shQuote(docs_dir)))
+  }
+)
+unlink(c(docs_tar, docs_dir), recursive = TRUE)
+
 for (r in results) {
   cat(sprintf("=== [%s] %s ===\n", if (r$ok) "PASS" else "FAIL", r$label))
   if (length(r$log)) {
