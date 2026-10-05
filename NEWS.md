@@ -2,60 +2,15 @@
 
 ## Breaking changes
 
-* punycoder now requires R >= 4.1.0 (was R >= 3.5.0). The fleet declares the
-  oldest R minor version its weekly `deep-check` pipeline tests, and that
-  pipeline now carries a leg on R 4.1.3 (`SEOR-wxelnnmt`).
+* punycoder now requires R >= 4.1.0 (was R >= 3.5.0) (`SEOR-wxelnnmt`).
 
 ## Bug fixes
 
-* punycoder installs again on systems whose libidn2 is older than 2.3.5, such
-  as Ubuntu 20.04 and 22.04 or Debian 12. `configure` enabled the native
-  backend whenever `pkg-config` found any libidn2, but `idn2_punycode_encode()`
-  and `idn2_punycode_decode()` are public only from libidn2 2.3.5, so the build
-  failed to compile. Older versions now get the in-tree fallback backend, and
-  `configure` says why (`SEOR-wxelnnmt`).
+* punycoder installs again with libidn2 older than 2.3.5 (Ubuntu 20.04 and 22.04, Debian 12), using its in-tree backend (`SEOR-wxelnnmt`).
 
 ## Documentation
 
-* punycoder has a logo, the fleet's black hex, in `man/figures/logo.svg` and
-  `logo.png`. r-universe shows it on the package card and the documentation
-  site in its header, and the `README.md` heading carries it with the alt text
-  "hex logo, white on black" (`SEOR-wxjuxbtu`, `SEOR-wfleahtg`).
-
-* The logo files carry full metadata: every project link (GitLab, GitHub, CRAN,
-  r-universe, the documentation site and, where one exists, the Zenodo DOI), a
-  screen-reader description and the standard image metadata fields, written by
-  `scripts/logo-metadata.py` in the `seor` repository (`SEOR-eyfiidrv`).
-
-* The logo's keywords are this package's `X-schema.org-keywords` tags, the ones
-  r-universe indexes, as written in `DESCRIPTION` and after `R`, `rstats` and
-  `R package` (`SEOR-qoqmestu`).
-
-* The README now covers what a user needs. Installation gives the r-universe
-  command next to the CRAN one, and lists the system requirements a source
-  install needs. The comparison with other Punycode libraries moved to a new
-  article, `vignette("comparison")`. The development dependencies moved to
-  `CONTRIBUTING.md`, and the list of functions was dropped: the reference index
-  already has it (`SEOR-kqmqosji`).
-
-## Internal
-
-* The lint gate bans `tolower()`, `toupper()` and `casefold()`, which follow
-  the locale: a Turkish locale folds `I` to `ı` (U+0131), not `i`. The three
-  calls in tests and `data-raw/` now map ASCII letters with `chartr()` or
-  `letters`, with unchanged results (SEOR-rxxuzhmc).
-* The pre-push gate (`scripts/verify-on-push.sh`) and the `check` and
-  `full-check` CI jobs also fail when `R CMD check` exits non-zero.
-  `rcmdcheck` reads a check that halted partway as 0 errors, 0 warnings and 0
-  notes, which is how two halted `full-check` runs were cited as passes for
-  1.3.0 (`SEOR-maavnxdm`).
-* Every CI job that runs R installs pandoc 3.10 from one pin, the
-  `PANDOC_VERSION` variable of the shared R setup, and checks the download
-  against the release's published `sha256` digest before installing it. Four
-  jobs used to install their own unchecked copy. The pre-push gate's
-  `scripts/check-toolchain.R` now also fails when the local pandoc is not that
-  pin, since `README.md` is byte-stable only under the pandoc that knit it
-  (`SEOR-dpjdwhbi`).
+* New `vignette("comparison")` compares punycoder with other Punycode libraries (`SEOR-kqmqosji`).
 
 # punycoder 1.3.0
 
