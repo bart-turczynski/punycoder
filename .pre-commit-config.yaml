@@ -148,10 +148,11 @@ repos:
         always_run: true
         stages: [pre-push]
       # `entry` is scripts/verify-on-push.sh. It first runs
-      # scripts/check-docs-drift.R on a `git archive HEAD` export, failing when
-      # man/ or NAMESPACE differ from what roxygen2 regenerates (SEOR-nwfmerhu),
-      # then the lintr + rcmdcheck command this hook used to spell inline,
-      # unchanged. It skips both when the push DESTINATION is a directory on
+      # scripts/check-docs-drift.R on a `git archive` export of the commit being
+      # pushed ($PRE_COMMIT_TO_REF, else HEAD), failing when man/ or NAMESPACE
+      # differ from what roxygen2 regenerates (SEOR-nwfmerhu), then the lintr +
+      # rcmdcheck command this hook used to spell inline, unchanged, on the
+      # working tree. It skips both when the push DESTINATION is a directory on
       # this filesystem -- the local archival mirror `backup`, where the gate
       # verifies nothing because that history already passed on its way to
       # origin (PUNY-dopcsyjw, ported

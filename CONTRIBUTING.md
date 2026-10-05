@@ -9,12 +9,16 @@ New code needs tests, and each user-facing change needs one `NEWS.md` bullet.
 A merge request must pass the verification command below.
 
 Run verification (the pre-push chain: the hygiene hooks, citation and
-BugReports checks, the toolchain check, the URL check, spelling, then lintr
-and `R CMD check --as-cran` in the `verify` hook):
+BugReports checks, the toolchain check, the URL check, spelling, then the
+docs-drift check, lintr and `R CMD check --as-cran` in the `verify` hook):
 
 ```sh
 pre-commit run --hook-stage pre-push --all-files
 ```
+
+In the `verify` hook the docs-drift check judges the commit being pushed (`HEAD`
+when run by hand), while lintr and `R CMD check` judge the working tree,
+uncommitted edits included.
 
 ## Orientation
 

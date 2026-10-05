@@ -66,12 +66,20 @@
 # THE DOCS-DRIFT STEP runs first (SEOR-nwfmerhu): scripts/check-docs-drift.R
 # regenerates man/ and NAMESPACE with roxygen2 and fails, printing the diff,
 # when they differ from what is committed. A stale .Rd is still valid .Rd, so
-# neither lintr nor R CMD check can see it. It runs on its OWN `git archive
-# HEAD` export, never on this working tree: roxygen loads the package through
-# pkgload, which runs ./configure and compiles src/ in place, and those build
-# products would land in the directory rcmdcheck builds from below. HEAD, not
-# the working tree, because HEAD is what the push sends. The `docs-drift`
-# check in scripts/gates.R runs the same two commands in CI.
+# neither lintr nor R CMD check can see it. It runs on its OWN `git archive`
+# export of the commit being pushed, never on this working tree: roxygen loads
+# the package through pkgload, which runs ./configure and compiles src/ in
+# place, and those build products would land in the directory rcmdcheck builds
+# from below. The commit is $PRE_COMMIT_TO_REF, the local sha pre-commit
+# exports for the ref being pushed, so `git push origin B` checks B even with
+# another branch checked out. With no such variable (a hand-run `pre-commit
+# run --hook-stage pre-push`, this script run directly) it is HEAD. The
+# `docs-drift` check in scripts/gates.R runs the same export in CI, on HEAD.
+#
+# TWO TREES, TWO VERDICTS. The docs-drift step judges that commit; lintr and
+# rcmdcheck below judge the working tree, uncommitted edits included. A pass
+# here therefore says the pushed commit's docs are current and the working
+# tree lints and checks clean -- not that either holds for the other tree.
 #
 # THE EXIT-STATUS GUARD after the check: rcmdcheck reads a check that halted
 # partway as 0/0/0 and returns normally, so error_on never fires. The gate
@@ -88,10 +96,17 @@ if [ -n "$REMOTE_URL" ] && [ -d "$REMOTE_URL" ]; then
 fi
 
 # The export is removed by hand before `exec`, which replaces this shell and so
-# never fires an EXIT trap; the trap covers a failing step.
+# never fires an EXIT trap; the trap covers a failing step, the ref check
+# included.
+docs_ref="${PRE_COMMIT_TO_REF:-HEAD}"
 docsdir="$(mktemp -d)"
 trap 'rm -rf "$docsdir"' EXIT
-git archive HEAD | tar -x -C "$docsdir"
+if ! docs_sha="$(git rev-parse --verify --quiet "${docs_ref}^{commit}")"; then
+  echo "verify: docs-drift cannot export '$docs_ref': not a commit in this repository." >&2
+  exit 1
+fi
+echo "verify: docs-drift on $docs_sha ($docs_ref)"
+git archive "$docs_sha" | tar -x -C "$docsdir"
 Rscript scripts/check-docs-drift.R "$docsdir"
 rm -rf "$docsdir"
 trap - EXIT

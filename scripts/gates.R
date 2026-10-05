@@ -118,9 +118,11 @@ results$spelling <- run_check(
 # The pre-push gate's docs-drift step (SEOR-nwfmerhu): regenerate man/ and
 # NAMESPACE with roxygen2 and fail on any difference from what is committed,
 # since a stale .Rd is valid .Rd and neither lint nor R CMD check sees it. Same
-# `git archive HEAD` export as scripts/verify-on-push.sh, so the pkgload
-# compile roxygen runs never writes build products into this checkout. The
-# roxygen2 pin it needs is installed by the `gates` CI job.
+# `git archive` export as scripts/verify-on-push.sh, so the pkgload compile
+# roxygen runs never writes build products into this checkout. That script
+# exports $PRE_COMMIT_TO_REF, the commit being pushed; this one exports HEAD,
+# because a CI job checks out exactly the commit under test, so HEAD is it.
+# The roxygen2 pin it needs is installed by the `gates` CI job.
 docs_tar <- tempfile("docs-drift-", fileext = ".tar")
 docs_dir <- tempfile("docs-drift-")
 dir.create(docs_dir)

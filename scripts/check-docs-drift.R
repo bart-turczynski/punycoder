@@ -25,7 +25,8 @@
 # from: pkgload runs ./configure and leaves src/Makevars, .o files and a .so
 # behind in src/, which would contaminate that build. scripts/verify-on-push.sh
 # and the `docs-drift` check in scripts/gates.R each give it its own
-# `git archive HEAD` export instead.
+# `git archive` export instead: of the commit being pushed in the hook, of
+# HEAD in CI.
 #
 # Usage (from the package root):
 #   Rscript scripts/check-docs-drift.R [package-dir]
