@@ -2,7 +2,7 @@
 
 ## Breaking changes
 
-* punycoder now requires R >= 4.1.0 (was R >= 3.5.0) (`SEOR-wxelnnmt`).
+* punycoder now requires R >= 4.1.0, up from 3.5.0 (`SEOR-wxelnnmt`).
 
 ## Bug fixes
 
