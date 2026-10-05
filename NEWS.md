@@ -22,10 +22,10 @@
   site in its header, and the `README.md` heading carries it with the alt text
   "hex logo, white on black" (`SEOR-wxjuxbtu`, `SEOR-wfleahtg`).
 
-* punycoder's logo files carry full metadata: every project link (GitLab,
-  GitHub, CRAN, r-universe, the documentation site), a screen-reader description
-  and the standard image metadata fields, written by seor's
-  `scripts/logo-metadata.py` (`SEOR-eyfiidrv`).
+* The logo files carry full metadata: every project link (GitLab, GitHub, CRAN,
+  r-universe, the documentation site and, where one exists, the Zenodo DOI), a
+  screen-reader description and the standard image metadata fields, written by
+  `scripts/logo-metadata.py` in the `seor` repository (`SEOR-eyfiidrv`).
 
 * The README now covers what a user needs. Installation gives the r-universe
   command next to the CRAN one, and lists the system requirements a source
