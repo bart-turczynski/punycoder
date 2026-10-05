@@ -63,6 +63,24 @@
 # THE GATE ITSELF is the command the inline hook ran, byte for byte: lintr,
 # then `R CMD check --as-cran` failing on any WARNING, mirroring CI.
 #
+# THE DOCS-DRIFT STEP runs first (SEOR-nwfmerhu): scripts/check-docs-drift.R
+# regenerates man/, NAMESPACE and DESCRIPTION with roxygen2 and fails, printing the diff,
+# when they differ from what is committed. A stale .Rd is still valid .Rd, so
+# neither lintr nor R CMD check can see it. It runs on its OWN `git archive`
+# export of the commit being pushed, never on this working tree: roxygen loads
+# the package through pkgload, which runs ./configure and compiles src/ in
+# place, and those build products would land in the directory rcmdcheck builds
+# from below. The commit is $PRE_COMMIT_TO_REF, the local sha pre-commit
+# exports for the ref being pushed, so `git push origin B` checks B even with
+# another branch checked out. With no such variable (a hand-run `pre-commit
+# run --hook-stage pre-push`, this script run directly) it is HEAD. The
+# `docs-drift` check in scripts/gates.R runs the same export in CI, on HEAD.
+#
+# TWO TREES, TWO VERDICTS. The docs-drift step judges that commit; lintr and
+# rcmdcheck below judge the working tree, uncommitted edits included. A pass
+# here therefore says the pushed commit's docs are current and the working
+# tree lints and checks clean -- not that either holds for the other tree.
+#
 # THE EXIT-STATUS GUARD after the check: rcmdcheck reads a check that halted
 # partway as 0/0/0 and returns normally, so error_on never fires. The gate
 # also fails on R CMD check's own exit status (SEOR-maavnxdm).
@@ -76,5 +94,25 @@ if [ -n "$REMOTE_URL" ] && [ -d "$REMOTE_URL" ]; then
   echo "verify: skipped -- '${REMOTE_NAME:-?}' is a local path ($REMOTE_URL), i.e. an archival mirror, not a forge; the gate runs on the push to origin. Force it with: scripts/verify-on-push.sh"
   exit 0
 fi
+
+# The export is removed by hand before `exec`, which replaces this shell and so
+# never fires an EXIT trap; the trap covers a failing step, the ref check
+# included. The INT/TERM/HUP traps turn a signal into an ordinary exit, which
+# is what runs the EXIT trap.
+docs_ref="${PRE_COMMIT_TO_REF:-HEAD}"
+docsdir="$(mktemp -d)"
+trap 'rm -rf "$docsdir"' EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
+if ! docs_sha="$(git rev-parse --verify --quiet "${docs_ref}^{commit}")"; then
+  echo "verify: docs-drift cannot export '$docs_ref': not a commit in this repository." >&2
+  exit 1
+fi
+echo "verify: docs-drift on $docs_sha ($docs_ref)"
+git archive "$docs_sha" | tar -x -C "$docsdir"
+Rscript scripts/check-docs-drift.R "$docsdir"
+rm -rf "$docsdir"
+trap - EXIT INT TERM HUP
 
 exec Rscript -e 'lints <- lintr::lint_package(); if (length(lints)) { print(lints); quit(status = 1) }; res <- rcmdcheck::rcmdcheck(args = "--as-cran", error_on = "warning"); if (!identical(as.integer(res$status), 0L)) stop("R CMD check exited with status ", res$status, "; the run did not complete.", call. = FALSE)'

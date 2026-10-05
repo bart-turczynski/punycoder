@@ -9,12 +9,16 @@ New code needs tests, and each user-facing change needs one `NEWS.md` bullet.
 A merge request must pass the verification command below.
 
 Run verification (the pre-push chain: the hygiene hooks, citation and
-BugReports checks, the toolchain check, the URL check, spelling, then lintr
-and `R CMD check --as-cran` in the `verify` hook):
+BugReports checks, the toolchain check, the URL check, spelling, then the
+docs-drift check, lintr and `R CMD check --as-cran` in the `verify` hook):
 
 ```sh
 pre-commit run --hook-stage pre-push --all-files
 ```
+
+In the `verify` hook the docs-drift check judges the commit being pushed (`HEAD`
+when run by hand), while lintr and `R CMD check` judge the working tree,
+uncommitted edits included.
 
 ## Orientation
 
@@ -128,10 +132,13 @@ workflows when the project went GitLab-only; `.github/` no longer exists.
 
 The **gate** is `gates`, `check`, `coverage`. `gates` runs `scripts/gates.R`,
 which folds the `lint`, `readme` and `news-version` checks that `verify.yml` and
-`news-version.yaml` used to run, plus `spelling`, into one job: it runs all of
-them, prints a PASS/FAIL line for each, and fails if any failed (SEOR-pgammbgo,
-ADR 0005 in seor). `check` runs `R CMD check --as-cran` and fails on a WARNING;
-`coverage` fails below 95% total coverage, the fleet minimum.
+`news-version.yaml` used to run, plus `spelling` and `docs-drift`, into one job:
+it runs all of them, prints a PASS/FAIL line for each, and fails if any failed
+(SEOR-pgammbgo, ADR 0005 in seor). `docs-drift` regenerates `man/`,
+`NAMESPACE` and `DESCRIPTION` with the pinned roxygen2 and fails when they
+differ from what is committed, the same check the pre-push gate runs first (SEOR-nwfmerhu).
+`check` runs `R CMD check --as-cran` and fails on a WARNING; `coverage` fails
+below 95% total coverage, the fleet minimum.
 
 Read "gate" carefully: **it does not run on your merge request.** A top-level
 `workflow:` block admits only a tag, a push to `main`, or a pipeline a human
