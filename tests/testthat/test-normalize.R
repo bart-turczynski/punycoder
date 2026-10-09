@@ -147,6 +147,47 @@ test_that("terminal-dot handling matches the contract", {
   expect_identical(host_normalize("example.com.."), NA_character_)
 })
 
+test_that("verify_dns_length = TRUE keeps rejecting empty labels", {
+  # UTS #46 section 4.2 step 4 rejects an empty label (A4_2) and an empty domain
+  # (A4_1) when VerifyDnsLength is on. That holds whatever the other two flags
+  # say: leading, inner, doubled-trailing and bare empty labels stay NA. U+3002
+  # IDEOGRAPHIC FULL STOP maps to U+002E, so it makes empty labels too. The b +
+  # u-umlaut hosts are "buecher" spelled with U+00FC.
+  empty_label_hosts <- c(
+    "a..b.example", ".bücher.example", "a..bücher.example",
+    "bücher.example..", ".", "", "。", "a。。b"
+  )
+  for (hyphens in c(TRUE, FALSE)) {
+    for (std3 in c(TRUE, FALSE)) {
+      expect_identical(
+        host_normalize(empty_label_hosts, check_hyphens = hyphens,
+                       use_std3 = std3, verify_dns_length = TRUE),
+        rep(NA_character_, length(empty_label_hosts)),
+        info = paste("check_hyphens", hyphens, "use_std3", std3)
+      )
+    }
+  }
+
+  # The single trailing root dot is the one empty label every profile keeps
+  # (ADR-010), relaxed or not.
+  expect_identical(
+    host_normalize("bücher.example."), "xn--bcher-kva.example."
+  )
+  expect_identical(
+    host_normalize("bücher.example.", check_hyphens = FALSE,
+                   use_std3 = FALSE, verify_dns_length = FALSE),
+    "xn--bcher-kva.example."
+  )
+
+  # "xn--" is an A-label with an empty payload, not an empty label: it fails
+  # Processing (P4) and stays NA under every profile.
+  expect_identical(
+    host_normalize(c("xn--", "a.xn--.b"), check_hyphens = FALSE,
+                   use_std3 = FALSE, verify_dns_length = FALSE),
+    c(NA_character_, NA_character_)
+  )
+})
+
 test_that("host_normalize is vectorized and preserves names", {
   x <- c(a = "Example.COM", b = NA, c = "a_b.com")
   out <- host_normalize(x)

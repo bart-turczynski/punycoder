@@ -140,6 +140,35 @@ test_that("relaxing a UTS-46 flag stays bounded against IdnaTestV2", {
   }
 })
 
+# With VerifyDnsLength on, no accepted host may carry an empty label other than
+# the single trailing root dot (ADR-010), whichever way the other two flags are
+# set. Checked over every corpus row rather than a handful of seeds, because the
+# empty-label rejection is what separates this path from verify_dns_length =
+# FALSE, where empty labels are kept (UTS #46 section 4.2 step 4).
+test_that("verify_dns_length = TRUE never emits an empty label", {
+  for (version in unicode_versions()) {
+    path <- idna_fixture_path(version)
+    skip_if(!nzchar(path),
+            paste("IdnaTestV2 fixture not installed for", version))
+
+    df <- idna_load_v2(path)
+    expect_gt(nrow(df), 6000L)
+    for (hyphens in c(TRUE, FALSE)) {
+      for (std3 in c(TRUE, FALSE)) {
+        got <- host_normalize(df$source, check_hyphens = hyphens,
+                              use_std3 = std3, verify_dns_length = TRUE,
+                              unicode_version = version)
+        core <- sub("\\.$", "", got[!is.na(got)])
+        has_empty <- !nzchar(core) | grepl("^\\.|\\.\\.|\\.$", core)
+        expect_false(
+          any(has_empty),
+          info = paste(version, "check_hyphens", hyphens, "use_std3", std3)
+        )
+      }
+    }
+  }
+})
+
 # Pins the documented UTS-46-vs-IDNA2008 stance: host_normalize is UTS #46
 # compatibility processing, not IDNA2008 conformance, so it ACCEPTS symbol
 # code points that IDNA2008 / libidn-backed registry checks (e.g. punycode's
