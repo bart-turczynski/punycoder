@@ -2,6 +2,17 @@
 
 ## Breaking changes
 
+* **The normalization profile token is now `uts46-nontransitional-std3-v3`**
+  (was `-v2`), because `host_normalize(verify_dns_length = FALSE)` now keeps
+  empty labels (below). Contract sections 3 and 8 increment `-vN` for any
+  accept/reject change to the section 4 algorithm, and the relaxed tokens
+  share the base, so `...-v2+no-verify-dns-length` would otherwise name two
+  different normalizations (ADR-018). Results with the default flags do not
+  change, but every token does, including the default one: a key that
+  stores the token misses once and must be rebuilt. `pslr` compares the token
+  and rebuilds its index on a mismatch, so it needs a compatibility review
+  before raising its accepted punycoder version (`PUNY-fffgkhoj`).
+
 * punycoder now requires R >= 4.1.0, up from 3.5.0 (`SEOR-wxelnnmt`).
 
 ## Bug fixes

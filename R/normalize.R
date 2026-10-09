@@ -32,7 +32,7 @@
 #' `UseSTD3ASCIIRules`. IDNA2003 / Nameprep (RFC 3490/3491/3454) is not used.
 #'
 #' The default applies the full strict UTS #46 profile
-#' (`uts46-nontransitional-std3-v2`). The `check_hyphens`, `use_std3`, and
+#' (`uts46-nontransitional-std3-v3`). The `check_hyphens`, `use_std3`, and
 #' `verify_dns_length` arguments are UTS #46 processing flags that can each be
 #' relaxed independently; pass the *same* values to
 #' [normalization_profile_info()] to obtain the identity of the resulting
@@ -127,7 +127,7 @@ unicode_versions <- function() {
 .normalization_profile_token <- function(check_hyphens, use_std3,
                                          verify_dns_length, unicode_version,
                                          default_version) {
-  base <- "uts46-nontransitional-std3-v2"
+  base <- "uts46-nontransitional-std3-v3"
   deviations <- c(
     if (!check_hyphens) "no-check-hyphens",
     if (!use_std3) "no-std3",

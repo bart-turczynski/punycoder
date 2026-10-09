@@ -21,11 +21,11 @@ test_that("pin: host_normalize() on representative hosts", {
 
 test_that("pin: normalization_profile_info() default and relaxed identity", {
   info <- normalization_profile_info()
-  expect_identical(info$profile, "uts46-nontransitional-std3-v2")
+  expect_identical(info$profile, "uts46-nontransitional-std3-v3")
   expect_true(info$use_std3)
   expect_identical(
     normalization_profile_info(check_hyphens = FALSE)$profile,
-    "uts46-nontransitional-std3-v2+no-check-hyphens"
+    "uts46-nontransitional-std3-v3+no-check-hyphens"
   )
 })
 
@@ -48,7 +48,7 @@ test_that("normalisation_profile_info() is normalization_profile_info()", {
   )
   expect_identical(
     normalisation_profile_info(check_hyphens = FALSE)$profile,
-    "uts46-nontransitional-std3-v2+no-check-hyphens"
+    "uts46-nontransitional-std3-v3+no-check-hyphens"
   )
 })
 

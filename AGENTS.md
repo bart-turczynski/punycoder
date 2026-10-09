@@ -75,7 +75,7 @@ Note the libidn2 path is Unix-only: `configure` defines `-DPUNYCODER_USE_LIBIDN2
 
 Every public encode/decode function takes `strict = getOption("punycoder.strict", TRUE)`. The default is set in `R/zzz.R::.onLoad`. In strict mode the C++ layer throws and `exports.cpp` converts to `Rcpp::stop`; in non-strict mode failures become `NA_character_` per element. `puny_encode`/`puny_decode` additionally reject URL-shaped input via `looks_like_url_input()` so callers don't accidentally pass a full URL to a domain-only function.
 
-Note `host_normalize` does **not** follow the strict/non-strict switch: it always reports invalid input as `NA` (never aborts), so a caller can layer its own policy. This is a separate contract — UTS #46 compatibility processing, deliberately *not* IDNA2008 / RFC 5891 conformance (it accepts labels IDNA2008 rejects, e.g. `"☕.example"`). The pinned profile is `uts46-nontransitional-std3-v2`; `normalization_profile_info()` returns its machine-readable identity and must stay in sync with the flag combination passed to `host_normalize`.
+Note `host_normalize` does **not** follow the strict/non-strict switch: it always reports invalid input as `NA` (never aborts), so a caller can layer its own policy. This is a separate contract — UTS #46 compatibility processing, deliberately *not* IDNA2008 / RFC 5891 conformance (it accepts labels IDNA2008 rejects, e.g. `"☕.example"`). The pinned profile is `uts46-nontransitional-std3-v3`; `normalization_profile_info()` returns its machine-readable identity and must stay in sync with the flag combination passed to `host_normalize`.
 
 ### The predicate contract (`is_punycode` / `is_idn`)
 
