@@ -35,8 +35,13 @@ restricts ASCII to letters, digits, and hyphen. \code{FALSE} admits other ASCII
 STD3-disallowed-but-valid.}
 
 \item{verify_dns_length}{Logical scalar. When \code{TRUE} (the default) each
-A-label must be 1-63 octets and the whole host <= 253. \code{FALSE} drops the
-length limits (empty labels are still rejected as structural errors).}
+A-label must be 1-63 octets and the whole host <= 253, so an empty label
+is rejected; the single trailing root dot (\code{"example.com."}) is the one
+exception. \code{FALSE} drops these checks, as UTS #46 section 4.2 step 4 does
+when \code{VerifyDnsLength} is false: over-long labels and hosts convert, and
+empty labels are kept wherever they sit (\code{"a..b"}, \code{".a"}, \code{"a.."}). The
+empty string and \code{"."} then convert to themselves, matching the
+IdnaTestV2 rows for them, whose only errors are the \code{VerifyDnsLength} ones.}
 
 \item{unicode_version}{Character scalar naming a Unicode table set this build
 ships, or \code{NULL} (the default) for the pinned one. See
@@ -45,7 +50,9 @@ ships, or \code{NULL} (the default) for the pinned one. See
 \value{
 A character vector the same length as \code{x}. Each element is the
 canonical lowercase ASCII A-label host, or \code{NA_character_} when the input
-is \code{NA} or invalid under the profile.
+is \code{NA} or invalid under the profile. Under \code{verify_dns_length = FALSE} the
+host may hold empty labels, and may be \code{""} (for empty input, or input
+that maps to nothing, such as a soft hyphen) or \code{"."}.
 }
 \description{
 Converts DNS hostnames to their canonical comparison form following the
@@ -81,7 +88,7 @@ Bidi rule via \code{CheckBidi}, and STD 3 (RFC 952 + RFC 1123) host-name rules v
 \code{UseSTD3ASCIIRules}. IDNA2003 / Nameprep (RFC 3490/3491/3454) is not used.
 
 The default applies the full strict UTS #46 profile
-(\code{uts46-nontransitional-std3-v2}). The \code{check_hyphens}, \code{use_std3}, and
+(\code{uts46-nontransitional-std3-v3}). The \code{check_hyphens}, \code{use_std3}, and
 \code{verify_dns_length} arguments are UTS #46 processing flags that can each be
 relaxed independently; pass the \emph{same} values to
 \code{\link[=normalization_profile_info]{normalization_profile_info()}} to obtain the identity of the resulting
@@ -94,6 +101,8 @@ upstack in \code{rurl}, not here.
 host_normalize(c("Example.COM", "münchen.de", "example.com."))
 host_normalize("a_b.com") # NA: STD3 rejects "_"
 host_normalize("a_b.com", use_std3 = FALSE) # "a_b.com"
+host_normalize("a..b.com") # NA: empty label
+host_normalize("a..b.com", verify_dns_length = FALSE) # "a..b.com"
 host_normalize("example.com", unicode_version = unicode_versions()[[1L]])
 }
 \seealso{

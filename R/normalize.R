@@ -32,7 +32,7 @@
 #' `UseSTD3ASCIIRules`. IDNA2003 / Nameprep (RFC 3490/3491/3454) is not used.
 #'
 #' The default applies the full strict UTS #46 profile
-#' (`uts46-nontransitional-std3-v2`). The `check_hyphens`, `use_std3`, and
+#' (`uts46-nontransitional-std3-v3`). The `check_hyphens`, `use_std3`, and
 #' `verify_dns_length` arguments are UTS #46 processing flags that can each be
 #' relaxed independently; pass the *same* values to
 #' [normalization_profile_info()] to obtain the identity of the resulting
@@ -51,14 +51,21 @@
 #'   (e.g. `"_"`) that the selected Unicode table set marks
 #'   STD3-disallowed-but-valid.
 #' @param verify_dns_length Logical scalar. When `TRUE` (the default) each
-#'   A-label must be 1-63 octets and the whole host <= 253. `FALSE` drops the
-#'   length limits (empty labels are still rejected as structural errors).
+#'   A-label must be 1-63 octets and the whole host <= 253, so an empty label
+#'   is rejected; the single trailing root dot (`"example.com."`) is the one
+#'   exception. `FALSE` drops these checks, as UTS #46 section 4.2 step 4 does
+#'   when `VerifyDnsLength` is false: over-long labels and hosts convert, and
+#'   empty labels are kept wherever they sit (`"a..b"`, `".a"`, `"a.."`). The
+#'   empty string and `"."` then convert to themselves, matching the
+#'   IdnaTestV2 rows for them, whose only errors are the `VerifyDnsLength` ones.
 #' @param unicode_version Character scalar naming a Unicode table set this build
 #'   ships, or `NULL` (the default) for the pinned one. See
 #'   [unicode_versions()]. An unshipped version is an error.
 #' @return A character vector the same length as `x`. Each element is the
 #'   canonical lowercase ASCII A-label host, or `NA_character_` when the input
-#'   is `NA` or invalid under the profile.
+#'   is `NA` or invalid under the profile. Under `verify_dns_length = FALSE` the
+#'   host may hold empty labels, and may be `""` (for empty input, or input
+#'   that maps to nothing, such as a soft hyphen) or `"."`.
 #' @seealso [normalization_profile_info()] for the profile identity,
 #'   [unicode_versions()] for the table sets available,
 #'   [puny_encode()] for the lower-level RFC 3492 transform.
@@ -66,6 +73,8 @@
 #' host_normalize(c("Example.COM", "münchen.de", "example.com."))
 #' host_normalize("a_b.com") # NA: STD3 rejects "_"
 #' host_normalize("a_b.com", use_std3 = FALSE) # "a_b.com"
+#' host_normalize("a..b.com") # NA: empty label
+#' host_normalize("a..b.com", verify_dns_length = FALSE) # "a..b.com"
 #' host_normalize("example.com", unicode_version = unicode_versions()[[1L]])
 #' @export
 host_normalize <- function(x, check_hyphens = TRUE, use_std3 = TRUE,
@@ -118,7 +127,7 @@ unicode_versions <- function() {
 .normalization_profile_token <- function(check_hyphens, use_std3,
                                          verify_dns_length, unicode_version,
                                          default_version) {
-  base <- "uts46-nontransitional-std3-v2"
+  base <- "uts46-nontransitional-std3-v3"
   deviations <- c(
     if (!check_hyphens) "no-check-hyphens",
     if (!use_std3) "no-std3",

@@ -2,11 +2,24 @@
 
 ## Breaking changes
 
+* **The normalization profile token is now `uts46-nontransitional-std3-v3`**
+  (was `-v2`), because `host_normalize(verify_dns_length = FALSE)` now keeps
+  empty labels (below). Contract sections 3 and 8 increment `-vN` for any
+  accept/reject change to the section 4 algorithm, and the relaxed tokens
+  share the base, so `...-v2+no-verify-dns-length` would otherwise name two
+  different normalizations (ADR-018). Results with the default flags do not
+  change, but every token does, including the default one: a key that
+  stores the token misses once and must be rebuilt. `pslr` compares the token
+  and rebuilds its index on a mismatch, so it needs a compatibility review
+  before raising its accepted punycoder version (`PUNY-fffgkhoj`).
+
 * punycoder now requires R >= 4.1.0, up from 3.5.0 (`SEOR-wxelnnmt`).
 
 ## Bug fixes
 
 * punycoder installs again with libidn2 older than 2.3.5 (Ubuntu 20.04 and 22.04, Debian 12), using its in-tree backend (`SEOR-wxelnnmt`).
+
+* `host_normalize(verify_dns_length = FALSE)` now keeps empty labels instead of returning `NA` (`PUNY-fffgkhoj`). UTS #46 section 4.2 (ToASCII) step 4 checks label and domain length, and so rejects an empty label, only when `VerifyDnsLength` is true; with it false, `"a..b.example"`, `".bücher.example"`, `"a..bücher.example"` and `"bücher.example.."` convert to `"a..b.example"`, `".xn--bcher-kva.example"`, `"a..xn--bcher-kva.example"` and `"xn--bcher-kva.example.."`, as Node's `url.domainToASCII()` does. Before, only a single trailing root dot survived. `""` and `"."` now return `""` and `"."`, the `toAsciiN` values IdnaTestV2 gives for them, whose only errors are the `VerifyDnsLength` ones (A4_1, A4_2). Every IdnaTestV2 row whose only errors are A4_1 or A4_2 now converts. With `verify_dns_length = TRUE` (the default) nothing changes: across both vendored corpora and every `check_hyphens` / `use_std3` setting the results are identical, and relaxed results only gain values, never lose or change one (per corpus, 59 more inputs convert with `verify_dns_length = FALSE`, 75 when `check_hyphens = FALSE` too). `rurl`'s reverse-dependency test needs a `rurl` release first, so this version must not go to CRAN before that release.
 
 ## Documentation
 

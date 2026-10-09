@@ -147,6 +147,94 @@ test_that("terminal-dot handling matches the contract", {
   expect_identical(host_normalize("example.com.."), NA_character_)
 })
 
+test_that("verify_dns_length = TRUE keeps rejecting empty labels", {
+  # UTS #46 section 4.2 step 4 rejects an empty label (A4_2) and an empty domain
+  # (A4_1) when VerifyDnsLength is on. That holds whatever the other two flags
+  # say: leading, inner, doubled-trailing and bare empty labels stay NA. U+3002
+  # IDEOGRAPHIC FULL STOP maps to U+002E, so it makes empty labels too. The b +
+  # u-umlaut hosts are "buecher" spelled with U+00FC.
+  empty_label_hosts <- c(
+    "a..b.example", ".bücher.example", "a..bücher.example",
+    "bücher.example..", ".", "", "。", "a。。b"
+  )
+  for (hyphens in c(TRUE, FALSE)) {
+    for (std3 in c(TRUE, FALSE)) {
+      expect_identical(
+        host_normalize(empty_label_hosts, check_hyphens = hyphens,
+                       use_std3 = std3, verify_dns_length = TRUE),
+        rep(NA_character_, length(empty_label_hosts)),
+        info = paste("check_hyphens", hyphens, "use_std3", std3)
+      )
+    }
+  }
+
+  # The single trailing root dot is the one empty label every profile keeps
+  # (ADR-010), relaxed or not.
+  expect_identical(
+    host_normalize("bücher.example."), "xn--bcher-kva.example."
+  )
+  expect_identical(
+    host_normalize("bücher.example.", check_hyphens = FALSE,
+                   use_std3 = FALSE, verify_dns_length = FALSE),
+    "xn--bcher-kva.example."
+  )
+
+  # "xn--" is an A-label with an empty payload, not an empty label: it fails
+  # Processing (P4) and stays NA under every profile.
+  expect_identical(
+    host_normalize(c("xn--", "a.xn--.b"), check_hyphens = FALSE,
+                   use_std3 = FALSE, verify_dns_length = FALSE),
+    c(NA_character_, NA_character_)
+  )
+})
+
+test_that("verify_dns_length = FALSE keeps empty labels (UTS #46 4.2 step 4)", {
+  # ToASCII checks for empty labels only when VerifyDnsLength is true, so with
+  # it off a leading, inner, trailing or repeated empty label converts and is
+  # kept. Every expected value below matches Node 26's url.domainToASCII().
+  hosts <- c(
+    "a..b.example", ".bücher.example", "a..bücher.example",
+    "bücher.example..", "bücher.example.", "...a..", "。a"
+  )
+  expected <- c(
+    "a..b.example", ".xn--bcher-kva.example", "a..xn--bcher-kva.example",
+    "xn--bcher-kva.example..", "xn--bcher-kva.example.", "...a..", ".a"
+  )
+  expect_identical(
+    host_normalize(hosts, check_hyphens = FALSE, use_std3 = FALSE,
+                   verify_dns_length = FALSE),
+    expected
+  )
+  # Relaxing VerifyDnsLength alone is enough; the other two flags are unrelated.
+  expect_identical(host_normalize(hosts, verify_dns_length = FALSE), expected)
+
+  # "" and "." are the empty domain and a domain of two empty labels. The
+  # IdnaTestV2 rows for them carry only [A4_1, A4_2], and their toAsciiN is ""
+  # and "." -- so they convert to themselves rather than to NA.
+  expect_identical(
+    host_normalize(c("", ".", "。"), verify_dns_length = FALSE),
+    c("", ".", ".")
+  )
+  expect_identical(
+    host_normalize(c("", "."), check_hyphens = FALSE, use_std3 = FALSE,
+                   verify_dns_length = FALSE),
+    c("", ".")
+  )
+
+  # The other checks still apply to the non-empty labels around them.
+  expect_identical(
+    host_normalize("a..b_c", verify_dns_length = FALSE), NA_character_
+  )
+  expect_identical(
+    host_normalize("a..-b", verify_dns_length = FALSE), NA_character_
+  )
+  # An empty label in a Bidi domain is not itself checked (UTS #46 section 4.1
+  # applies its criteria to non-empty labels); U+05D0 is HEBREW LETTER ALEF.
+  expect_identical(
+    host_normalize("א..com", verify_dns_length = FALSE), "xn--4db..com"
+  )
+})
+
 test_that("host_normalize is vectorized and preserves names", {
   x <- c(a = "Example.COM", b = NA, c = "a_b.com")
   out <- host_normalize(x)
@@ -217,7 +305,7 @@ test_that("normalization_profile_info reports the ratified profile identity", {
     "check_hyphens", "check_bidi", "check_joiners", "verify_dns_length",
     "backend"
   ))
-  expect_identical(info$profile, "uts46-nontransitional-std3-v2")
+  expect_identical(info$profile, "uts46-nontransitional-std3-v3")
   # Hardcoded on purpose: the pin is profile identity, so moving it must be a
   # deliberate edit here and in dev/normalization-contract.md, never something a
   # newly compiled-in table set can do on its own (ADR-016, ADR-017).
@@ -254,28 +342,28 @@ test_that("profile token is stable for defaults, distinct per flag set", {
   # default-relative, so leaving it at -v1 would have let one string denote two
   # different normalizations across that release.
   expect_identical(
-    normalization_profile_info()$profile, "uts46-nontransitional-std3-v2"
+    normalization_profile_info()$profile, "uts46-nontransitional-std3-v3"
   )
 
   # Any deviation appends a deterministic, fixed-order tag.
   expect_identical(
     normalization_profile_info(check_hyphens = FALSE)$profile,
-    "uts46-nontransitional-std3-v2+no-check-hyphens"
+    "uts46-nontransitional-std3-v3+no-check-hyphens"
   )
   expect_identical(
     normalization_profile_info(use_std3 = FALSE)$profile,
-    "uts46-nontransitional-std3-v2+no-std3"
+    "uts46-nontransitional-std3-v3+no-std3"
   )
   expect_identical(
     normalization_profile_info(verify_dns_length = FALSE)$profile,
-    "uts46-nontransitional-std3-v2+no-verify-dns-length"
+    "uts46-nontransitional-std3-v3+no-verify-dns-length"
   )
   expect_identical(
     normalization_profile_info(
       check_hyphens = FALSE, use_std3 = FALSE, verify_dns_length = FALSE
     )$profile,
     paste0(
-      "uts46-nontransitional-std3-v2",
+      "uts46-nontransitional-std3-v3",
       "+no-check-hyphens+no-std3+no-verify-dns-length"
     )
   )

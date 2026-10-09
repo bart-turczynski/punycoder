@@ -38,7 +38,8 @@ punycoder exposes one documented function that converts a DNS hostname to its
 canonical comparison form: Unicode NFC normalization, case normalization,
 UTS-46 label mapping and validation, and conversion to lowercase ASCII
 A-labels, while preserving whether the input carried exactly one terminal root
-dot.
+dot. With `verify_dns_length = FALSE` empty labels are kept as they are, so
+every dot is preserved (section 4).
 
 In scope:
 
@@ -86,14 +87,15 @@ host_normalize(x, check_hyphens = TRUE, use_std3 = TRUE, verify_dns_length = TRU
   `NA_character_` (missing, not invalid).
 - `check_hyphens`, `use_std3`, `verify_dns_length`: logical scalars, the three
   UTS #46 processing flags exposed as knobs. Each defaults to `TRUE` (the full
-  `uts46-nontransitional-std3-v2` profile); each may be relaxed independently.
+  `uts46-nontransitional-std3-v3` profile); each may be relaxed independently.
   Behavior must **not** read the process-wide `punycoder.strict` option
   (PRD §4). `CheckBidi` and `CheckJoiners` always apply and are **not** knobs.
   These are UTS #46 parameters, not a browser mode: full WHATWG host policy
   (where `beStrict = false` flips exactly these three) lives upstack in `rurl`.
 - Returns: character vector, `length(x)`, names preserved. Each element is the
   canonical lowercase ASCII A-label host, or `NA_character_` when the input is
-  invalid under the profile. The function never aborts on invalid *data*; it
+  invalid under the profile. With `verify_dns_length = FALSE` the host may hold
+  empty labels, and may be `""` or `"."` (section 4). The function never aborts on invalid *data*; it
   aborts only on programming errors (wrong type, non-scalar flag).
 
 Returning `NA` for invalid input — rather than throwing under `strict = TRUE`,
@@ -116,7 +118,7 @@ The profile is **UTS-46** with these parameters, fixed for the current revision:
 | `CheckJoiners` | `true` |
 | `VerifyDnsLength` | `true` (label 1–63 octets; total ≤ 253, excluding the root dot) |
 
-`normalization_profile = "uts46-nontransitional-std3-v2"`. The `-vN` suffix is a
+`normalization_profile = "uts46-nontransitional-std3-v3"`. The `-vN` suffix is a
 profile revision: any change to the parameters above, to the accept/reject or
 output of the algorithm in section 4, **or to the pinned Unicode version**,
 increments it.
@@ -133,16 +135,22 @@ because the bare token is default-relative: without the bump the same string
 would denote one Unicode version before the release and another after, while
 the outgoing version simultaneously starts carrying a `+unicode-<version>` tag
 it did not have. Incrementing makes a stale key miss loudly rather than collide
-silently. `-v1` denoted the pin at 16.0.0; `-v2` denotes it at 17.0.0.
+silently. `-v1` denoted the pin at 16.0.0; `-v2` denoted it at 17.0.0; `-v3`
+denotes the same pin with empty labels kept under `verify_dns_length = FALSE`
+(PUNY-fffgkhoj). That last bump is the same rule applied to a relaxed path: an
+accept/reject change to section 4 under any flag combination increments `-vN`,
+because the relaxed tokens are built on the same base (ADR-018).
 
 ## 4. Algorithm (normative, per element)
 
 For each non-`NA` element of `x`:
 
 1. **Reject non-UTF-8 / ill-formed input** → `NA`.
-2. **Terminal-dot capture.** If the string ends with exactly one `.`, record
-   "had root dot" and strip that single dot. A string that is only `"."`, ends
-   with two or more dots, or is empty after this step is invalid → `NA`.
+2. **Terminal-dot capture** (`VerifyDnsLength` only). If the string ends with
+   exactly one `.`, record "had root dot" and strip that single dot. A string
+   that is only `"."`, ends with two or more dots, or is empty after this step
+   is invalid → `NA`. With `verify_dns_length = FALSE` this step does nothing:
+   a trailing dot is an empty final label like any other (below).
 3. **UTS-46 processing** at the pinned Unicode version, with the section 3
    parameters:
    a. **Map** each code point (case fold, map, or mark disallowed) via the
@@ -153,17 +161,30 @@ For each non-`NA` element of `x`:
       and verify it is valid and re-encodes to the identical A-label (RFC 5891
       §5.4 canonical form); a non-canonical A-label → `NA`. Validate every label
       against the profile (NFC form, `CheckHyphens`, `CheckBidi`,
-      `CheckJoiners`, no empty labels, STD3 for ASCII).
+      `CheckJoiners`, STD3 for ASCII). An empty label passes this step and
+      encodes to itself; an `xn--` label with an empty payload does not (it is
+      a Processing error, `NA` under every flag).
 4. **Encode** every non-ASCII label back to its `xn--` A-label via Punycode
    (RFC 3492). ASCII labels are emitted lowercased.
-5. **Length verification** (`VerifyDnsLength`): each A-label 1–63 octets; total
-   joined length ≤ 253 octets. Violation → `NA`.
+5. **Length verification** (`VerifyDnsLength`, UTS #46 §4.2 step 4): each
+   A-label 1–63 octets, so an empty label is rejected here; total joined length
+   ≤ 253 octets. Violation → `NA`. With `verify_dns_length = FALSE` this step is
+   skipped.
 6. **Reassemble** labels with `.`; if "had root dot" was recorded, append one
    `.`. The result is all-lowercase ASCII.
 
-Empty labels (from leading dots or consecutive dots) are invalid at step 3c →
-`NA`. This makes leading-dot, consecutive-dot, and multi-terminal-dot inputs
-invalid, matching the caller's input contract.
+Under the default `verify_dns_length = TRUE`, empty labels (from leading dots
+or consecutive dots) are invalid at step 5 → `NA`, and step 2 rejects `"."`,
+`""` and multi-terminal dots. This makes leading-dot, consecutive-dot, and
+multi-terminal-dot inputs invalid, matching the caller's input contract.
+
+Under `verify_dns_length = FALSE` UTS #46 §4.2 step 4 applies neither check, so
+empty labels are kept wherever they sit: `"a..b"` → `"a..b"`, `".bücher.example"`
+→ `".xn--bcher-kva.example"`, `"x.."` → `"x.."`. The empty string and `"."`
+convert to themselves, as do inputs that map to nothing (`"\u00AD"` → `""`). The
+IdnaTestV2 rows for these carry only the `VerifyDnsLength` errors `A4_1` /
+`A4_2`. Relaxing the flag therefore only turns rejections into acceptances
+(section 8, monotone rule).
 
 ## 5. Worked examples (contract test seeds)
 
@@ -222,7 +243,7 @@ Returns a one-row base `data.frame` (stable column names and types):
 
 | Column | Type | Meaning |
 |---|---|---|
-| `profile` | character | `"uts46-nontransitional-std3-v2"` |
+| `profile` | character | `"uts46-nontransitional-std3-v3"` |
 | `unicode_version` | character | the data version this call used; the pinned default is `"17.0.0"` |
 | `idna` | character | `"uts46"` |
 | `transitional` | logical | `FALSE` |

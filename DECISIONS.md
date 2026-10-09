@@ -222,9 +222,15 @@ Unicode version), where it accounts for every deviation and no false rejection
 (57 rows at 16.0.0, 59 at 17.0.0 — the count is a property of the fixture, so it
 is pinned per version).
 
-**Consequences.** Leading dots, consecutive dots, and multi-terminal dots remain
-invalid (empty labels → `NA`). See `NEWS.md` (1.2.0 Internal) and
-`dev/normalization-contract.md` §4.
+**Consequences.** Under `verify_dns_length = TRUE` (the default), leading dots,
+consecutive dots, and multi-terminal dots remain invalid (empty labels → `NA`).
+See `NEWS.md` (1.2.0 Internal) and `dev/normalization-contract.md` §4.
+
+**Amendment (PUNY-fffgkhoj).** The capture and the empty-label rejection are
+`VerifyDnsLength` checks (UTS #46 §4.2 step 4), so they apply only under
+`verify_dns_length = TRUE`. With the flag `FALSE` every empty label is kept,
+the root label included: `"a..b"`, `".a"`, `"a.."`, `"."` and `""` convert to
+themselves (contract §4).
 
 ---
 
@@ -710,3 +716,31 @@ see their token change from `uts46-nontransitional-std3-v1` to
 `uts46-nontransitional-std3-v2+unicode-16.0.0` — both halves move, which is the
 intended loud miss. Anyone treating the bare token as a durable constant must
 re-key once; that is the deprecation the `-vN` digit exists to signal.
+
+---
+
+## ADR-018 — A relaxed-path accept/reject change bumps `-vN` too
+
+**Status:** Accepted (owner, 2026-10-09)
+
+**Context.** PUNY-fffgkhoj made `host_normalize(verify_dns_length = FALSE)`
+keep empty labels, as UTS #46 §4.2 step 4 requires. The default path is
+byte-identical; only relaxed calls gain values (59 rows per vendored corpus,
+75 with `check_hyphens = FALSE` too). Contract §3 increments `-vN` for "any
+change … to the accept/reject or output of the algorithm in section 4", and
+§8 bullet 1 says the same. Against a bump: ADR-016 ties `-vN` to the profile
+(the §3 parameters, i.e. the full path), the §8 monotone clause is the one
+written for relaxed flags and still holds, and a bump re-keys every
+default-path consumer whose results did not change.
+
+**Decision.** Bump `-v2` → `-v3`. The relaxed tokens are built on the same
+base (`uts46-nontransitional-std3-vN+no-verify-dns-length`), and there is no
+mechanism to bump a relaxed token alone, so without the bump
+`...-v2+no-verify-dns-length` would name two different normalizations before
+and after the release: the collision ADR-017 exists to prevent.
+
+**Consequences.** Every token changes, the default one included, although
+default results do not. `pslr` rebuilds its index once on the mismatch and
+gets the §8 compatibility review. `rurl`'s pin test accepts `-v2` or `-v3` for
+punycoder above 1.3.0 (RURL-tsmevksk), so either answer passes its
+reverse-dependency check.

@@ -38,7 +38,7 @@ struct HostNormalizeResult {
 struct NormalizeOptions {
     bool check_hyphens = true;      // V2/V3: "--" in 3rd/4th, leading/trailing
     bool use_std3 = true;           // UseSTD3ASCIIRules: ASCII restricted to LDH
-    bool verify_dns_length = true;  // label 1-63 octets, host <= 253
+    bool verify_dns_length = true;  // label 1-63 octets (none empty), host <= 253
     UnicodeVersion unicode_version = kDefaultUnicodeVersion;
 };
 
@@ -48,7 +48,7 @@ struct NormalizeOptions {
 // catching internal PunycoderError exceptions, so embedders must compile this
 // code with C++ exception handling enabled. The input is a well-formed
 // (possibly empty) UTF-8 std::string. With the default `opts` (all flags true)
-// this is the strict uts46-nontransitional-std3-v2 profile.
+// this is the strict uts46-nontransitional-std3-v3 profile.
 HostNormalizeResult host_normalize_one(const std::string& input,
                                        const NormalizeOptions& opts);
 

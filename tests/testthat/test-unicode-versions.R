@@ -99,17 +99,17 @@ test_that("the profile token distinguishes a non-default table set", {
   # Compiling in a further table set must never move it; only moving the pin
   # itself does, and then by incrementing -vN (ADR-017).
   expect_identical(normalization_profile_info()$profile,
-                   "uts46-nontransitional-std3-v2")
+                   "uts46-nontransitional-std3-v3")
   expect_identical(
     normalization_profile_info(unicode_version = info$default)$profile,
-    "uts46-nontransitional-std3-v2"
+    "uts46-nontransitional-std3-v3"
   )
 
   # Anything else appends a tag, on the same rule as a relaxed flag, so two
   # genuinely different normalizations can never mint identical() tokens.
   alt <- normalization_profile_info(unicode_version = other[[1L]])
   expect_identical(alt$profile,
-                   paste0("uts46-nontransitional-std3-v2+unicode-",
+                   paste0("uts46-nontransitional-std3-v3+unicode-",
                           other[[1L]]))
   expect_identical(alt$unicode_version, other[[1L]])
   expect_false(identical(alt$profile, normalization_profile_info()$profile))
@@ -118,7 +118,7 @@ test_that("the profile token distinguishes a non-default table set", {
   expect_identical(
     normalization_profile_info(use_std3 = FALSE,
                                unicode_version = other[[1L]])$profile,
-    paste0("uts46-nontransitional-std3-v2+no-std3+unicode-", other[[1L]])
+    paste0("uts46-nontransitional-std3-v3+no-std3+unicode-", other[[1L]])
   )
 })
 
