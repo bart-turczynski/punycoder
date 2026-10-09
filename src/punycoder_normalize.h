@@ -38,7 +38,7 @@ struct HostNormalizeResult {
 struct NormalizeOptions {
     bool check_hyphens = true;      // V2/V3: "--" in 3rd/4th, leading/trailing
     bool use_std3 = true;           // UseSTD3ASCIIRules: ASCII restricted to LDH
-    bool verify_dns_length = true;  // label 1-63 octets, host <= 253
+    bool verify_dns_length = true;  // label 1-63 octets (none empty), host <= 253
     UnicodeVersion unicode_version = kDefaultUnicodeVersion;
 };
 

@@ -169,6 +169,65 @@ test_that("verify_dns_length = TRUE never emits an empty label", {
   }
 })
 
+# The converse of the bound above: a row whose every toASCII error is one the
+# relaxed flags govern must convert, to the corpus toAsciiN. For VerifyDnsLength
+# alone that is every A4_1 / A4_2 row -- empty labels anywhere, the empty domain
+# "", "." and over-long labels (UTS #46 section 4.2 step 4). With all three
+# flags off it is checked on the rows that hold an empty label; six U1 rows
+# whose xn-- payload carries non-LDH ASCII ("," or "?") are a separate
+# use_std3 = FALSE gap and stay out of this test.
+.idna_has_empty_label <- function(x) {
+  !nzchar(x) | grepl("^\\.|\\.\\.|\\.$", x)
+}
+
+test_that("rows failing only relaxed checks convert under those flags", {
+  relaxed_sets <- list(
+    verify_dns_length = list(
+      args = list(verify_dns_length = FALSE),
+      codes = .idna_flag_codes$verify_dns_length,
+      empty_only = FALSE
+    ),
+    all_three = list(
+      args = list(check_hyphens = FALSE, use_std3 = FALSE,
+                  verify_dns_length = FALSE),
+      codes = unlist(.idna_flag_codes[
+        c("check_hyphens", "use_std3", "verify_dns_length")
+      ], use.names = FALSE),
+      empty_only = TRUE
+    )
+  )
+  for (version in unicode_versions()) {
+    path <- idna_fixture_path(version)
+    skip_if(!nzchar(path),
+            paste("IdnaTestV2 fixture not installed for", version))
+
+    df <- idna_load_v2(path)
+    expect_gt(nrow(df), 6000L)
+    code_sets <- lapply(df$status, .idna_codes)
+    for (set in names(relaxed_sets)) {
+      spec <- relaxed_sets[[set]]
+      covered <- vapply(
+        code_sets,
+        function(codes) length(codes) > 0L && all(codes %in% spec$codes),
+        logical(1)
+      )
+      if (spec$empty_only) {
+        covered <- covered & .idna_has_empty_label(df$to_ascii)
+      }
+      got <- do.call(
+        host_normalize,
+        c(list(df$source[covered]), spec$args, unicode_version = version)
+      )
+      label <- paste(set, "under Unicode", version)
+      expect_identical(got, df$to_ascii[covered], info = label)
+      # Empty labels other than the root are what this change is about: make
+      # sure the corpus still has them, so the check cannot pass vacuously.
+      inner_empty <- !nzchar(got) | grepl("^\\.|\\.\\.", got)
+      expect_gt(sum(inner_empty), 10L, label = label)
+    }
+  }
+})
+
 # Pins the documented UTS-46-vs-IDNA2008 stance: host_normalize is UTS #46
 # compatibility processing, not IDNA2008 conformance, so it ACCEPTS symbol
 # code points that IDNA2008 / libidn-backed registry checks (e.g. punycode's

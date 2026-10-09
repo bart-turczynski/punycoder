@@ -188,6 +188,53 @@ test_that("verify_dns_length = TRUE keeps rejecting empty labels", {
   )
 })
 
+test_that("verify_dns_length = FALSE keeps empty labels (UTS #46 4.2 step 4)", {
+  # ToASCII checks for empty labels only when VerifyDnsLength is true, so with
+  # it off a leading, inner, trailing or repeated empty label converts and is
+  # kept. Every expected value below matches Node 26's url.domainToASCII().
+  hosts <- c(
+    "a..b.example", ".bücher.example", "a..bücher.example",
+    "bücher.example..", "bücher.example.", "...a..", "。a"
+  )
+  expected <- c(
+    "a..b.example", ".xn--bcher-kva.example", "a..xn--bcher-kva.example",
+    "xn--bcher-kva.example..", "xn--bcher-kva.example.", "...a..", ".a"
+  )
+  expect_identical(
+    host_normalize(hosts, check_hyphens = FALSE, use_std3 = FALSE,
+                   verify_dns_length = FALSE),
+    expected
+  )
+  # Relaxing VerifyDnsLength alone is enough; the other two flags are unrelated.
+  expect_identical(host_normalize(hosts, verify_dns_length = FALSE), expected)
+
+  # "" and "." are the empty domain and a domain of two empty labels. The
+  # IdnaTestV2 rows for them carry only [A4_1, A4_2], and their toAsciiN is ""
+  # and "." -- so they convert to themselves rather than to NA.
+  expect_identical(
+    host_normalize(c("", ".", "。"), verify_dns_length = FALSE),
+    c("", ".", ".")
+  )
+  expect_identical(
+    host_normalize(c("", "."), check_hyphens = FALSE, use_std3 = FALSE,
+                   verify_dns_length = FALSE),
+    c("", ".")
+  )
+
+  # The other checks still apply to the non-empty labels around them.
+  expect_identical(
+    host_normalize("a..b_c", verify_dns_length = FALSE), NA_character_
+  )
+  expect_identical(
+    host_normalize("a..-b", verify_dns_length = FALSE), NA_character_
+  )
+  # An empty label in a Bidi domain is not itself checked (UTS #46 section 4.1
+  # applies its criteria to non-empty labels); U+05D0 is HEBREW LETTER ALEF.
+  expect_identical(
+    host_normalize("א..com", verify_dns_length = FALSE), "xn--4db..com"
+  )
+})
+
 test_that("host_normalize is vectorized and preserves names", {
   x <- c(a = "Example.COM", b = NA, c = "a_b.com")
   out <- host_normalize(x)

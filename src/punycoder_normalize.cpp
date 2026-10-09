@@ -41,10 +41,10 @@ bool has_ace_prefix(const std::vector<uint32_t>& label) {
 }
 
 // Resolve one split label (already mapped + NFC) to its U-label form. Decodes
-// xn-- labels; returns false on an empty label or a Punycode/UTF-8 decode error.
+// xn-- labels; returns false on a Punycode/UTF-8 decode error. An empty label
+// resolves to an empty U-label: whether it is allowed is VerifyDnsLength's call
+// (UTS #46 section 4.2 step 4), made once the labels are encoded.
 bool resolve_label(const std::vector<uint32_t>& piece, LabelWork& work) {
-    if (piece.empty()) return false;
-
     if (!has_ace_prefix(piece)) {
         work.cps = piece;
         work.from_alabel = false;
@@ -235,7 +235,9 @@ struct Normalizer {
     // CheckBidi is whole-domain and is applied separately by the caller.
     static bool validate_label(const std::vector<uint32_t>& label,
                                bool from_alabel, const NormalizeOptions& opts) {
-        if (label.empty()) return false;  // empty label (leading/consecutive dots)
+        // finalize_label passes a plain empty label through before calling this,
+        // so only an xn-- label with an empty payload could arrive empty (P4).
+        if (label.empty()) return false;
 
         // V1: label must be in NFC.
         //
@@ -299,6 +301,15 @@ struct Normalizer {
     // selects whether CheckBidi applies (contract section 3).
     static bool finalize_label(const LabelWork& work, bool bidi_domain,
                                const NormalizeOptions& opts, std::string& out) {
+        // UTS #46 section 4.1 states its validity criteria (CheckBidi included)
+        // for a non-empty label, so an empty label passes them and encodes to
+        // itself; VerifyDnsLength alone decides whether it may stay (step 5 of
+        // run()). "xn--" with an empty payload is not an empty label and is not
+        // let through here; it stays a Processing error (P4).
+        if (!work.from_alabel && work.cps.empty()) {
+            out.clear();
+            return true;
+        }
         if (!validate_label(work.cps, work.from_alabel, opts)) return false;
         if (bidi_domain && !check_bidi(work.cps)) return false;
 
@@ -339,16 +350,24 @@ struct Normalizer {
             return invalid();
         }
 
-        // Step 2: terminal-dot capture. Strip exactly one trailing root dot;
-        // reject "." alone, two-or-more trailing dots, and empty remainder.
+        // Step 2: terminal-dot capture, under VerifyDnsLength only. Strip exactly
+        // one trailing root dot; reject "." alone, two-or-more trailing dots, and
+        // empty remainder. With VerifyDnsLength off every empty label is kept
+        // (UTS #46 section 4.2 step 4), the root label included, so there is
+        // nothing to capture: "x." splits into "x" and an empty label and
+        // reassembles to "x." on its own.
         bool had_root = false;
-        if (!cps.empty() && cps.back() == kFullStop) {
-            if (cps.size() == 1) return invalid();                   // "." only
-            if (cps[cps.size() - 2] == kFullStop) return invalid();  // ">=2 dots"
-            had_root = true;
-            cps.pop_back();
+        if (opts.verify_dns_length) {
+            if (!cps.empty() && cps.back() == kFullStop) {
+                if (cps.size() == 1) return invalid();  // "." only
+                if (cps[cps.size() - 2] == kFullStop) {
+                    return invalid();  // ">=2 dots"
+                }
+                had_root = true;
+                cps.pop_back();
+            }
+            if (cps.empty()) return invalid();
         }
-        if (cps.empty()) return invalid();
 
         // Step 3a: UTS-46 map. Step 3b: NFC.
         std::vector<uint32_t> mapped;
@@ -400,15 +419,16 @@ struct Normalizer {
             out_labels.push_back(std::move(encoded));
         }
 
-        // Step 5: VerifyDnsLength. Each A-label 1-63 octets; total joined (the
+        // Step 5: VerifyDnsLength (UTS #46 section 4.2 step 4). Each A-label 1-63
+        // octets, so an empty label is rejected here (A4_2); total joined (the
         // labels plus the separating dots, excluding the optional root dot) <= 253.
-        // Empty labels are a structural error (rejected in validate_label above)
-        // and stay rejected regardless of the flag; only the length *limits* are
-        // gated by verify_dns_length.
+        // With the flag off none of this applies and empty labels are kept, so
+        // "a..b", ".a", "a.." and "" all convert (IdnaTestV2 rows whose only
+        // errors are A4_1 / A4_2).
         std::size_t total = out_labels.empty() ? 0 : out_labels.size() - 1;
         for (const std::string& l : out_labels) {
-            if (l.empty()) return invalid();
-            if (opts.verify_dns_length && l.size() > kMaxLabelOctets) {
+            if (opts.verify_dns_length &&
+                (l.empty() || l.size() > kMaxLabelOctets)) {
                 return invalid();
             }
             total += l.size();
