@@ -128,7 +128,7 @@ Always in-tree, always backend-independent for accept/reject and output (ADR-003
 1. `host_normalize()` (R) validates the three logical flags and passes the vector
    down; **it never reads `punycoder.strict`** and never aborts on invalid data.
 2. `host_normalize_one` (C++) runs the UTS #46 pipeline per element: terminal-dot
-   capture → map (case fold / map / disallow) → NFC → label split → per-label
+   capture (VerifyDnsLength only) → map (case fold / map / disallow) → NFC → label split → per-label
    validation + A-label canonical check → Punycode-encode non-ASCII labels →
    DNS length verification → reassemble.
 3. Invalid data → `NA` for that element (never throws). Programming errors (wrong

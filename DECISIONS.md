@@ -222,9 +222,15 @@ Unicode version), where it accounts for every deviation and no false rejection
 (57 rows at 16.0.0, 59 at 17.0.0 — the count is a property of the fixture, so it
 is pinned per version).
 
-**Consequences.** Leading dots, consecutive dots, and multi-terminal dots remain
-invalid (empty labels → `NA`). See `NEWS.md` (1.2.0 Internal) and
-`dev/normalization-contract.md` §4.
+**Consequences.** Under `verify_dns_length = TRUE` (the default), leading dots,
+consecutive dots, and multi-terminal dots remain invalid (empty labels → `NA`).
+See `NEWS.md` (1.2.0 Internal) and `dev/normalization-contract.md` §4.
+
+**Amendment (PUNY-fffgkhoj).** The capture and the empty-label rejection are
+`VerifyDnsLength` checks (UTS #46 §4.2 step 4), so they apply only under
+`verify_dns_length = TRUE`. With the flag `FALSE` every empty label is kept,
+the root label included: `"a..b"`, `".a"`, `"a.."`, `"."` and `""` convert to
+themselves (contract §4).
 
 ---
 

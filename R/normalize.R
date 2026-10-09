@@ -62,9 +62,10 @@
 #'   ships, or `NULL` (the default) for the pinned one. See
 #'   [unicode_versions()]. An unshipped version is an error.
 #' @return A character vector the same length as `x`. Each element is the
-#'   canonical lowercase ASCII A-label host (`""` for empty input under
-#'   `verify_dns_length = FALSE`), or `NA_character_` when the input is `NA` or
-#'   invalid under the profile.
+#'   canonical lowercase ASCII A-label host, or `NA_character_` when the input
+#'   is `NA` or invalid under the profile. Under `verify_dns_length = FALSE` the
+#'   host may hold empty labels, and may be `""` (for empty input, or input
+#'   that maps to nothing, such as a soft hyphen) or `"."`.
 #' @seealso [normalization_profile_info()] for the profile identity,
 #'   [unicode_versions()] for the table sets available,
 #'   [puny_encode()] for the lower-level RFC 3492 transform.
