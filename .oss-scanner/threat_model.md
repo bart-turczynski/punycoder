@@ -40,8 +40,8 @@ Most important (native code parsing untrusted bytes):
 - `src/punycoder_normalize.cpp`: the UTS #46 pipeline (`host_normalize_one`):
   terminal-dot capture, mapping, label split, A-label decode and canonical
   re-encode check, CheckBidi, CheckJoiners, DNS length.
-- `src/punycoder_nfc.cpp`: NFC (decomposition, canonical ordering by
-  insertion sort, composition, quick check).
+- `src/punycoder_nfc.cpp`: NFC (decomposition, canonical ordering,
+  composition, quick check).
 - `src/punycoder_domain.cpp`, `src/punycoder_service.cpp`: label split,
   per-label length cap, strict canonical A-label check, `looks_like_url_input`.
 - `src/punycoder_backend.cpp`: the libidn2 adapter (buffer sizing and retry
@@ -97,7 +97,10 @@ Rate by what reaches the caller. Strings are untrusted; flags are trusted.
   that changes the host (an A-label that decodes to a U+002E or other
   separator and is passed through, two backends giving different hosts for
   the same input, a non-canonical A-label accepted as canonical so two
-  spellings of one host compare unequal, non-ASCII bytes in output).
+  spellings of one host compare unequal, non-ASCII bytes in output). Also
+  High: under the relaxed flags, an `xn--` label that decodes to a WHATWG
+  forbidden host code point and is passed through (see "Anything to leave
+  alone").
 - **Medium**: denial of service from small untrusted input: CPU or memory
   superlinear in input length (the codec caps labels at 1024 bytes; check
   what `host_normalize()`'s mapping and NFC passes do with long input or
@@ -111,10 +114,15 @@ Rate by what reaches the caller. Strings are untrusted; flags are trusted.
 
 Documented design choices, not bugs:
 
-- `puny_*` and `validate_domain()` raise an R error (`Rcpp::stop`) on invalid
-  input under `strict = TRUE`, and return `NA` under `strict = FALSE`;
-  `host_normalize()` returns `NA` for invalid input; `is_punycode()` and
-  `is_idn()` return `FALSE` for ill-formed UTF-8 (ADR-005, AGENTS.md).
+- `puny_*` raise an R error (`Rcpp::stop`) on invalid input under
+  `strict = TRUE`, and return `NA` under `strict = FALSE`. `validate_domain()`
+  never raises an error for an invalid domain under either `strict` value:
+  `validate_domain_cpp()` (`src/exports.cpp`) catches every error and returns a
+  `punycoder_validation` result with `valid = FALSE` and the message and code
+  in `errors` / `error_codes`; there `strict` picks the rule set, not the
+  error policy. `host_normalize()` returns `NA` for invalid input;
+  `is_punycode()` and `is_idn()` return `FALSE` for ill-formed UTF-8
+  (ADR-005, AGENTS.md).
 - No homograph, confusable, mixed-script or display-safety checks, no URL
   parsing, no PSL or per-TLD rules (ADR-001, README "Non-goals").
 - UTS #46 compatibility processing, not IDNA2008: labels such as
@@ -123,10 +131,18 @@ Documented design choices, not bugs:
   `verify_dns_length = FALSE` empty labels and over-long hosts are accepted;
   with `use_std3 = FALSE` non-LDH ASCII such as `_` survives. The relaxed flags
   only turn rejections into acceptances; WHATWG forbidden-host-code-point
-  checks belong to the caller.
+  checks on the host as written belong to the caller. One exception is a
+  finding, not a design choice: under the relaxed flags, an `xn--` label that
+  decodes to a WHATWG forbidden host code point (such as `/`, `@` or `:`) and
+  is passed through in `xn--` form hides that code point from the caller's
+  check, which sees only ASCII. Rate it High when it can reach a consumer's
+  host: `rurl` calls `host_normalize()` with all three flags `FALSE`.
 - Non-strict `puny_decode()` decodes non-canonical A-labels (e.g. uppercase
-  payloads) on a best-effort basis; strict mode and `host_normalize()` reject
-  them.
+  payloads) on a best-effort basis; strict `puny_decode()` rejects them.
+  `host_normalize()` case-folds during UTS #46 mapping before it decodes, so
+  `host_normalize("xn--MNCHEN-3ya.de")` gives `"xn--mnchen-3ya.de"`; it
+  rejects only an A-label whose decoded label does not re-encode to the same
+  A-label (e.g. `xn--cafe-yvc`, the A-label of a decomposed form).
 - Windows builds use only the in-tree backend; libidn2 is a Punycode
   accelerator, never the IDNA engine (ADR-003, ADR-008).
 
@@ -141,3 +157,8 @@ the standard and clause (e.g. "UTS #46 section 4.1", "RFC 3492 section 6.2")
 when the fix is a conformance fix. A fix that changes what `host_normalize()`
 accepts or rejects also increments the profile token's `-vN` revision
 (ADR-018, `dev/normalization-contract.md` section 8); say so in the report.
+After editing any file under `src/`, and above all a header such as
+`src/punycoder_core.h` (ADR-009, AGENTS.md), rebuild with
+`R CMD INSTALL --preclean /src` before testing: the build and
+`test_local()`'s `load_all()` leave objects in `/src/src`, and the Makevars
+declare no header dependencies, so a plain reinstall can link stale objects.
