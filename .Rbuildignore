@@ -43,6 +43,7 @@
 ^CONTRIBUTING\.md$
 ^CODE_OF_CONDUCT\.md$
 ^\.pre-commit-config\.yaml$
+^\.oss-scanner$
 ^THIRD_PARTY_NOTICES\.md$
 ^cran-comments\.md$
 ^CRAN-SUBMISSION$
