@@ -20,7 +20,7 @@
 #   * `codemeta` is not part of the merge gate, and its own script line can
 #     never fail, so it isn't a pass/fail check to fold in.
 #   * `citation-version` runs stdlib-only Python on a dedicated
-#     `python:3.13-alpine` image; the `rocker/r-ver` image this script runs
+#     `python:3.14-alpine` image; the `rocker/r-ver` image this script runs
 #     under has no python3 at all (verified directly against the image, not
 #     assumed), so it stayed its own job rather than paying for an apt-get
 #     python3 on every merge forever.
