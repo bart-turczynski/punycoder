@@ -268,7 +268,7 @@ workflow:
 # Two of the five candidates the owner named for folding did NOT qualify and
 # stay their own jobs:
 #
-# `citation-version` runs on `image: python:3.13-alpine`, not this job's
+# `citation-version` runs on `image: python:3.14-alpine`, not this job's
 # `rocker/r-ver` (see `.r` above) -- and rocker/r-ver has no `python3` at all
 # (verified directly: `docker run --rm rocker/r-ver:latest sh -c 'which
 # python3'` -> nothing). Folding it in would mean either installing python3
@@ -360,7 +360,7 @@ gates:
 # pay the runner-pickup tax for about a second of work.
 citation-version:
   stage: lint
-  image: python:3.13-alpine
+  image: python:3.14-alpine
   script:
     - python3 scripts/check-citation.py --self-test
     - python3 scripts/check-citation.py
