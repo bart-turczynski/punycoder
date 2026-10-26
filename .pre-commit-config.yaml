@@ -79,13 +79,15 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-push]
-      # DESCRIPTION's BugReports: keeps the CRAN-incoming-safe /-/issues form
-      # (and man/punycoder-package.Rd mirrors it), while every human-facing
-      # file that names the tracker links /-/work_items (SEOR-ocbtrrnl). The
-      # reasoning is in the script's docstring. Offline, stdlib-only, same
+      # DESCRIPTION's BugReports:, man/punycoder-package.Rd and every tracker
+      # link (codemeta.json, .bestpractices.json, CONTRIBUTING.md, SECURITY.md,
+      # the intro vignette) name /-/work_items, and no human-facing file may
+      # carry a /-/issues link (seor ADR 0011,
+      # https://gitlab.com/bart-turczynski/seor/-/blob/main/design/adr/0011-bugreports-names-work-items.md).
+      # The reasoning is in the script's docstring. Offline, stdlib-only, same
       # shape as check-citation above.
       - id: check-bugreports
-        name: BugReports split (DESCRIPTION vs human-facing links)
+        name: BugReports and tracker links name /-/work_items
         entry: python3 scripts/check-bugreports.py
         language: system
         pass_filenames: false
@@ -123,8 +125,8 @@ repos:
       # inst/CITATION, NEWS, README.md) and fails on a dead one: --as-cran in
       # `verify` reports a dead link only as a NOTE, which the gate lets
       # through. A URL that cannot be reached at all only warns, so a network
-      # blip never rejects a push; zero URLs checked fails; the only exemption
-      # is BugReports' /-/issues URL answering exactly 404 (SEOR-ocbtrrnl).
+      # blip never rejects a push; zero URLs checked fails; nothing is exempt
+      # (seor ADR 0011).
       # The fleet standard's URL check, ported from sitemapr's `urls` stage.
       - id: check-urls
         name: declared URLs resolve

@@ -5,10 +5,10 @@
 # GitLab-only (PUNY-beydmanp): the GitHub account that ran it is suspended, so
 # none of those workflows could execute any more.
 #
-# Job-name map from the workflows they replace, because CONTRIBUTING.md and
+# Job-name map from the workflows they replace, because design/ci.md and
 # `.bestpractices.json` cite job names (as of SEOR-pgammbgo below, `lint`,
 # `readme`, `news-version` no longer exist as separate jobs -- they folded
-# into `gates`, with `spelling` added since. CONTRIBUTING.md has caught up;
+# into `gates`, with `spelling` added since. design/ci.md has caught up;
 # `.bestpractices.json` mirrors the live bestpractices.dev entry and still
 # names the old jobs):
 #
@@ -57,7 +57,7 @@ default:
   # maintainer's Mac, which carry this tag. Naming it makes that dependency
   # explicit: while the Mac sleeps, jobs sit pending and then fail as
   # `stuck_pending_no_matching_runners`, which is infrastructure, not code
-  # (seor CONTRIBUTING.md, "Stuck-pending runbook"; SEOR-hhtzaknn).
+  # (seor design/stuck-pending-runbook.md; SEOR-hhtzaknn).
   tags: [local-docker]
 
 workflow:
@@ -352,9 +352,10 @@ gates:
 # this check's whole reason for a dedicated image is staying offline and
 # stdlib-only.
 #
-# `check-bugreports.py` rides along here rather than getting a job of its own
-# (SEOR-ocbtrrnl): DESCRIPTION's BugReports: keeps the CRAN-incoming-safe
-# /-/issues form while human-facing tracker links name /-/work_items. It is
+# `check-bugreports.py` rides along here rather than getting a job of its own:
+# DESCRIPTION's BugReports:, man/punycoder-package.Rd and every tracker link
+# name /-/work_items (seor ADR 0011,
+# https://gitlab.com/bart-turczynski/seor/-/blob/main/design/adr/0011-bugreports-names-work-items.md). It is
 # stdlib-only, offline and instant, the same shape as check-citation.py, so
 # it belongs in the job that already has a python3; a job of its own would
 # pay the runner-pickup tax for about a second of work.
@@ -406,7 +407,7 @@ check:
 
 # Cross-platform coverage is the one thing leaving GitHub genuinely cost: this
 # project has no macOS or Windows runner any more. What replaces it, per
-# CONTRIBUTING.md's release checklist, is R's own pre-submission services --
+# design/release-deltas.md, is R's own pre-submission services --
 # win-builder (devtools::check_win_devel()) and the macOS builder at
 # https://mac.r-project.org/macbuilder/submit.html -- which are forge-independent
 # and are what CRAN itself mirrors. This job keeps the R-VERSION half of the old
@@ -565,7 +566,7 @@ floor-check:
 # image's prebuilt libR.so, so no flag of ours can avoid it. Do not re-add the
 # matrix entry unless the runner is x86_64. Valgrind now comes from R-hub's
 # own x86_64 runners, `rhub::rc_submit(platforms = "valgrind")`, before every
-# CRAN submission (CONTRIBUTING.md, release checklist). A native arm64
+# CRAN submission (design/release-deltas.md). A native arm64
 # valgrind on rocker/r-ver does work, but that R is not built with valgrind
 # instrumentation and is not CRAN's platform, so a green run there would look
 # stronger than it is.
@@ -586,7 +587,7 @@ floor-check:
 # never running -- on the weekly deep-check schedule, unattended and without
 # `allow_failure`, since nobody is watching a scheduled pipeline the way a
 # human triggering `web` would be. Still available before a release too, per
-# CONTRIBUTING.md: `glab ci run --branch main --variables DEEP_CHECK:1` starts
+# design/ci.md: `glab ci run --branch main --variables DEEP_CHECK:1` starts
 # it, and full-check with it, straight from the terminal (the `api` rule; see
 # the note on full-check).
 sanitizers:

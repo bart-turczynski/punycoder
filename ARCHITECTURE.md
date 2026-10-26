@@ -104,6 +104,12 @@ See ADR-009.
 | `unicode_tables_registry.h` | Resolves the facade column; included only by the two units that instantiate the pipeline. |
 | `init.c`, `RcppExports.cpp` | C entry points / **generated** Rcpp glue. |
 
+### Native Code
+
+- The C++ implementation is split by subsystem under `src/`.
+- Keep backend-specific logic inside the backend adapter layer rather than spreading `#ifdef` checks through domain or URL code.
+- Preserve current R-facing error prefixes when changing internal error handling.
+
 ## Request lifecycles
 
 ### `puny_encode("café.com")` (codec surface)

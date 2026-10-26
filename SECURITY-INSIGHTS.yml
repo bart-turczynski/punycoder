@@ -20,7 +20,7 @@ project:
   documentation:
     quickstart-guide: https://bart-turczynski.gitlab.io/punycoder/
     detailed-guide: https://bart-turczynski.gitlab.io/punycoder/reference/index.html
-    release-process: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/CONTRIBUTING.md
+    release-process: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/design/release-deltas.md
   repositories:
     - name: punycoder
       url: https://gitlab.com/bart-turczynski/punycoder
