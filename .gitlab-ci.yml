@@ -352,9 +352,10 @@ gates:
 # this check's whole reason for a dedicated image is staying offline and
 # stdlib-only.
 #
-# `check-bugreports.py` rides along here rather than getting a job of its own
-# (SEOR-ocbtrrnl): DESCRIPTION's BugReports: keeps the CRAN-incoming-safe
-# /-/issues form while human-facing tracker links name /-/work_items. It is
+# `check-bugreports.py` rides along here rather than getting a job of its own:
+# DESCRIPTION's BugReports:, man/punycoder-package.Rd and every tracker link
+# name /-/work_items (seor ADR 0011,
+# https://gitlab.com/bart-turczynski/seor/-/blob/main/design/adr/0011-bugreports-names-work-items.md). It is
 # stdlib-only, offline and instant, the same shape as check-citation.py, so
 # it belongs in the job that already has a python3; a job of its own would
 # pay the runner-pickup tax for about a second of work.
