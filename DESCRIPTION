@@ -32,7 +32,7 @@ Language: en-US
 Suggests: testthat (>= 3.0.0), knitr, rmarkdown, oysteR, rosv
 VignetteBuilder: knitr
 Roxygen: list(markdown = TRUE)
-Config/roxygen2/version: 8.0.0
+Config/roxygen2/version: 8.1.1
 Config/testthat/edition: 3
 X-schema.org-keywords: punycode, punycode encode, punycode decode, IDNA,
     IDN, internationalized domain names, UTS-46, RFC 3492, Unicode,
