@@ -167,7 +167,7 @@ the prefixes `exports.cpp` adds (e.g. `"Error encoding domain: …"`) are contra
 Changing them requires bumping the tests that assert them.
 
 **Consequences.** Treat error strings as an API surface, not incidental text. See
-`CONTRIBUTING.md` ("Native Code") and AGENTS.md.
+ARCHITECTURE.md ("Native Code") and AGENTS.md.
 
 ---
 
@@ -184,7 +184,7 @@ and see only the `LabelBackend` abstraction.
 
 **Consequences.** Because Windows never defines the flag (`Makevars.win`), Windows
 builds always use the fallback backend — a property that stays localized to one
-file. See `CONTRIBUTING.md` and ARCHITECTURE.md "Backend selection."
+file. See ARCHITECTURE.md "Native Code" and "Backend selection."
 
 ---
 

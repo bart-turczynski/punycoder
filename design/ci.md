@@ -44,7 +44,7 @@ Everything else is opt-in:
 | --- | --- |
 | `full-check` | release tags `v*`; the `deep-check` schedule; an API pipeline on `main` with `DEEP_CHECK=1`; manual from a hand-started pipeline, on any ref |
 | `floor-check` | `R CMD check --as-cran` on R 4.1.3, the declared floor, with dependencies from a dated Posit Package Manager snapshot; same triggers as `full-check` |
-| `sanitizers` | R-hub's clang-ASAN/UBSAN container (no valgrind: see the release checklist): the `deep-check` schedule; an API pipeline on `main` with `DEEP_CHECK=1`; manual on a release tag or a hand-started pipeline |
+| `sanitizers` | R-hub's clang-ASAN/UBSAN container (no valgrind: see [release-deltas.md](release-deltas.md)): the `deep-check` schedule; an API pipeline on `main` with `DEEP_CHECK=1`; manual on a release tag or a hand-started pipeline |
 | `pages` | every push to `main` — builds pkgdown, publishes to GitLab Pages. Pinned to `main`: a hand-started branch pipeline cannot reach it. Strips agent instruction files first, see below |
 | `codemeta` | manual, artifact-only (see below) |
 | `osv-audit`, `security-audit` | a pipeline schedule that sets `SCHEDULE_KIND=dependency-audit`; manual from a hand-started pipeline. Never on a push |

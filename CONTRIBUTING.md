@@ -6,7 +6,10 @@ privately as described in `SECURITY.md`. Send changes as merge requests on
 GitLab; the GitHub repository is a read-only mirror.
 
 New code needs tests, and each user-facing change needs one `NEWS.md` bullet.
-A merge request must pass the verification command below.
+Add or update tests for every user-visible change, keep exported function
+signatures and object shapes stable unless the change is explicitly planned
+as breaking, and prefer small, reviewable patches over broad rewrites without
+coverage. A merge request must pass the verification command below.
 
 Run verification (the pre-push chain: the hygiene hooks, citation and
 BugReports checks, the toolchain check, the URL check, spelling, then the
@@ -23,10 +26,8 @@ uncommitted edits included.
 ## Orientation
 
 Before making changes, skim [ARCHITECTURE.md](ARCHITECTURE.md) (how the package
-is layered and where each responsibility lives) and [DECISIONS.md](DECISIONS.md)
-(the ADR log explaining the load-bearing design choices — scope, normalization
-profile, backend model, error policy, deprecations). Normalization behavior is
-specified normatively in [dev/normalization-contract.md](dev/normalization-contract.md).
+is layered and where each responsibility lives, and the rules for native code).
+It links the ADR log and the normative normalization spec.
 
 Maintainer notes live in `design/`: CI and the project settings it depends on
 in
@@ -35,6 +36,8 @@ the CRAN release deltas in
 [`design/release-deltas.md`](https://gitlab.com/bart-turczynski/punycoder/-/blob/main/design/release-deltas.md),
 the linter set in
 [`design/lint-set.md`](https://gitlab.com/bart-turczynski/punycoder/-/blob/main/design/lint-set.md),
+the issue-first rule for large changes in
+[`design/workflow.md`](https://gitlab.com/bart-turczynski/punycoder/-/blob/main/design/workflow.md),
 local validation and the doc-only gate in
 [`design/validation.md`](https://gitlab.com/bart-turczynski/punycoder/-/blob/main/design/validation.md),
 and dependency and license scanning in
@@ -50,19 +53,6 @@ built and the backend parity tests in `test-backends` run against it.
 ```sh
 Rscript -e 'pak::local_install_deps(dependencies = TRUE)'
 ```
-
-## Workflow
-
-- Open an issue or discussion before large behavioral changes.
-- Add or update tests for every user-visible change.
-- Keep exported function signatures and object shapes stable unless the change is explicitly planned as breaking.
-- Prefer small, reviewable patches over broad rewrites without coverage.
-
-## Native Code
-
-- The C++ implementation is split by subsystem under `src/`.
-- Keep backend-specific logic inside the backend adapter layer rather than spreading `#ifdef` checks through domain or URL code.
-- Preserve current R-facing error prefixes when changing internal error handling.
 
 ## What not to commit
 

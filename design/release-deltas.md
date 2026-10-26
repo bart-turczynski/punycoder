@@ -23,6 +23,12 @@ punycoder's deltas:
   1.2.0's revdep check would have broken it. The predicate-contract change
   (PUNY-cewysjxi) looked similar and was not: neither revdep called
   `is_punycode` or `is_idn`, so no ordering constraint existed.
+- **Step 4: replace the BugReports paragraph in `cran-comments.md`.** The
+  current file records the 1.3.0 submission, which argued that `DESCRIPTION`
+  keeps `/-/issues` on purpose. The next `cran-comments.md` replaces that
+  paragraph with seor ADR 0011's rationale for `/-/work_items` and the
+  expected "which should likely be" NOTE
+  (https://gitlab.com/bart-turczynski/seor/-/blob/main/design/adr/0011-bugreports-names-work-items.md).
 - **Step 5: `full-check` and `sanitizers` must be green on the release
   commit.** Start both with `glab ci run --branch main --variables
   DEEP_CHECK:1` (agent+go), or from **Build > Pipelines > Run pipeline** on

@@ -12,7 +12,7 @@
   "contribution_justification": "Contribution guide at https://gitlab.com/bart-turczynski/punycoder/-/blob/main/CONTRIBUTING.md",
 
   "contribution_requirements_status": "Met",
-  "contribution_requirements_justification": "CONTRIBUTING.md (https://gitlab.com/bart-turczynski/punycoder/-/blob/main/CONTRIBUTING.md) states the requirements for acceptable contributions: tests for every user-visible change, stable exported signatures unless a break is planned, preserved R-facing error prefixes, and small reviewable patches. It names the pre-commit pre-push hook, which runs lintr and R CMD check --as-cran failing on any warning, as what gates a merge.",
+  "contribution_requirements_justification": "CONTRIBUTING.md (https://gitlab.com/bart-turczynski/punycoder/-/blob/main/CONTRIBUTING.md) states the requirements for acceptable contributions: tests for every user-visible change, stable exported signatures and object shapes unless a break is planned, and small reviewable patches. It names the pre-commit pre-push hook, which runs lintr and R CMD check --as-cran failing on any warning, as what gates a merge.",
 
   "license_location_status": "Met",
   "license_location_justification": "LICENSE is at the repository top level: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/LICENSE",

@@ -58,11 +58,11 @@ All declarations live in `src/punycoder_core.h`. Implementations are split by re
 - `punycoder_nfc.cpp` / `.h` — Unicode NFC (canonical decomposition + composition) per UAX #15, used by the normalizer.
 - `unicode_tables_16_0_0.cpp` / `.h`, `unicode_tables_17_0_0.cpp` / `.h` — vendored Unicode data (combining class, decompositions, composition, UTS #46 mapping/status, combining-mark set, Bidi_Class, Joining_Type), one self-contained unit per shipped version, each ending in a `struct Tables` facade. **Generated, never hand-edited** — see the Unicode tables section below.
 - `punycoder_unicode_version.h` / `.cpp` — **leaf**: the `PUNYCODER_UNICODE_VERSIONS(X)` list, `UnicodeVersion`, `kDefaultUnicodeVersion`, string↔enum helpers. Includes no table header. `unicode_tables_registry.h` resolves the facade column and is included only by the two units that instantiate the pipeline.
-- `punycoder_backend.cpp` — Backend selection (`select_label_backend`) and the `libidn2` adapter guarded by `#ifdef PUNYCODER_USE_LIBIDN2`. **All `#ifdef PUNYCODER_USE_LIBIDN2` should stay in this file**; don't sprinkle them through domain code (per CONTRIBUTING.md).
+- `punycoder_backend.cpp` — Backend selection (`select_label_backend`) and the `libidn2` adapter guarded by `#ifdef PUNYCODER_USE_LIBIDN2`. **All `#ifdef PUNYCODER_USE_LIBIDN2` should stay in this file**; don't sprinkle them through domain code (per ARCHITECTURE.md, "Native Code").
 - `punycoder_utf8.cpp` — UTF-8 ↔ codepoint conversion and ASCII helpers.
 - `punycoder_domain.cpp` — `validate_and_parse_domain`, label-level rules (length, hyphens, xn-- detection).
 - `punycoder_service.cpp` — `PunycodeService` facade that wires the chosen backend to the domain layer and applies the `strict` flag.
-- `punycoder_errors.cpp` — `PunycoderError` and the canonical `throw_error(ErrorCode, …)` map. **R-facing error message prefixes are part of the contract** (per CONTRIBUTING.md) — `exports.cpp` adds prefixes like `"Error encoding domain: …"`. Don't change those strings without bumping tests.
+- `punycoder_errors.cpp` — `PunycoderError` and the canonical `throw_error(ErrorCode, …)` map. **R-facing error message prefixes are part of the contract** (per ARCHITECTURE.md, "Native Code") — `exports.cpp` adds prefixes like `"Error encoding domain: …"`. Don't change those strings without bumping tests.
 - `exports.cpp` — Rcpp boundary: NA handling, strict-vs-non-strict error policy (strict → `Rcpp::stop`; non-strict → return `NA_character_`), and the `compare_backends_cpp` / `backend_info_cpp` introspection used by tests.
 
 ### Backend selection
