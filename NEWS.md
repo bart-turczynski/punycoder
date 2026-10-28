@@ -2,7 +2,7 @@
 
 ## Breaking changes
 
-* The normalization profile token is now `uts46-nontransitional-std3-v3` (was `-v2`) because empty labels are now kept (below); default results are unchanged, but a key storing the token must be rebuilt (ADR-018).
+* The normalization profile token is now `uts46-nontransitional-std3-v3` (was `-v2`) because `verify_dns_length = FALSE` now keeps empty labels (below); default results are unchanged, but a key storing the token must be rebuilt (ADR-018).
 
 * punycoder now requires R >= 4.1.0, up from 3.5.0 (`SEOR-wxelnnmt`).
 
@@ -78,6 +78,7 @@ Maintenance release over the 1.2.0 development tag; the public API is unchanged.
 
 ## Minor improvements
 
+* `host_normalize()` is verified against UTS #46 IdnaTestV2 (16.0.0); a trailing root dot is accepted, unlike strict `VerifyDnsLength`.
 * `puny_encode()` and `puny_decode()` reject URL-shaped input with a dedicated `looks_like_url` error pointing at `rurl::get_host()`; URLs were always rejected.
 
 # punycoder 1.1.0
@@ -107,33 +108,4 @@ First CRAN release.
 * Vectorized operations for bulk processing
 * Robust error handling and validation
 * Complete documentation with vignettes
-
-## Package Structure
-
-* CRAN-compliant package structure
-* MIT license
-* Comprehensive test coverage
-* Performance optimizations
-* Cross-platform compatibility (Windows, macOS, Linux)
-
-## Technical Implementation
-
-* C++ backend using Rcpp for performance
-* Placeholder implementation ready for libidn2 integration
-* RFC 3492 compliance framework
-* Extensive input validation
-* Memory-efficient vectorized operations
-
-## Documentation
-
-* Complete function documentation with examples
-* Introductory vignette
-* README with quick start guide
-* Test vectors from RFC 3492 specification
-
-## Future Roadmap
-
-* Integration with GNU libidn2 for production punycode implementation
-* Performance optimizations
-* Additional URL manipulation utilities
-* Integration examples with popular R packages
+* Cross-platform: Windows, macOS and Linux.
