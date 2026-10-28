@@ -102,6 +102,25 @@ repos:
         pass_filenames: false
         files: ^scripts/bestpractices-url\.py$
         stages: [pre-push]
+      # Each NEWS.md bullet is one terse line a package user acts on or
+      # notices, with no housekeeping bullets and no Internal section (seor's
+      # fleet standard, "NEWS.md bullets"). scripts/check-news.py is ported
+      # from seor unchanged. Offline, stdlib-only, same shape as
+      # check-citation above; its self-test runs when the script changes.
+      - id: news-terse
+        name: NEWS.md bullets are one terse line
+        entry: python3 scripts/check-news.py NEWS.md
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+      - id: news-terse-self-test
+        name: check-news self-test
+        entry: python3 scripts/check-news.py --self-test
+        language: system
+        pass_filenames: false
+        files: ^scripts/check-news\.py$
+        stages: [pre-push]
       # Mirrors the CI verify gate: the docs-drift check, lintr, then R CMD
       # check --as-cran, failing on any WARNING. Runs on push (not per commit)
       # since a full check is slow.
