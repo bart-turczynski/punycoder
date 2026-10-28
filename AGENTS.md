@@ -116,6 +116,9 @@ Before any of them runs, `nfc()` **quick-checks** its input (PUNY-wfzldcuo, ADR-
 ## Repo conventions
 
 - Git follows the house `agent-workflow` skill. fp tracks issues, and status changes stay decoupled from git (the `fp` skill's `references/decoupling.md`). The verify command is the pre-push `verify` hook; see `CONTRIBUTING.md`.
+- `NEWS.md` lists only what a package user acts on or notices (behavior, API, dependencies, requirements, installation), each bullet one terse line: one source line, at most 32 words.
+  Where a standard decides the change, cite the clause in a few words ("UTS #46 §4.1"), not the reasoning; at most one issue or MR reference, in parentheses, at the end.
+  No housekeeping bullets (CI, gates, lint, spelling, badges, metadata, agent files) and no `## Internal` section. The `news-terse` pre-push hook (`scripts/check-news.py`) enforces it.
 - `dev/` holds off-CRAN planning and development notes (e.g. `dev/user_story.md`). It's excluded from the package build via `.Rbuildignore`; put any new dev-only docs here rather than at repo root.
 - `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `THIRD_PARTY_NOTICES.md`, `README.Rmd`, `_pkgdown.yml`, and generated artifacts (`*.Rcheck`, `*.tar.gz`, `*coverage.html`, `lib/`, `README.html`) are all `.Rbuildignore`d — never commit a coverage HTML or a built `.tar.gz`.
 
