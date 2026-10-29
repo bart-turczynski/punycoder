@@ -1,7 +1,6 @@
 #include "punycoder_nfc.h"
 
 #include <algorithm>
-#include <utility>
 
 #include "unicode_tables_registry.h"
 
@@ -69,14 +68,19 @@ struct Nfc {
   // combining marks (ccc != 0) by combining class. Starters (ccc == 0) are
   // fixed points that bound the runs.
   //
-  // std::stable_sort, not an insertion sort: a run's length is bounded only by
-  // the input, and an insertion sort is quadratic in it (PUNY-zyycvyhb). Each
-  // class is looked up once and carried with its code point; a run already in
-  // order, the common case, is left untouched without being copied back.
+  // A run's length is bounded only by the input, so one sort cannot serve
+  // both cases (PUNY-zyycvyhb). Real text has runs of one to a few marks, where
+  // an in-place insertion sort over classes already in hand is cheapest; its
+  // cost is bounded by kShortRun^2 per run, so it stays linear in the input.
+  // Longer runs go to a stable counting sort by class: O(run + 256), with one
+  // scratch buffer that the common path never allocates. 32 covers the 30
+  // consecutive non-starters UAX #15's Stream-Safe Text Format allows, and is
+  // small enough that the quadratic bound stays noise.
+  static constexpr size_t kShortRun = 32;
+
   static void canonical_order(std::vector<uint32_t> &v) {
-    typedef std::pair<uint8_t, uint32_t> Mark;  // (ccc, code point)
     const size_t n = v.size();
-    std::vector<Mark> run;
+    uint8_t ccs[kShortRun];  // classes of the current run, while it is short
     size_t i = 0;
     while (i < n) {
       uint8_t cc = T::combining_class(v[i]);
@@ -84,23 +88,57 @@ struct Nfc {
         ++i;
         continue;
       }
+      // One pass finds the run's end and whether it is already in order,
+      // looking each class up once and copying nothing.
       const size_t start = i;
       bool ordered = true;
-      uint8_t last = 0;
-      run.clear();
-      for (; i < n; ++i) {
+      uint8_t last = cc;
+      ccs[0] = cc;
+      for (++i; i < n; ++i) {
         cc = T::combining_class(v[i]);
         if (cc == 0) break;
         if (cc < last) ordered = false;
         last = cc;
-        run.emplace_back(cc, v[i]);
+        if (i - start < kShortRun) ccs[i - start] = cc;
       }
+      const size_t len = i - start;
+      if (i < n) ++i;  // v[i] is a starter: its class is already known
       if (ordered) continue;
-      std::stable_sort(run.begin(), run.end(), [](const Mark &a, const Mark &b) {
-        return a.first < b.first;
-      });
-      for (size_t k = 0; k < run.size(); ++k) v[start + k] = run[k].second;
+      if (len <= kShortRun) {
+        insertion_sort(&v[start], ccs, len);
+      } else {
+        counting_sort(&v[start], len);
+      }
     }
+  }
+
+  // Stable in-place insertion sort of cps[0, len) by the classes in ccs.
+  static void insertion_sort(uint32_t *cps, uint8_t *ccs, size_t len) {
+    for (size_t k = 1; k < len; ++k) {
+      const uint32_t cp = cps[k];
+      const uint8_t cc = ccs[k];
+      size_t j = k;
+      while (j > 0 && ccs[j - 1] > cc) {  // stable: stop at equal class
+        cps[j] = cps[j - 1];
+        ccs[j] = ccs[j - 1];
+        --j;
+      }
+      cps[j] = cp;
+      ccs[j] = cc;
+    }
+  }
+
+  // Stable counting sort of cps[0, len) by combining class: ties keep their
+  // input order because the scatter walks the run front to back.
+  static void counting_sort(uint32_t *cps, size_t len) {
+    size_t offset[257] = {0};
+    for (size_t k = 0; k < len; ++k) ++offset[T::combining_class(cps[k]) + 1];
+    for (size_t c = 1; c < 257; ++c) offset[c] += offset[c - 1];
+    std::vector<uint32_t> sorted(len);
+    for (size_t k = 0; k < len; ++k) {
+      sorted[offset[T::combining_class(cps[k])]++] = cps[k];
+    }
+    std::copy(sorted.begin(), sorted.end(), cps);
   }
 
   static uint32_t compose_pair(uint32_t a, uint32_t b) {

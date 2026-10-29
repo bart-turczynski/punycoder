@@ -109,15 +109,34 @@ test_that("canonical ordering is a stable sort by ccc within each mark run", {
   # with none of these marks, so composition leaves the reordered run alone.
   # ccc: U+0334/U+0335 = 1, U+031B = 216, U+0316/U+0317 = 220,
   #      U+0300/U+0301/U+0302 = 230.
+  #
+  # canonical_order() takes two paths: runs of up to 32 marks are insertion-
+  # sorted, longer ones go to a counting sort. Each property below is pinned on
+  # both sides of that threshold. Long runs exceed 63 octets as an A-label, so
+  # they are checked with verify_dns_length = FALSE.
   expect_ordered <- function(input, expected) {
     host <- function(cps) paste0(intToUtf8(cps), ".com")
-    expect_identical(host_normalize(host(input)), puny_encode(host(expected)))
+    expect_identical(
+      host_normalize(host(input), verify_dns_length = FALSE),
+      puny_encode(host(expected))
+    )
   }
+  ccc <- c(
+    "334" = 1, "335" = 1, "31B" = 216, "316" = 220, "317" = 220,
+    "300" = 230, "301" = 230, "302" = 230
+  )
+  # The rule itself, applied by hand: the marks of each class, in input order,
+  # concatenated in increasing class order.
+  by_class <- function(marks) {
+    cls <- ccc[sprintf("%X", marks)]
+    unlist(lapply(sort(unique(cls)), function(k) marks[cls == k]))
+  }
+  mixed <- c(0x301, 0x316, 0x300, 0x334, 0x317, 0x335, 0x302, 0x31B)
 
   # Mixed classes with ties at three classes; the run starts right after the
   # label's first code point, so marks move all the way to the left boundary.
   expect_ordered(
-    c(0x78, 0x301, 0x316, 0x300, 0x334, 0x317, 0x335, 0x302, 0x31B),
+    c(0x78, mixed),
     c(0x78, 0x334, 0x335, 0x31B, 0x316, 0x317, 0x301, 0x300, 0x302)
   )
 
@@ -127,10 +146,25 @@ test_that("canonical ordering is a stable sort by ccc within each mark run", {
     c(0x78, 0x316, 0x301, 0x31, 0x334, 0x300)
   )
 
-  # A run of one class only: stability alone decides, so it must not change.
+  # Out of order with ties at two classes, so stability decides the order
+  # within each class: short path.
   expect_ordered(
-    c(0x78, 0x302, 0x301, 0x300),
-    c(0x78, 0x302, 0x301, 0x300)
+    c(0x78, 0x302, 0x301, 0x316, 0x300, 0x317),
+    c(0x78, 0x316, 0x317, 0x302, 0x301, 0x300)
+  )
+
+  # The same properties on the long path: 72 marks of mixed classes, eight
+  # ties per position, then 65 marks where one ccc-220 mark at the end
+  # reorders 64 ccc-230 ties that must keep their input order.
+  long_mixed <- rep(mixed, 9)
+  expect_length(long_mixed, 72L)
+  expect_ordered(c(0x78, long_mixed), c(0x78, by_class(long_mixed)))
+
+  long_ties <- c(rep(c(0x302, 0x301, 0x300, 0x301), 16), 0x316)
+  expect_length(long_ties, 65L)
+  expect_ordered(
+    c(0x78, long_ties),
+    c(0x78, 0x316, rep(c(0x302, 0x301, 0x300, 0x301), 16))
   )
 })
 
@@ -138,15 +172,28 @@ test_that("a long combining-mark run is reordered in bounded time", {
   skip_on_cran()
 
   # PUNY-zyycvyhb. Alternating ccc 230 / 220 marks is the worst case for an
-  # insertion sort, which took tens of seconds here even on an optimized build.
-  # The bound is loose enough for an -O0 build (devtools::test) on a loaded
-  # machine, and is a smoke check, not a benchmark (see test-performance.R).
-  marks <- rep(c("́", "̖"), length.out = 2e5)
+  # insertion sort, which took 7.1 s at 2e5 marks on an -O2 build and 31 s
+  # under devtools::test. The bound is loose enough for an -O0 build on a
+  # loaded machine, and is a smoke check, not a benchmark (see
+  # test-performance.R).
+  marks <- rep(c("\u0301", "\u0316"), length.out = 2e5)
   host <- paste0("a", paste(marks, collapse = ""))
 
   elapsed <- system.time(result <- host_normalize(host))[["elapsed"]]
   expect_identical(result, NA_character_) # far past the DNS length limit
   expect_lt(elapsed, 3)
+
+  # And the long path's output: with "x", which composes with neither mark,
+  # 300 alternating marks come out as the 150 ccc-220 marks, then the 150
+  # ccc-230 ones. 300 keeps the label under puny_encode()'s 1024-octet cap.
+  long <- paste0("x", paste(marks[1:300], collapse = ""), ".com")
+  expected <- paste0(
+    "x", strrep("\u0316", 150), strrep("\u0301", 150), ".com"
+  )
+  expect_identical(
+    host_normalize(long, verify_dns_length = FALSE),
+    puny_encode(expected)
+  )
 })
 
 test_that("mixed-case A-label payload normalizes via UTS-46 mapping", {

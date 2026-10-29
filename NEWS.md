@@ -12,7 +12,7 @@
 
 * `host_normalize(verify_dns_length = FALSE)` now keeps empty labels instead of returning `NA`, per UTS #46 §4.2 step 4 and as Node's `url.domainToASCII()` does; the default is unchanged (`PUNY-fffgkhoj`).
 
-* `host_normalize()` now reorders long runs of combining marks in O(n log n) rather than quadratic time, so such input no longer stalls; results are unchanged (`PUNY-zyycvyhb`).
+* `host_normalize()` now reorders long runs of combining marks in linear rather than quadratic time, so such input no longer stalls; results are unchanged (`PUNY-zyycvyhb`).
 
 ## Documentation
 
