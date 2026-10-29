@@ -134,6 +134,21 @@ test_that("canonical ordering is a stable sort by ccc within each mark run", {
   )
 })
 
+test_that("a long combining-mark run is reordered in bounded time", {
+  skip_on_cran()
+
+  # PUNY-zyycvyhb. Alternating ccc 230 / 220 marks is the worst case for an
+  # insertion sort, which took tens of seconds here even on an optimized build.
+  # The bound is loose enough for an -O0 build (devtools::test) on a loaded
+  # machine, and is a smoke check, not a benchmark (see test-performance.R).
+  marks <- rep(c("́", "̖"), length.out = 2e5)
+  host <- paste0("a", paste(marks, collapse = ""))
+
+  elapsed <- system.time(result <- host_normalize(host))[["elapsed"]]
+  expect_identical(result, NA_character_) # far past the DNS length limit
+  expect_lt(elapsed, 3)
+})
+
 test_that("mixed-case A-label payload normalizes via UTS-46 mapping", {
   # dev/normalization-contract.md section 5 lists "xn--MNCHEN-3ya.de" -> NA as
   # a "non-canonical A-label payload" row. That row is inconsistent with the

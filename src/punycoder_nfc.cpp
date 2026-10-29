@@ -1,5 +1,8 @@
 #include "punycoder_nfc.h"
 
+#include <algorithm>
+#include <utility>
+
 #include "unicode_tables_registry.h"
 
 namespace punycoder {
@@ -62,23 +65,41 @@ struct Nfc {
     for (uint32_t i = 0; i < len; ++i) out.push_back(d[i]);
   }
 
-  // Canonical ordering: stable-sort each maximal run of combining marks
-  // (ccc != 0) by combining class. Starters (ccc == 0) are fixed points that
-  // bound the runs.
+  // Canonical ordering (UAX #15 D108/D109): stable-sort each maximal run of
+  // combining marks (ccc != 0) by combining class. Starters (ccc == 0) are
+  // fixed points that bound the runs.
+  //
+  // std::stable_sort, not an insertion sort: a run's length is bounded only by
+  // the input, and an insertion sort is quadratic in it (PUNY-zyycvyhb). Each
+  // class is looked up once and carried with its code point; a run already in
+  // order, the common case, is left untouched without being copied back.
   static void canonical_order(std::vector<uint32_t> &v) {
+    typedef std::pair<uint8_t, uint32_t> Mark;  // (ccc, code point)
     const size_t n = v.size();
-    for (size_t i = 1; i < n; ++i) {
+    std::vector<Mark> run;
+    size_t i = 0;
+    while (i < n) {
       uint8_t cc = T::combining_class(v[i]);
-      if (cc == 0) continue;
-      uint32_t cp = v[i];
-      size_t j = i;
-      while (j > 0) {
-        uint8_t prev = T::combining_class(v[j - 1]);
-        if (prev == 0 || prev <= cc) break;  // stable: stop at equal class
-        v[j] = v[j - 1];
-        --j;
+      if (cc == 0) {
+        ++i;
+        continue;
       }
-      v[j] = cp;
+      const size_t start = i;
+      bool ordered = true;
+      uint8_t last = 0;
+      run.clear();
+      for (; i < n; ++i) {
+        cc = T::combining_class(v[i]);
+        if (cc == 0) break;
+        if (cc < last) ordered = false;
+        last = cc;
+        run.emplace_back(cc, v[i]);
+      }
+      if (ordered) continue;
+      std::stable_sort(run.begin(), run.end(), [](const Mark &a, const Mark &b) {
+        return a.first < b.first;
+      });
+      for (size_t k = 0; k < run.size(); ++k) v[start + k] = run[k].second;
     }
   }
 
