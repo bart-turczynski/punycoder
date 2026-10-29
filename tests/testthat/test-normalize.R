@@ -100,6 +100,40 @@ test_that("the NFC quick check does not skip input that needs normalizing", {
   expect_identical(host_normalize("\u4e2d\u6587.com"), "xn--fiq228c.com")
 })
 
+test_that("canonical ordering is a stable sort by ccc within each mark run", {
+  # UAX #15 D108/D109: within each maximal run of non-starters, reorder by
+  # canonical combining class, keeping equal classes in input order. Expected
+  # code points are derived by hand from those rules and encoded with
+  # puny_encode(), which applies no normalization, so the expectation does not
+  # come from the implementation under test. Base "x" and the digit "1" compose
+  # with none of these marks, so composition leaves the reordered run alone.
+  # ccc: U+0334/U+0335 = 1, U+031B = 216, U+0316/U+0317 = 220,
+  #      U+0300/U+0301/U+0302 = 230.
+  expect_ordered <- function(input, expected) {
+    host <- function(cps) paste0(intToUtf8(cps), ".com")
+    expect_identical(host_normalize(host(input)), puny_encode(host(expected)))
+  }
+
+  # Mixed classes with ties at three classes; the run starts right after the
+  # label's first code point, so marks move all the way to the left boundary.
+  expect_ordered(
+    c(0x78, 0x301, 0x316, 0x300, 0x334, 0x317, 0x335, 0x302, 0x31B),
+    c(0x78, 0x334, 0x335, 0x31B, 0x316, 0x317, 0x301, 0x300, 0x302)
+  )
+
+  # A starter bounds each run: nothing crosses the "1".
+  expect_ordered(
+    c(0x78, 0x301, 0x316, 0x31, 0x300, 0x334),
+    c(0x78, 0x316, 0x301, 0x31, 0x334, 0x300)
+  )
+
+  # A run of one class only: stability alone decides, so it must not change.
+  expect_ordered(
+    c(0x78, 0x302, 0x301, 0x300),
+    c(0x78, 0x302, 0x301, 0x300)
+  )
+})
+
 test_that("mixed-case A-label payload normalizes via UTS-46 mapping", {
   # dev/normalization-contract.md section 5 lists "xn--MNCHEN-3ya.de" -> NA as
   # a "non-canonical A-label payload" row. That row is inconsistent with the
