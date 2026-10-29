@@ -113,9 +113,17 @@ Before any of them runs, `nfc()` **quick-checks** its input (PUNY-wfzldcuo, ADR-
 
 `tests/testthat/` is grouped by concern: `test-encoding`, `test-validators`, `test-unicode`, `test-rfc3492` (golden vectors), `test-backends` (libidn2 vs fallback parity), `test-contracts` (NA/error policy), `test-normalize` (`host_normalize` behavior + profile flags), `test-idna-conformance` (UTS #46 conformance vectors), `test-internals`, `test-lifecycle`, `test-performance`. Add tests under the matching file for any user-visible change (per CONTRIBUTING.md).
 
+## Verification
+
+Gate: local
+Verify: .fleet-ci/gate auto
+
+The merge gate is fleet-ci's local gate, run in the fleet image by the pre-push hook (install it once per clone with `.fleet-ci/pre-push --install`); its settings are `.fleet-ci.yml`. A diff against `main` that the classifier calls docs-only (`design/**/*.md` and the like; `_pkgdown.yml` is excluded here) gets T0, spelling and `pkgdown::check_pkgdown()`; any other gets T1, the cheap gates and one `R CMD check`.
+Branch pushes, merge requests and pushes to `main` create no pipeline. CI runs fleet-ci's template: T2 on the weekly `deep-check` schedule, T3 on a `RELEASE=1` web pipeline and on the `v*` tag (seor ADR 0012).
+
 ## Repo conventions
 
-- Git follows the house `agent-workflow` skill. fp tracks issues, and status changes stay decoupled from git (the `fp` skill's `references/decoupling.md`). The verify command is the pre-push `verify` hook; see `CONTRIBUTING.md`.
+- Git follows the house `agent-workflow` skill. fp tracks issues, and status changes stay decoupled from git (the `fp` skill's `references/decoupling.md`).
 - `NEWS.md` lists only what a package user acts on or notices (behavior, API, dependencies, requirements, installation), each bullet one terse line: one source line, at most 32 words.
   Where a standard decides the change, cite the clause in a few words ("UTS #46 §4.1"), not the reasoning; at most one issue or MR reference, in parentheses, at the end.
   No housekeeping bullets (CI, gates, lint, spelling, badges, metadata, agent files) and no `## Internal` section. The `news-terse` pre-push hook (`scripts/check-news.py`) enforces it.
@@ -136,16 +144,18 @@ It writes `dev/tracker-snapshot.md`, per the `dev/` convention above. Not `docs/
 
 **Refresh it in a session that commits, not on closure.** An earlier rule tied the refresh to closing an issue, and it could not hold (PUNY-lezxwoov): an issue closes only after its merge request lands, often from a session that writes the tracker and never commits, and a commit triggered by a status change is the git side effect the decoupling rule forbids. pslr and raddr never had that trigger. The snapshot is a backstop for a reader who has only the git history, so its trigger is the moment such a copy is taken.
 
-**Refresh it before taking any copy you intend to keep** — a mirror push to the `backup` remote at `~/Projects/_backups/punycoder.git`, or a `git bundle create <path> --all`. Both exist for this repository as of 2026-08-01. A bundle taken without refreshing carries a stale copy of the only tracker reasoning in git, and a snapshot that is never regenerated is worse than none, because it looks current. A plain push to `backup` does not run the verify gate: `scripts/verify-on-push.sh` skips it for a destination that is a directory on this machine.
+**Refresh it before taking any copy you intend to keep** — a mirror push to the `backup` remote at `~/Projects/_backups/punycoder.git`, or a `git bundle create <path> --all`. Both exist for this repository as of 2026-08-01. A bundle taken without refreshing carries a stale copy of the only tracker reasoning in git, and a snapshot that is never regenerated is worse than none, because it looks current. A push to `backup` runs the gate like any other; a tree that already passed hits its pass stamp and is not checked again.
 
 ## A red gate on an untouched tree
 
-Toolchain drift makes the verify gate go red on a tree nobody changed, and it
-looks exactly like a defect in the change being made. `scripts/check-toolchain.R`
-runs ahead of the expensive step and names it in one line: roxygen2's installed
-version against this package's `Config/roxygen2/version`, and any installed
-package built under a newer R than the one running. Both have happened, and both
-cost an afternoon (SEOR-tcytizic).
+The gate runs in the image the fleet-ci pin names, so this machine's R
+library cannot turn it red. A dependency that moved on CRAN can: the gate
+resolves the dependencies afresh on every run. The pre-push
+`check-toolchain` hook (`scripts/check-toolchain.R`) still checks this
+machine, roxygen2 and pandoc against the pins, so that a local
+`devtools::document()` or `build_readme()` writes what the gate accepts
+(SEOR-tcytizic).
 
-If that check passes and the gate is still red on a tree you have not touched,
-say so and keep the evidence rather than assuming your change caused it.
+If the gate is red on a tree you have not touched, say so and keep the
+evidence (`FLEET_GATE_KEEP=<dir>` keeps the container's output) rather than
+assuming your change caused it.
