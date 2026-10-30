@@ -118,7 +118,7 @@ Before any of them runs, `nfc()` **quick-checks** its input (PUNY-wfzldcuo, ADR-
 Gate: local
 Verify: .fleet-ci/gate auto
 
-The merge gate is fleet-ci's local gate, run in the fleet image by the pre-push hook (install it once per clone with `.fleet-ci/pre-push --install`); its settings are `.fleet-ci.yml`. A diff against `main` that the classifier calls docs-only (`design/**/*.md` and the like; `_pkgdown.yml` is excluded here) gets T0, spelling and `pkgdown::check_pkgdown()`; any other gets T1, the cheap gates and one `R CMD check`.
+The merge gate is fleet-ci's local gate, run in the fleet image by the pre-push hook (install it once per clone with `.fleet-ci/pre-push --install`); its settings are `.fleet-ci.yml`. Until it is installed, the warn-only pre-commit hook `fleet-ci-hook-installed` (`scripts/check-fleet-hook.sh`) prints a WARNING on every push, which then ran only the hygiene hooks. A diff against `main` that the classifier calls docs-only (`design/**/*.md` and the like; `_pkgdown.yml` is excluded here) gets T0, spelling and `pkgdown::check_pkgdown()`; any other gets T1, the cheap gates and one `R CMD check`.
 Branch pushes, merge requests and pushes to `main` create no pipeline. CI runs fleet-ci's template: T2 on the weekly `deep-check` schedule, T3 on a `RELEASE=1` web pipeline and on the `v*` tag (seor ADR 0012).
 
 ## Repo conventions
@@ -144,7 +144,9 @@ It writes `dev/tracker-snapshot.md`, per the `dev/` convention above. Not `docs/
 
 **Refresh it in a session that commits, not on closure.** An earlier rule tied the refresh to closing an issue, and it could not hold (PUNY-lezxwoov): an issue closes only after its merge request lands, often from a session that writes the tracker and never commits, and a commit triggered by a status change is the git side effect the decoupling rule forbids. pslr and raddr never had that trigger. The snapshot is a backstop for a reader who has only the git history, so its trigger is the moment such a copy is taken.
 
-**Refresh it before taking any copy you intend to keep** — a mirror push to the `backup` remote at `~/Projects/_backups/punycoder.git`, or a `git bundle create <path> --all`. Both exist for this repository as of 2026-08-01. A bundle taken without refreshing carries a stale copy of the only tracker reasoning in git, and a snapshot that is never regenerated is worse than none, because it looks current. A push to `backup` runs the gate like any other; a tree that already passed hits its pass stamp and is not checked again.
+**Refresh it before taking any copy you intend to keep** — a push to the `backup` remote at `~/Projects/_backups/punycoder.git`, or a `git bundle create <path> --all`. Both exist for this repository as of 2026-08-01. A bundle taken without refreshing carries a stale copy of the only tracker reasoning in git, and a snapshot that is never regenerated is worse than none, because it looks current.
+
+Push only `main` and the tags to `backup` (`git push backup main --tags`), never a mirror of all refs. A push to `backup` runs the gate like any other, and the gate refuses any pushed ref whose commit lacks `.fleet-ci.yml` or the fleet-ci include in `.gitlab-ci.yml`, which is every branch (and any tag `backup` does not already hold) from before the fleet-ci migration; those branches are not mirrored (the bundle still carries them). The gate skips a commit only on a pass stamp keyed on its tree, the tier, the classifier version, the image and, in the full tier, the resolved dependency lock, so a tree that passed earlier is checked again once the image or a resolved dependency has moved.
 
 ## A red gate on an untouched tree
 

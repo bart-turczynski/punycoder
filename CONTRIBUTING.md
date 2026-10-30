@@ -11,17 +11,25 @@ signatures and object shapes stable unless the change is explicitly planned
 as breaking, and prefer small, reviewable patches over broad rewrites without
 coverage. A merge request must pass the verification command below.
 
-Run verification (the pre-push chain: the hygiene hooks, citation and
-BugReports checks, the toolchain check, the URL check, spelling, then the
-docs-drift check, lintr and `R CMD check --as-cran` in the `verify` hook):
+Verification is fleet-ci's local gate, which runs in the fleet Docker image
+(settings in `.fleet-ci.yml`). Install its pre-push hook once per clone, from
+the package root:
 
 ```sh
-pre-commit run --hook-stage pre-push --all-files
+.fleet-ci/pre-push --install
 ```
 
-In the `verify` hook the docs-drift check judges the commit being pushed (`HEAD`
-when run by hand), while lintr and `R CMD check` judge the working tree,
-uncommitted edits included.
+From then on the gate runs on every push, on each pushed commit, followed by
+the pre-commit pre-push hooks. `pre-commit install -f` (or `pre-commit install
+--hook-type pre-push`) replaces that hook and drops the gate; re-run
+`.fleet-ci/pre-push --install` after either. To run the gate by hand on
+`HEAD`:
+
+```sh
+.fleet-ci/gate auto
+```
+
+The gate checks the committed tree, never uncommitted edits.
 
 ## Orientation
 

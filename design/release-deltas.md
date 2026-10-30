@@ -29,11 +29,15 @@ punycoder's deltas:
   paragraph with seor ADR 0011's rationale for `/-/work_items` and the
   expected "which should likely be" NOTE
   (https://gitlab.com/bart-turczynski/seor/-/blob/main/design/adr/0011-bugreports-names-work-items.md).
-- **Step 5: `full-check` and `sanitizers` must be green on the release
-  commit.** Start both with `glab ci run --branch main --variables
-  DEEP_CHECK:1` (agent+go), or from **Build > Pipelines > Run pipeline** on
-  GitLab. The release tag starts `full-check` by itself, but only after the
-  submission. `sanitizers` runs clang-ASAN/UBSAN only.
+- **Step 5: the release checks must be green on the release commit.** Start
+  them from **Build > Pipelines > Run pipeline** on GitLab: ref `main`,
+  variable `RELEASE=1`. That web pipeline runs `t2-check-release`,
+  `t2-check-oldrel`, `t2-check-devel`, `t2-floor`, `t2-sanitizers`,
+  `t2-locale`, `t2-ascran`, `coverage`, `osv-audit`, `security-audit`,
+  `citation-version` and `t3-manual`, without `pages`. An API pipeline
+  (`glab ci run`) creates nothing. The release tag runs the same jobs plus
+  `pages`, but only after the submission. `t2-sanitizers` runs
+  clang-ASAN/UBSAN only.
 - **Step 6: add valgrind on R-hub.** R-hub's valgrind image cannot start any
   R process on this project's arm64 runner (its GCC-built R uses an x87
   instruction Rosetta 2 does not implement; the `sanitizers` job comment has
