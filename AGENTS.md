@@ -118,7 +118,7 @@ Before any of them runs, `nfc()` **quick-checks** its input (PUNY-wfzldcuo, ADR-
 Gate: local
 Verify: .fleet-ci/gate auto
 
-The merge gate is fleet-ci's local gate, run in the fleet image by the pre-push hook (install it once per clone with `.fleet-ci/pre-push --install`); its settings are `.fleet-ci.yml`. Until it is installed, the warn-only pre-commit hook `fleet-ci-hook-installed` (`scripts/check-fleet-hook.sh`) prints a WARNING on every push, which then ran only the hygiene hooks. A diff against `main` that the classifier calls docs-only (`design/**/*.md` and the like; `_pkgdown.yml` is excluded here) gets T0, spelling and `pkgdown::check_pkgdown()`; any other gets T1, the cheap gates and one `R CMD check`.
+The merge gate is fleet-ci's local gate, run in the fleet image by the pre-push hook (install it once per clone with `.fleet-ci/pre-push --install`); its settings are `.fleet-ci.yml`. Until it is installed, the pre-commit hook `fleet-ci-hook-installed` (`scripts/check-fleet-hook.sh`) refuses every push. A diff against `main` that the classifier calls docs-only (`design/**/*.md` and the like; `_pkgdown.yml` is excluded here) gets T0, spelling and `pkgdown::check_pkgdown()`; any other gets T1, the cheap gates and one `R CMD check`.
 Branch pushes, merge requests and pushes to `main` create no pipeline. CI runs fleet-ci's template: T2 on the weekly `deep-check` schedule, T3 on a `RELEASE=1` web pipeline and on the `v*` tag (seor ADR 0012).
 
 ## Repo conventions
