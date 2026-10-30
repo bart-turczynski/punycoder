@@ -17,7 +17,7 @@
 # Blank-line-only differences don't count: pandoc versions disagree about the
 # blank line after `<!-- badges: start -->` (SEOR-kaqtnovh). The test is on the
 # diff's output, not its exit status: git 2.43 exits 1 on a blank-only diff
-# under --ignore-blank-lines.
+# under --ignore-blank-lines. Any exit status above 1 is a git error and fails.
 #
 # The knit is byte-stable only under the pinned pandoc, which the fleet image
 # carries (.fleet-ci/toolchain).
@@ -36,7 +36,14 @@ fi
 R_LIBS="$work/lib${R_LIBS:+:$R_LIBS}" Rscript -e 'rmarkdown::render("README.Rmd", output_options = list(html_preview = FALSE), quiet = TRUE, envir = new.env(parent = globalenv()))'
 rm -f README.html
 
-readme_diff=$(git diff --no-index --ignore-blank-lines -- "$work/README.committed.md" README.md || true)
+# Exit 0 (same) and 1 (differs) are answers; anything else is a git error.
+diff_status=0
+git diff --no-index --ignore-blank-lines -- "$work/README.committed.md" README.md >"$work/readme.diff" || diff_status=$?
+if [ "$diff_status" -gt 1 ]; then
+  echo "ERROR: git diff --no-index failed (exit $diff_status)." >&2
+  exit 1
+fi
+readme_diff=$(cat "$work/readme.diff")
 if [ -n "$readme_diff" ]; then
   printf '%s\n' "$readme_diff"
   echo "ERROR: README.md is out of sync with README.Rmd."
