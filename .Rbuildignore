@@ -71,3 +71,11 @@
 # package source -- one WARNING for a non-portable path and one NOTE for the
 # hidden directory. seor carries the same pair of entries for the same reason.
 ^\.Rlibs$
+# The same for fleet-ci's t2-sanitizers job, which installs the dependencies
+# into $CI_PROJECT_DIR/.fleet-lib and then runs `R CMD build .` there.
+^\.fleet-lib$
+# The fleet-ci local gate: the vendored runner and its settings, per
+# fleet-ci's README, "Adopting the template". Every line here is a regular
+# expression, comments included: no unbalanced brackets.
+^\.fleet-ci$
+^\.fleet-ci\.yml$
