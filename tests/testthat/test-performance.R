@@ -105,13 +105,16 @@ expect_rate_at_least <- function(fn, input, minimum_rate) {
 # is toward passing, which is the right direction for a test that must not flake
 # across machines.
 #
-# `copies` is how many times each host is repeated to make a batch worth
-# timing. 4000 suits hosts of a few hundred characters; a single host that is
-# itself tens of thousands of characters long is already a batch, so pass 1.
+# `copies` and `long_copies` are how many times each host is repeated to make
+# a batch worth timing. 4000 of each suits hosts of a few hundred characters.
+# For a long host that is a batch on its own, repeat the short one so the two
+# inputs hold about the same number of characters: then both clear
+# benchmark_seconds()'s timer floor together, and neither can skip on a fast
+# build while the other measures.
 expect_cost_per_char_stable <- function(fn, short, long, tolerance = 4,
-                                        copies = 4000L) {
+                                        copies = 4000L, long_copies = copies) {
   short_input <- rep(short, copies)
-  long_input <- rep(long, copies)
+  long_input <- rep(long, long_copies)
 
   short_per_char <-
     benchmark_seconds(fn, short_input) / (length(short_input) * nchar(short))
@@ -206,11 +209,45 @@ test_that("an over-long non-ASCII label is rejected in time linear in its length
   expect_identical(nchar(long), 32000L)
 
   expect_identical(host_normalize(long), NA_character_)
-  expect_cost_per_char_stable(host_normalize, short, long, copies = 1L)
 
   # Loose absolute bound, as for the combining-mark run in test-normalize.R:
   # it fails at -O0 against the quadratic encoder and passes with a wide
-  # margin against the bounded one. Not a benchmark.
+  # margin against the bounded one. Not a benchmark. Timed directly, before
+  # the scaling check, so a skip there cannot drop it.
   elapsed <- system.time(host_normalize(long))[["elapsed"]]
   expect_lt(elapsed, 0.5)
+
+  # 16 copies of the 2,000-code-point host against one 32,000-code-point host:
+  # the same number of characters on each side.
+  expect_cost_per_char_stable(
+    host_normalize, short, long, copies = 16L, long_copies = 1L
+  )
+})
+
+test_that("a non-ASCII label over 59 code points is rejected before encoding", {
+  skip_on_cran()
+
+  # PUNY-ttjakmgu. An encoded label is at least 4 + n octets, so a non-ASCII
+  # label of more than 59 code points cannot fit 63 and is rejected without
+  # being encoded. The test above cannot see that bound: its hosts are over
+  # 253 code points, so the host bound rejects them first. Here the long label
+  # is 250 distinct code points, under the host bound, and the short one is
+  # 10, which encodes. Rejecting the long label costs about a quarter of the
+  # short one's per character at -O0; encoding it too costs about four times
+  # as much. So the tolerance is 1, not the helper's 4: the long label must
+  # be cheaper per character than one that is encoded, which holds only if it
+  # is not encoded.
+  hangul <- intToUtf8(0xAC00 + 0:249, multiple = TRUE)
+  short <- paste(hangul[1:10], collapse = "")
+  long <- paste(hangul, collapse = "")
+
+  expect_identical(host_normalize(long), NA_character_)
+  # It is NA for its length alone: with the length check off it encodes.
+  expect_gt(nchar(host_normalize(long, verify_dns_length = FALSE)), 63L)
+
+  # 10,000 short hosts against 400 long ones: 100,000 characters each.
+  expect_cost_per_char_stable(
+    host_normalize, short, long, tolerance = 1,
+    copies = 10000L, long_copies = 400L
+  )
 })

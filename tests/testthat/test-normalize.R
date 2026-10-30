@@ -313,7 +313,17 @@ test_that("verify_dns_length = TRUE agrees with the length check it skips to", {
     vapply(60:66, function(n) strrep("a", n), ""),
     paste0(strrep("a", 62), "\uff41"),
     paste0(strrep("a", 63), "\u00ad"),
-    paste0(strrep("a", 54), "\u00ad\u00fc")
+    paste0(strrep("a", 54), "\u00ad\u00fc"),
+    # Decomposed u + U+0308 composes to one code point under NFC, so these
+    # are 110-120 code points as typed and 55-60 as encoded; 58 encodes to
+    # exactly 63 octets.
+    vapply(55:60, function(n) strrep("u\u0308", n), ""),
+    # U+FB03 maps to "ffi", three code points for one, across 59.
+    vapply(17:21, function(k) paste0(strrep("\ufb03", k), "\u00fc"), ""),
+    # Over 59 and under 253: only the label bound can reject these early.
+    vapply(c(60L, 120L, 250L), function(n) {
+      intToUtf8(0xAC00 + seq_len(n) - 1L)
+    }, "")
   )
   hosts <- c(labels, paste0(labels, ".example"), paste0(labels, ".example."))
 
@@ -327,9 +337,19 @@ test_that("verify_dns_length = TRUE agrees with the length check it skips to", {
       hosts,
       paste(stem, strrep("c", tail_len), sep = "."),
       paste(stem, paste0(strrep("c", tail_len - 10), "\u00fc"), sep = "."),
-      paste(stem, paste0(strrep("c", tail_len), strrep("\u00ad", 8)), sep = ".")
+      paste(stem, paste0(strrep("c", tail_len), strrep("\u00ad", 8)), sep = "."),
+      paste(stem, paste0(strrep("c", tail_len), strrep("\ufb03", 2)), sep = ".")
     )
   }
+  # Decomposed u + U+0308 again, this time across 253: over it as typed and
+  # mapped, under it after NFC, and still valid once encoded.
+  nfc_hosts <- vapply(24:34, function(k) {
+    paste(stem, paste0(strrep("c", k), strrep("u\u0308", 10)), sep = ".")
+  }, "")
+  expect_true(any(
+    nchar(nfc_hosts) > 253L & !is.na(host_normalize(nfc_hosts))
+  ))
+  hosts <- c(hosts, nfc_hosts)
 
   expect_identical(host_normalize(hosts), dns_limited(hosts))
   # The sweep has to straddle both limits to mean anything.
