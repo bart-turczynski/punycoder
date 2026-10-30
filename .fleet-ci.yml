@@ -38,6 +38,11 @@ exclude_tests:
   - path: tests/testthat/test-security.R
     why: queries Sonatype OSS Index with credentials the gate does not have; the security-audit job runs it in T2
 
+# Every skip R CMD check's test run may report; any other fails the gate.
+allowed_skips:
+  - reason: man/ not in tree
+    why: test-spelling-aliases.R reads the source tree's man/, which an installed-package check lacks; R CMD check's codoc covers it there, devtools::test() runs it
+
 # The top-level .md files the pkgdown site publishes; every other one (the
 # agent files among them) is moved out before build_site() (SEOR-wqxhftpv).
 # ARCHITECTURE.md and DECISIONS.md were already live when the keep-list
