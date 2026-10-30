@@ -1,5 +1,20 @@
-# Pre-commit gate, mirroring CI. Install with `pre-commit install` (pre-commit
-# hooks) and `pre-commit install --hook-type pre-push` (the verify hook below).
+# The hygiene hooks, at commit and at push. Install with `pre-commit install`
+# (both hook types, from default_install_hook_types below), then
+# `.fleet-ci/pre-push --install`, which replaces pre-commit's pre-push hook
+# with fleet-ci's: that hook runs the fleet-ci local gate (.fleet-ci/gate,
+# settings in .fleet-ci.yml) on each pushed ref, then this file's pre-push
+# stage. The gate itself, docs drift, lintr, spelling, the URL check and
+# R CMD check, is in .fleet-ci.yml, never here: this file must not run
+# .fleet-ci/gate (fleet-ci README, "The local gate").
+#
+# Over fleet-ci's hook, `pre-commit install` and
+# `pre-commit install --hook-type pre-push` without -f move it to
+# hooks/pre-push.legacy (pre-commit's migration mode), which still runs the
+# gate first. `pre-commit install -f` (both types, from
+# default_install_hook_types) and `pre-commit install -f --hook-type pre-push`
+# delete it and drop the gate; `-f --hook-type pre-commit` leaves it alone.
+# Re-run `.fleet-ci/pre-push --install` after either of the two.
+default_install_hook_types: [pre-commit, pre-push]
 #
 # air (the R formatter) is intentionally NOT wired up here: this package has not
 # adopted air (no air.toml), so enabling it would reformat the whole source tree
@@ -36,8 +51,11 @@ repos:
       # the proof that adding a table set did not perturb the shipped ones, and
       # a fixer-edited file makes that check red for a reason unrelated to the
       # data.
+      #
+      # .fleet-ci/ is fleet-ci's bin/vendor output, which seor's fleet checker
+      # requires byte for byte; re-run bin/vendor rather than editing it.
       - id: end-of-file-fixer
-        exclude: &fixer-excludes '^(inst/testdata/|README\.md$|R/RcppExports\.R$|src/RcppExports\.cpp$|src/unicode_tables_.*\.(h|cpp)$)'
+        exclude: &fixer-excludes '^(\.fleet-ci/|inst/testdata/|README\.md$|R/RcppExports\.R$|src/RcppExports\.cpp$|src/unicode_tables_.*\.(h|cpp)$)'
       - id: trailing-whitespace
         exclude: *fixer-excludes
       - id: check-merge-conflict
@@ -56,8 +74,9 @@ repos:
   # conformance vectors in inst/testdata/, src/unicode_tables_* (generated
   # from the upstream UCD), the tracker snapshot (data-raw/snapshot-tracker.sh
   # overwrites it wholesale) and .bestpractices.json (mirrors the live
-  # bestpractices.dev entry). roxygen2::roxygenise needs no allow-list: the
-  # en-GB_to_en-US dictionary has no entry for it.
+  # bestpractices.dev entry), and .fleet-ci/ (fleet-ci's bin/vendor output).
+  # roxygen2::roxygenise needs no allow-list: the en-GB_to_en-US dictionary
+  # has no entry for it.
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.3
     hooks:
@@ -65,7 +84,7 @@ repos:
         name: codespell (British spellings, en-GB_to_en-US; SEOR-xtmnpmae)
         args: [--builtin, en-GB_to_en-US]
         stages: [pre-commit, pre-push]
-        exclude: '^(man/|inst/testdata/|src/unicode_tables_.*\.(h|cpp)$|dev/tracker-snapshot\.md$|\.bestpractices\.json$)'
+        exclude: '^(\.fleet-ci/|man/|inst/testdata/|src/unicode_tables_.*\.(h|cpp)$|dev/tracker-snapshot\.md$|\.bestpractices\.json$)'
   - repo: local
     hooks:
       # CITATION.cff's version: and .zenodo.json's "version" must name the
@@ -121,18 +140,24 @@ repos:
         pass_filenames: false
         files: ^scripts/check-news\.py$
         stages: [pre-push]
-      # Mirrors the CI verify gate: the docs-drift check, lintr, then R CMD
-      # check --as-cran, failing on any WARNING. Runs on push (not per commit)
-      # since a full check is slow.
-      # Toolchain drift makes the gate red on a tree nobody changed, and it
-      # arrives disguised as a code defect: a roxygen2 skew aborts the docs
-      # guard, and a package built under a newer R than this one surfaces as an
-      # R CMD check WARNING minutes into the expensive step below. This is
-      # quick (one request, for CRAN's package index, which the check for a
-      # dependency older than CRAN's reads: SEOR-hxxxkmws), and it runs ahead
-      # of that step so the machine is
-      # named as the cause in one line rather than found by elimination
-      # (SEOR-tcytizic).
+      # Refuses the push when this clone's pre-push hook is not fleet-ci's,
+      # so the push would run without the gate (SEOR-gksaxuoz). It only
+      # reads the hook file; it never runs .fleet-ci/gate.
+      - id: fleet-ci-hook-installed
+        name: fleet-ci pre-push hook is installed
+        entry: sh scripts/check-fleet-hook.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+        verbose: true
+        stages: [pre-push]
+      # This machine's R toolchain against what the package pins: roxygen2
+      # against Config/roxygen2/version, installed packages built under a newer
+      # R, and the local pandoc against the fleet image's (.fleet-ci/toolchain),
+      # so a local devtools::document() or build_readme() writes what the gate
+      # accepts. The gate itself runs in the fleet image and does not depend
+      # on this machine's library. Quick: one request, for CRAN's package
+      # index (SEOR-hxxxkmws, SEOR-tcytizic).
       - id: check-toolchain
         name: toolchain matches what this package pins
         entry: Rscript scripts/check-toolchain.R
@@ -140,54 +165,3 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-push]
-      # Fetches every URL the package declares (DESCRIPTION, man/,
-      # inst/CITATION, NEWS, README.md) and fails on a dead one: --as-cran in
-      # `verify` reports a dead link only as a NOTE, which the gate lets
-      # through. A URL that cannot be reached at all only warns, so a network
-      # blip never rejects a push; zero URLs checked fails; nothing is exempt
-      # (seor ADR 0011).
-      # The fleet standard's URL check, ported from sitemapr's `urls` stage.
-      - id: check-urls
-        name: declared URLs resolve
-        entry: Rscript scripts/check-urls.R
-        language: system
-        pass_filenames: false
-        always_run: true
-        stages: [pre-push]
-      # R CMD check skips its DESCRIPTION spelling check on a machine with no
-      # English aspell/hunspell dictionary, so a typo first showed up in
-      # win-builder's incoming NOTE. spelling bundles its own hunspell
-      # dictionaries and also reads man/, vignettes, README and NEWS
-      # (SEOR-mtbzfroz). Genuine terms go in inst/WORDLIST.
-      - id: spelling
-        name: spelling (en-US, inst/WORDLIST)
-        entry: Rscript -e
-        args:
-          - 'bad <- spelling::spell_check_package(); if (nrow(bad)) { print(bad); quit(status = 1) }'
-        language: system
-        pass_filenames: false
-        always_run: true
-        stages: [pre-push]
-      # `entry` is scripts/verify-on-push.sh. It first runs
-      # scripts/check-docs-drift.R on a `git archive` export of the commit being
-      # pushed ($PRE_COMMIT_TO_REF, else HEAD), failing when man/, NAMESPACE or DESCRIPTION
-      # differ from what roxygen2 regenerates (SEOR-nwfmerhu), then the lintr +
-      # rcmdcheck command this hook used to spell inline, unchanged, on the
-      # working tree. It skips both when the push DESTINATION is a directory on
-      # this filesystem -- the local archival mirror `backup`, where the gate
-      # verifies nothing because that history already passed on its way to
-      # origin (PUNY-dopcsyjw, ported
-      # from rurl's RURL-qkowfsdt). It reads the URL pre-commit re-exports as
-      # $PRE_COMMIT_REMOTE_URL; anything it cannot positively identify as a
-      # local mirror, origin included, runs the gate. Read the wrapper's header
-      # before changing the predicate -- this is a scoped skip, not a hole.
-      # `always_run: true` stays: the missing predicate was the remote, not the
-      # file set.
-      - id: verify
-        name: verify (mirrors CI)
-        entry: scripts/verify-on-push.sh
-        language: system
-        pass_filenames: false
-        always_run: true
-        stages: [pre-push]
-        verbose: true

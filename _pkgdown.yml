@@ -1,5 +1,5 @@
-# GitLab Pages is the publisher: the `pages` job in .gitlab-ci.yml builds this
-# site on every push to main and leaves it in `public/`. The site lives at the
+# GitLab Pages is the publisher: fleet-ci's `pages` job builds this site from
+# a v* release tag and leaves it in `public/`. The site lives at the
 # GitLab Pages namespace path, the fleet standard (SEOR-hcmtspmv); the
 # project's unique domain is turned off. DESCRIPTION's `URL:` names the same
 # site.

@@ -96,7 +96,7 @@
   "test_invocation_justification": "Tests run via devtools::test() and as part of R CMD check.",
 
   "test_most_status": "Met",
-  "test_most_justification": "covr measures coverage in the `coverage` CI job on every push to main and reports it through GitLab's native coverage reporting; the latest main pipeline (2026-09-24) measured 97.82% line coverage: https://gitlab.com/bart-turczynski/punycoder/-/pipelines",
+  "test_most_justification": "covr measures coverage in the `coverage` CI job, which fails below 95%, on the weekly T2 deep-check pipeline schedule and on every RELEASE=1 pre-submission pipeline, and reports it through GitLab's native coverage reporting; the latest main pipeline (2026-09-24) measured 97.82% line coverage: https://gitlab.com/bart-turczynski/punycoder/-/pipelines",
 
   "test_policy_status": "Met",
   "test_policy_justification": "CONTRIBUTING.md requires tests for every user-visible change: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/CONTRIBUTING.md",
@@ -108,13 +108,13 @@
   "tests_documented_added_justification": "The test-addition policy is documented in CONTRIBUTING.md: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/CONTRIBUTING.md",
 
   "warnings_status": "Met",
-  "warnings_justification": "lintr and R CMD check surface warnings in the pre-push verification chain and in the `lint` and `check` CI jobs on every push to main: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml",
+  "warnings_justification": "lintr and R CMD check surface warnings in the local pre-push gate (T1) before every push once the clone has the hook installed (`.fleet-ci/pre-push --install`), and R CMD check again in the CI check jobs on the weekly T2 deep-check schedule and every RELEASE=1 pipeline: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.fleet-ci.yml",
 
   "warnings_fixed_status": "Met",
-  "warnings_fixed_justification": "Warnings are fixed before merge: the verification chain and the `check` CI job fail on any R CMD check warning, and `lint` fails on any lint.",
+  "warnings_fixed_justification": "Warnings are fixed before merge: the local pre-push gate (T1) fails on any R CMD check warning and on any lint, and the T2 check jobs fail on any R CMD check warning.",
 
   "warnings_strict_status": "Met",
-  "warnings_strict_justification": "The `lint` CI job sets LINTR_ERROR_ON_LINT=true so any lint fails, and `check` runs rcmdcheck with error_on = \"warning\"; the pre-push verification chain applies the same rules to R CMD check --as-cran: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml",
+  "warnings_strict_justification": "The local pre-push gate (T1) fails on any lint and runs R CMD check --as-cran with error_on = \"warning\"; the T2 check jobs fail on any ERROR or WARNING: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.fleet-ci.yml",
 
   "know_secure_design_status": "Met",
   "know_secure_design_justification": "The maintainer applies secure design principles; punycoder defensively handles untrusted Punycode/IDNA input through its C/C++ codec core, enforcing length limits, valid UTF-8, and label-structure rules.",
@@ -162,31 +162,31 @@
   "vulnerabilities_critical_fixed_justification": "No known unfixed critical vulnerabilities.",
 
   "static_analysis_status": "Met",
-  "static_analysis_justification": "lintr (a full-package lint using the goodpractice-aligned linter set in .lintr) and R CMD check run in the pre-push verification chain and in the `lint` and `check` CI jobs on every push to main: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml",
+  "static_analysis_justification": "lintr (a full-package lint using the goodpractice-aligned linter set in .lintr) and R CMD check run in the local pre-push gate (T1) before every push once the clone has the hook installed (`.fleet-ci/pre-push --install`), and R CMD check again in the CI check jobs on the weekly T2 deep-check schedule and every RELEASE=1 pipeline: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.fleet-ci.yml",
 
   "static_analysis_common_vulnerabilities_status": "Unmet",
   "static_analysis_common_vulnerabilities_justification": "lintr and R CMD check find defects but are not vulnerability scanners, and no vulnerability-focused analyzer (such as a C/C++ SAST tool) is run over the codec core in src/. The osv-audit job checks dependencies against OSV weekly, but that is SCA, not static analysis of punycoder's own code: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml",
 
   "static_analysis_fixed_status": "Met",
-  "static_analysis_fixed_justification": "The verification chain fails on any lintr finding or R CMD check warning, so static-analysis findings are fixed before merge.",
+  "static_analysis_fixed_justification": "The local pre-push gate (T1) fails on any lintr finding or R CMD check warning, so static-analysis findings are fixed before merge.",
 
   "static_analysis_often_status": "Met",
-  "static_analysis_often_justification": "lintr runs on every push: the verification chain is a pre-push hook, and the `lint` CI job runs again on every push to main: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml",
+  "static_analysis_often_justification": "lintr runs on every push that is not docs-only, as a gate of the local pre-push gate (T1): https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.fleet-ci.yml",
 
   "dynamic_analysis_status": "Met",
-  "dynamic_analysis_justification": "The release deltas in design/release-deltas.md (https://gitlab.com/bart-turczynski/punycoder/-/blob/main/design/release-deltas.md) requires two dynamic analyses of the package's C++ before every CRAN submission: the `sanitizers` CI job, which runs R CMD check, test suite included, inside R-hub's clang-ASAN/UBSAN container (https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml), and valgrind on R-hub's x86_64 runners through rhub::rc_submit(platforms = \"valgrind\"). Both ran on 1.3.0 before it was submitted (https://gitlab.com/bart-turczynski/punycoder/-/blob/main/cran-comments.md). A run of the job in its current configuration: https://gitlab.com/bart-turczynski/punycoder/-/jobs/16831530748",
+  "dynamic_analysis_justification": "The release deltas in design/release-deltas.md (https://gitlab.com/bart-turczynski/punycoder/-/blob/main/design/release-deltas.md) requires two dynamic analyses of the package's C++ before every CRAN submission: the `t2-sanitizers` CI job (formerly `sanitizers`), which runs R CMD check, test suite included, inside R-hub's clang-ASAN/UBSAN container (https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml), and valgrind on R-hub's x86_64 runners through rhub::rc_submit(platforms = \"valgrind\"). Both ran on 1.3.0 before it was submitted (https://gitlab.com/bart-turczynski/punycoder/-/blob/main/cran-comments.md). A run of the former `sanitizers` job: https://gitlab.com/bart-turczynski/punycoder/-/jobs/16831530748",
 
   "dynamic_analysis_unsafe_status": "Met",
-  "dynamic_analysis_unsafe_justification": "punycoder ships C++ in src/ (the RFC 3492 codec and the UTS #46 normalizer). clang-ASAN/UBSAN runs over it routinely: the `sanitizers` CI job runs R CMD check, test suite included, inside R-hub's clang-ASAN/UBSAN container on a weekly pipeline schedule and on every pre-submission DEEP_CHECK=1 pipeline (https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml; the schedule is listed in https://gitlab.com/bart-turczynski/punycoder/-/blob/main/design/ci.md). valgrind runs on R-hub's x86_64 runners before every submission. Latest sanitizers run: https://gitlab.com/bart-turczynski/punycoder/-/jobs/16831530748",
+  "dynamic_analysis_unsafe_justification": "punycoder ships C++ in src/ (the RFC 3492 codec and the UTS #46 normalizer). clang-ASAN/UBSAN runs over it routinely: the `t2-sanitizers` CI job runs R CMD check, test suite included, inside R-hub's clang-ASAN/UBSAN container on the weekly T2 deep-check pipeline schedule and on every pre-submission RELEASE=1 web pipeline (https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml; the schedule is listed in https://gitlab.com/bart-turczynski/punycoder/-/blob/main/design/ci.md). valgrind runs on R-hub's x86_64 runners before every submission. A run of the former `sanitizers` job: https://gitlab.com/bart-turczynski/punycoder/-/jobs/16831530748",
 
   "dynamic_analysis_enable_assertions_status": "Met",
-  "dynamic_analysis_enable_assertions_justification": "The testthat suite's expectations (expect_*) are assertions checked at runtime on every run of the verification chain and the `check` CI job: https://gitlab.com/bart-turczynski/punycoder/-/tree/main/tests/testthat",
+  "dynamic_analysis_enable_assertions_justification": "The testthat suite's expectations (expect_*) are assertions checked at runtime on every run of the local pre-push gate (T1) and the T2 check jobs: https://gitlab.com/bart-turczynski/punycoder/-/tree/main/tests/testthat",
 
   "dynamic_analysis_fixed_status": "Met",
-  "dynamic_analysis_fixed_justification": "clang-ASAN/UBSAN and valgrind have reported no findings in punycoder's C++ (latest run: https://gitlab.com/bart-turczynski/punycoder/-/jobs/16831530748). A confirmed finding blocks a release: the release deltas in design/release-deltas.md (https://gitlab.com/bart-turczynski/punycoder/-/blob/main/design/release-deltas.md) requires the `sanitizers` job to be green and valgrind to report 0 errors and 0 bytes definitely lost before a submission.",
+  "dynamic_analysis_fixed_justification": "clang-ASAN/UBSAN and valgrind have reported no findings in punycoder's C++ (a run of the former `sanitizers` job: https://gitlab.com/bart-turczynski/punycoder/-/jobs/16831530748). A confirmed finding blocks a release: the release deltas in design/release-deltas.md (https://gitlab.com/bart-turczynski/punycoder/-/blob/main/design/release-deltas.md) requires the `t2-sanitizers` job to be green and valgrind to report 0 errors and 0 bytes definitely lost before a submission.",
 
   "test_continuous_integration_status": "Met",
-  "test_continuous_integration_justification": "The GitLab CI pipeline (https://gitlab.com/bart-turczynski/punycoder/-/pipelines) runs lint, README sync, NEWS/version, citation-version, R CMD check and coverage on every push to main (configuration: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml ). Branch pushes and merge requests start no pipeline; the same verification chain runs as a pre-push hook on every branch before it leaves a contributor's machine.",
+  "test_continuous_integration_justification": "The GitLab CI pipeline (https://gitlab.com/bart-turczynski/punycoder/-/pipelines) runs R CMD check on R release, oldrel, devel and the declared floor, --as-cran, sanitizers, a locale leg, coverage, the dependency audits and citation-version on the weekly T2 deep-check schedule and on every RELEASE=1 pre-submission web pipeline (configuration: https://gitlab.com/bart-turczynski/punycoder/-/blob/main/.gitlab-ci.yml ). Pushes to main or a branch and merge requests start no pipeline; the local pre-push gate (T1) runs lint, README sync, NEWS/version, docs drift, the URL check and R CMD check in a container before every push leaves a contributor's machine, once the clone has the hook installed (`.fleet-ci/pre-push --install`).",
 
   "discussion_status": "Met",
   "discussion_justification": "GitLab Issues provide a public forum for project discussion: https://gitlab.com/bart-turczynski/punycoder/-/work_items",
