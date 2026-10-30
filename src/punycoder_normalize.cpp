@@ -36,8 +36,10 @@ constexpr std::size_t kAcePrefixOctets = 4;  // "xn--"
 //   that needs encoding and has n > 63 - 4 = 59 code points encodes to > 63.
 // - Host. Every output label has at least as many octets as the U-label piece
 //   it came from has code points: an ASCII label is copied, an A-label is
-//   emitted as its own (ASCII) input, an encoded label has 4 + n (above). The
-//   pieces plus the separating dots are exactly the mapped, NFC code points,
+//   emitted as its own input in UTF-8, at least one octet per code point
+//   (has_ace_prefix checks only the prefix, so "xn--" + U+00FC reaches it),
+//   and an encoded label has >= 4 + n (above). The pieces plus the
+//   separating dots are exactly the mapped, NFC code points,
 //   so a host with more than 253 of those cannot join to 253 octets or fewer.
 //   The root dot is stripped before that count and is not part of the total.
 
@@ -346,13 +348,18 @@ struct Normalizer {
             return true;
         }
 
+        // A label that needs encoding encodes to >= 4 + n octets; see
+        // kAcePrefixOctets above. Checked on the code points, before building
+        // the UTF-8 the encoder would take.
+        if (opts.verify_dns_length &&
+            work.cps.size() > kMaxLabelOctets - kAcePrefixOctets &&
+            std::any_of(work.cps.begin(), work.cps.end(),
+                        [](uint32_t cp) { return cp >= 0x80; })) {
+            return false;
+        }
+
         const std::string utf8 = codepoints_to_utf8(work.cps);
         if (has_non_ascii(utf8)) {
-            // Encodes to >= 4 + n octets; see kAcePrefixOctets above.
-            if (opts.verify_dns_length &&
-                work.cps.size() > kMaxLabelOctets - kAcePrefixOctets) {
-                return false;
-            }
             try {
                 out = punycode_encode_label_fallback(utf8);
             } catch (const PunycoderError&) {  // # nocov
