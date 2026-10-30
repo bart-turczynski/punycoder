@@ -8,14 +8,31 @@
 # `.fleet-ci/pre-push --install` writes. Without it, a push runs pre-commit's
 # hygiene hooks alone. This looks for the marker line that hook carries in
 # `hooks/pre-push`, or in `hooks/pre-push.legacy` under pre-commit's migration
-# mode (fleet-ci README, "The local gate"). It never runs the gate: the fleet
-# standard forbids a pre-commit hook that does.
+# mode (fleet-ci README, "The local gate"). The marker is read from the
+# `MARK =` line of the repository's .fleet-ci/pre-push, so a re-vendored
+# marker is followed. It never runs the gate: the fleet standard forbids a
+# pre-commit hook that does.
 #
 # Warn-only by decision: it always exits 0 until the hook is installed
 # fleet-wide, then it becomes a failure.
+# The time-box for that switch is tracked in seor ticket SEOR-cjxarlcq.
 set -u
 
-marker='# fleet-ci pre-push hook (.fleet-ci/pre-push --install)'
+top=$(git rev-parse --show-toplevel 2>/dev/null) || top="."
+vendored="$top/.fleet-ci/pre-push"
+
+marker=""
+if [ -f "$vendored" ]; then
+  marker=$(sed -n 's/^MARK[[:space:]]*=[[:space:]]*"\(.*\)"[[:space:]]*$/\1/p' "$vendored" | head -n 1)
+fi
+if [ -z "$marker" ]; then
+  cat >&2 <<EOF
+!! WARNING: cannot tell whether fleet-ci's pre-push hook is installed:
+!! $vendored is missing or has no MARK = "..." line.
+!! Re-run fleet-ci's bin/vendor to restore it.
+EOF
+  exit 0
+fi
 
 hooks=$(git rev-parse --git-path hooks 2>/dev/null) || hooks=""
 if [ -n "$hooks" ]; then

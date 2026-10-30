@@ -40,8 +40,8 @@ punycoder's deltas:
   clang-ASAN/UBSAN only.
 - **Step 6: add valgrind on R-hub.** R-hub's valgrind image cannot start any
   R process on this project's arm64 runner (its GCC-built R uses an x87
-  instruction Rosetta 2 does not implement; the `sanitizers` job comment has
-  the detail), so valgrind is not in CI. Run it on R-hub's x86_64 runners
+  instruction Rosetta 2 does not implement; [ci.md](ci.md)'s gaps list,
+  "No valgrind in CI", has the detail), so valgrind is not in CI. Run it on R-hub's x86_64 runners
   before every submission and after any substantial change under `src/`:
 
   ```r

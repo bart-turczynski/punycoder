@@ -16,8 +16,9 @@ include:
 variables:
   # The release legs (t2-check-release, t2-ascran, coverage) run on the image
   # with libidn2, so the native backend and its parity tests are checked
-  # there; oldrel, devel, the floor and the sanitizers check the fallback
-  # build. .fleet-ci.yml's `variant` must name the same image.
+  # there; oldrel, devel, the floor, the sanitizers, the locale leg and
+  # t3-manual check the fallback build. .fleet-ci.yml's `variant` must name
+  # the same image.
   FLEET_RELEASE_VARIANT: "fleet-r-idn2"
   # The declared floor, `Depends: R (>= 4.1.0)`: 4.1 is the oldest minor with
   # an arm64 rocker/r-ver image, which the runner needs. 2025-04-10 is the day

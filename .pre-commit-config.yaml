@@ -1,12 +1,20 @@
 # The hygiene hooks, at commit and at push. Install with `pre-commit install`
-# (pre-commit hooks) and `.fleet-ci/pre-push --install` (the pre-push hook):
-# that hook runs the fleet-ci local gate (.fleet-ci/gate, settings in
-# .fleet-ci.yml) on every pushed ref, then this file's pre-push stage. The
-# gate itself, docs drift, lintr, spelling, the URL check and R CMD check, is
-# in .fleet-ci.yml, never here: this file must not run .fleet-ci/gate (fleet-ci
-# README, "The local gate"). `pre-commit install -f` or
-# `pre-commit install --hook-type pre-push` replaces the gate's hook; re-run
-# `.fleet-ci/pre-push --install` after either.
+# (both hook types, from default_install_hook_types below), then
+# `.fleet-ci/pre-push --install`, which replaces pre-commit's pre-push hook
+# with fleet-ci's: that hook runs the fleet-ci local gate (.fleet-ci/gate,
+# settings in .fleet-ci.yml) on each pushed ref, then this file's pre-push
+# stage. The gate itself, docs drift, lintr, spelling, the URL check and
+# R CMD check, is in .fleet-ci.yml, never here: this file must not run
+# .fleet-ci/gate (fleet-ci README, "The local gate").
+#
+# Over fleet-ci's hook, `pre-commit install` and
+# `pre-commit install --hook-type pre-push` without -f move it to
+# hooks/pre-push.legacy (pre-commit's migration mode), which still runs the
+# gate first. `pre-commit install -f` (both types, from
+# default_install_hook_types) and `pre-commit install -f --hook-type pre-push`
+# delete it and drop the gate; `-f --hook-type pre-commit` leaves it alone.
+# Re-run `.fleet-ci/pre-push --install` after either of the two.
+default_install_hook_types: [pre-commit, pre-push]
 #
 # air (the R formatter) is intentionally NOT wired up here: this package has not
 # adopted air (no air.toml), so enabling it would reformat the whole source tree
@@ -132,13 +140,6 @@ repos:
         pass_filenames: false
         files: ^scripts/check-news\.py$
         stages: [pre-push]
-      # This machine's R toolchain against what the package pins: roxygen2
-      # against Config/roxygen2/version, installed packages built under a newer
-      # R, and the local pandoc against the fleet image's (.fleet-ci/toolchain),
-      # so a local devtools::document() or build_readme() writes what the gate
-      # accepts. The gate itself runs in the fleet image and does not depend
-      # on this machine's library. Quick: one request, for CRAN's package
-      # index (SEOR-hxxxkmws, SEOR-tcytizic).
       # Warns, loudly, when this clone's pre-push hook is not fleet-ci's, so
       # the push ran without the gate. Warn-only by decision, time-boxed until
       # the hook is installed fleet-wide, then it fails. It only reads the
@@ -151,6 +152,13 @@ repos:
         always_run: true
         verbose: true
         stages: [pre-push]
+      # This machine's R toolchain against what the package pins: roxygen2
+      # against Config/roxygen2/version, installed packages built under a newer
+      # R, and the local pandoc against the fleet image's (.fleet-ci/toolchain),
+      # so a local devtools::document() or build_readme() writes what the gate
+      # accepts. The gate itself runs in the fleet image and does not depend
+      # on this machine's library. Quick: one request, for CRAN's package
+      # index (SEOR-hxxxkmws, SEOR-tcytizic).
       - id: check-toolchain
         name: toolchain matches what this package pins
         entry: Rscript scripts/check-toolchain.R

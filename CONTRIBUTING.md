@@ -19,11 +19,14 @@ the package root:
 .fleet-ci/pre-push --install
 ```
 
-From then on the gate runs on every push, on each pushed commit, followed by
-the pre-commit pre-push hooks. `pre-commit install -f` (or `pre-commit install
---hook-type pre-push`) replaces that hook and drops the gate; re-run
-`.fleet-ci/pre-push --install` after either. To run the gate by hand on
-`HEAD`:
+From then on the gate runs on every push, on each pushed ref's tip, followed
+by the pre-commit pre-push hooks. `pre-commit install -f` (which installs
+both hook types, from `.pre-commit-config.yaml`'s
+`default_install_hook_types`) and `pre-commit install -f --hook-type
+pre-push` replace that hook and drop the gate; re-run
+`.fleet-ci/pre-push --install` after either. Without `-f`,
+`pre-commit install` keeps the gate (pre-commit's migration mode). To run the
+gate by hand on `HEAD`:
 
 ```sh
 .fleet-ci/gate auto

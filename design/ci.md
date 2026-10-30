@@ -8,14 +8,15 @@ never edit it). The job names below are the template's.
 
 | Tier | Where | What runs |
 | --- | --- | --- |
-| T0 | every commit and push, pre-commit hooks | `.pre-commit-config.yaml`: hygiene fixers, codespell, citation, BugReports, NEWS and toolchain checks, the warn-only `fleet-ci-hook-installed` check |
-| T1 | every push, locally, the pre-push hook | `.fleet-ci/gate` in the fleet image. A docs-only diff against `main` (`design/**/*.md` and the like) gets the docs tier: spelling and `pkgdown::check_pkgdown()`. Any other gets the full tier: those, then docs drift, lintr, README drift, NEWS heading, the URL check and one `R CMD check --as-cran` (incoming checks off) |
+| hygiene hooks | pre-commit, at commit and at push | `.pre-commit-config.yaml`. At commit and again at push: the hygiene fixers (end of file, trailing whitespace, line endings), the large-file, merge-conflict, YAML and case-conflict checks, and codespell. At push only: the citation, BugReports, NEWS and toolchain checks, the `check-news.py` and `bestpractices-url.py` self-tests when those scripts change, and the warn-only `fleet-ci-hook-installed` check |
+| T0 | every push whose diff against `main` is docs-only (`design/**/*.md` and the like), locally, the pre-push hook | the gate's docs tier, `.fleet-ci/gate` in the fleet image: spelling and `pkgdown::check_pkgdown()` |
+| T1 | every other push, locally, the pre-push hook | the gate's full tier: T0's checks, then docs drift, lintr, README drift, NEWS heading, the URL check and one `R CMD check --as-cran` (incoming checks off) |
 | T2 | the weekly `deep-check` schedule; every T3 run | `t2-check-release`, `t2-check-oldrel`, `t2-check-devel`, `t2-floor` (R 4.1.3), `t2-sanitizers` (R-hub clang-ASAN/UBSAN), `t2-locale`, `t2-ascran`, `coverage` (fails below 95%), `osv-audit`, `security-audit`, `citation-version` |
 | T3 | a `RELEASE=1` web pipeline on `main`; a `v*` tag | all of T2 plus `t3-manual`; the tag, or `RELEASE=1` on a tag, adds `pages` |
 
 Pushes to `main` or a branch, merge requests and API pipelines (`glab ci run`)
 create no pipeline at all. An empty pipeline list is not a pass: the merge
-gate is T1, run before the branch leaves the machine.
+gate is the local gate (T0 or T1), run before the branch leaves the machine.
 
 Before a CRAN submission, start T3 on `main` from **Build > Pipelines > Run
 pipeline**, ref `main`, variable `RELEASE=1` (see
@@ -28,9 +29,14 @@ alone.
 .fleet-ci/pre-push --install
 ```
 
-It runs the gate on every pushed commit, then the pre-commit pre-push stage.
-`pre-commit install -f` or `pre-commit install --hook-type pre-push` drops
-it; re-run the install after either. `.fleet-ci/gate auto` runs the gate by
+It runs the gate on each pushed ref's tip, then the pre-commit pre-push
+stage. Two commands drop it: `pre-commit install -f`, which installs both
+hook types (`.pre-commit-config.yaml`'s `default_install_hook_types`), and
+`pre-commit install -f --hook-type pre-push`; re-run the install after
+either. Without `-f`, `pre-commit install` (with or without
+`--hook-type pre-push`) moves the hook to `hooks/pre-push.legacy`
+(pre-commit's migration mode), which still runs the gate first; `-f
+--hook-type pre-commit` leaves it alone. `.fleet-ci/gate auto` runs the gate by
 hand on `HEAD`. A pass is stamped by tree, tier, classifier version, image
 and (full tier) resolved dependency lock, and a stamped commit is skipped.
 
@@ -62,9 +68,19 @@ These live in GitLab's project settings, so a clone does not carry them:
   `codemetar` when needed, and keep its hand-set GitLab URLs.
 - **Only the release legs build with libidn2.** `t2-check-release`,
   `t2-ascran` and `coverage` run on `fleet-r-idn2`
-  (`FLEET_RELEASE_VARIANT`); `t2-check-oldrel`, `t2-check-devel`, `t2-floor`
-  and `t2-locale` have no libidn2 image in the template and check the
-  fallback build.
+  (`FLEET_RELEASE_VARIANT`); `t2-check-oldrel`, `t2-check-devel`, `t2-floor`,
+  `t2-sanitizers`, `t2-locale` and `t3-manual` have no libidn2 image in the
+  template and check the fallback build.
+- **No valgrind in CI.** R-hub's valgrind image is x86_64, so on this
+  project's arm64 runner it runs under Rosetta 2, and no R process starts
+  there: its GCC-built R uses the x87 instruction `ffreep` at every startup,
+  which Rosetta does not implement (`Rscript` dies with SIGILL). The
+  clang-built `clang-asan` image that `t2-sanitizers` uses does not emit it.
+  Do not add a valgrind leg unless the runner is x86_64. A native arm64
+  valgrind on `rocker/r-ver` runs, but that R is not built with valgrind
+  instrumentation and is not CRAN's platform, so a green run there would
+  look stronger than it is. Valgrind runs on R-hub's x86_64 runners instead
+  ([release-deltas.md](release-deltas.md), step 6).
 - **Coverage measures the libidn2 build**, not the fallback one.
 - **`NOT_CRAN=true` in T1 and the T2 check legs.** The performance
   throughput floors in `test-performance.R` run there, and the T2 check legs
