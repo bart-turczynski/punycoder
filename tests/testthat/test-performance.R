@@ -104,9 +104,14 @@ expect_rate_at_least <- function(fn, input, minimum_rate) {
 # that inflates their per-character figure and so compresses the ratio. The bias
 # is toward passing, which is the right direction for a test that must not flake
 # across machines.
-expect_cost_per_char_stable <- function(fn, short, long, tolerance = 4) {
-  short_input <- rep(short, 4000L)
-  long_input <- rep(long, 4000L)
+#
+# `copies` is how many times each host is repeated to make a batch worth
+# timing. 4000 suits hosts of a few hundred characters; a single host that is
+# itself tens of thousands of characters long is already a batch, so pass 1.
+expect_cost_per_char_stable <- function(fn, short, long, tolerance = 4,
+                                        copies = 4000L) {
+  short_input <- rep(short, copies)
+  long_input <- rep(long, copies)
 
   short_per_char <-
     benchmark_seconds(fn, short_input) / (length(short_input) * nchar(short))
@@ -183,4 +188,29 @@ test_that("cost per character stays stable as hosts get longer", {
 
   expect_cost_per_char_stable(puny_encode, short_unicode, long_unicode)
   expect_cost_per_char_stable(host_normalize, short_unicode, long_unicode)
+})
+
+test_that("an over-long non-ASCII label is rejected in time linear in its length", {
+  skip_on_cran()
+
+  # PUNY-ttjakmgu. The Punycode encoder costs O(n * distinct non-basic code
+  # points), and host_normalize() used to run it before the 63/253-octet check
+  # that rejects the result: a 96 KB label of 32,000 distinct Hangul and CJK
+  # code points took 1.7 s on an -O2 build to come back NA. Every code point
+  # here is distinct, so a quadratic encoder makes the long label's cost per
+  # character 16x the short one's, against ~1x once the label is rejected up
+  # front.
+  cjk <- c(0xAC00 + 0:11171, 0x4E00 + 0:20827) # Hangul syllables, then CJK
+  short <- intToUtf8(cjk[seq(1L, 32000L, by = 16L)])
+  long <- intToUtf8(cjk[seq_len(32000L)])
+  expect_identical(nchar(long), 32000L)
+
+  expect_identical(host_normalize(long), NA_character_)
+  expect_cost_per_char_stable(host_normalize, short, long, copies = 1L)
+
+  # Loose absolute bound, as for the combining-mark run in test-normalize.R:
+  # it fails at -O0 against the quadratic encoder and passes with a wide
+  # margin against the bounded one. Not a benchmark.
+  elapsed <- system.time(host_normalize(long))[["elapsed"]]
+  expect_lt(elapsed, 0.5)
 })

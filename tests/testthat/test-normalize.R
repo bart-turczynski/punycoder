@@ -284,6 +284,61 @@ test_that("verify_dns_length = TRUE keeps rejecting empty labels", {
   )
 })
 
+test_that("verify_dns_length = TRUE agrees with the length check it skips to", {
+  # PUNY-ttjakmgu rejects a label or host before Punycode-encoding it when its
+  # code point count alone rules out the 63/253-octet limits. The result must
+  # be what encoding first and checking after gives, which is the
+  # verify_dns_length = FALSE output put through the same limits. Every input
+  # here has no empty label, so the flag differs on length alone.
+  dns_limited <- function(x) {
+    out <- host_normalize(x, verify_dns_length = FALSE)
+    core <- sub("[.]$", "", out)
+    labels <- strsplit(core, ".", fixed = TRUE)
+    ok <- !is.na(out) & nchar(core, "bytes") <= 253L & vapply(
+      labels, function(l) all(nchar(l, "bytes") <= 63L), logical(1)
+    )
+    ifelse(ok, out, NA_character_)
+  }
+
+  # Around the 63-octet label: k ASCII letters then one non-ASCII code point
+  # encodes to 4 + k + 1 + its digits, so the sweep crosses 63 octets. Then
+  # all-non-ASCII labels of 55-65 code points, ASCII ones of 60-66, and the
+  # same with a mapped (fullwidth) and an ignored (soft hyphen) code point,
+  # which mapping turns into one or zero code points.
+  hangul <- intToUtf8(0xAC00 + 0:69, multiple = TRUE)
+  labels <- c(
+    vapply(50:62, function(k) paste0(strrep("a", k), "\u00fc"), ""),
+    vapply(55:65, function(n) paste(hangul[seq_len(n)], collapse = ""), ""),
+    vapply(55:65, function(n) strrep("\u00fc", n), ""),
+    vapply(60:66, function(n) strrep("a", n), ""),
+    paste0(strrep("a", 62), "\uff41"),
+    paste0(strrep("a", 63), "\u00ad"),
+    paste0(strrep("a", 54), "\u00ad\u00fc")
+  )
+  hosts <- c(labels, paste0(labels, ".example"), paste0(labels, ".example."))
+
+  # Around the 253-octet host, in 50-character labels: ASCII only, with a
+  # non-ASCII label, and with ignored code points that take a host over 253
+  # code points before mapping and back under it after.
+  fifty <- strrep("b", 50)
+  for (tail_len in 45:52) {
+    stem <- paste(rep(fifty, 4), collapse = ".")
+    hosts <- c(
+      hosts,
+      paste(stem, strrep("c", tail_len), sep = "."),
+      paste(stem, paste0(strrep("c", tail_len - 10), "\u00fc"), sep = "."),
+      paste(stem, paste0(strrep("c", tail_len), strrep("\u00ad", 8)), sep = ".")
+    )
+  }
+
+  expect_identical(host_normalize(hosts), dns_limited(hosts))
+  # The sweep has to straddle both limits to mean anything.
+  expect_true(any(is.na(host_normalize(hosts))))
+  expect_true(any(nchar(host_normalize(hosts[seq_along(labels)])) == 63L,
+                  na.rm = TRUE))
+  expect_true(any(nchar(host_normalize(hosts)) == 253L, na.rm = TRUE))
+})
+
 test_that("verify_dns_length = FALSE keeps empty labels (UTS #46 4.2 step 4)", {
   # ToASCII checks for empty labels only when VerifyDnsLength is true, so with
   # it off a leading, inner, trailing or repeated empty label converts and is
