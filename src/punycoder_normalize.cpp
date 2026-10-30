@@ -21,6 +21,25 @@ constexpr uint8_t kVirama = 9;        // canonical combining class of viramas.
 // DNS limits enforced by VerifyDnsLength (contract section 3/5).
 constexpr std::size_t kMaxLabelOctets = 63;
 constexpr std::size_t kMaxHostOctets = 253;
+constexpr std::size_t kAcePrefixOctets = 4;  // "xn--"
+
+// Lower bounds that let VerifyDnsLength reject before encoding (PUNY-ttjakmgu).
+// The Punycode encoder costs O(n * distinct non-basic code points), so encoding
+// a label only to discard the result is a denial-of-service lever: a 96 KB
+// label of 32,000 distinct CJK code points took 1.7 s to come back NA. Neither
+// bound can reject anything step 5 of run() would accept:
+//
+// - Label. An encoded label is "xn--", then its b basic code points, then a
+//   delimiter if b > 0, then at least one digit per non-basic code point (each
+//   insertion emits a variable-length integer of >= 1 digit, RFC 3492 §6.3).
+//   For n code points that is >= 4 + b + (n - b) = 4 + n octets, so a label
+//   that needs encoding and has n > 63 - 4 = 59 code points encodes to > 63.
+// - Host. Every output label has at least as many octets as the U-label piece
+//   it came from has code points: an ASCII label is copied, an A-label is
+//   emitted as its own (ASCII) input, an encoded label has 4 + n (above). The
+//   pieces plus the separating dots are exactly the mapped, NFC code points,
+//   so a host with more than 253 of those cannot join to 253 octets or fewer.
+//   The root dot is stripped before that count and is not part of the total.
 
 // One label resolved to its U-label code points. A-labels are Punycode-decoded
 // up front so CheckBidi (a whole-domain property) can see every label's
@@ -329,6 +348,11 @@ struct Normalizer {
 
         const std::string utf8 = codepoints_to_utf8(work.cps);
         if (has_non_ascii(utf8)) {
+            // Encodes to >= 4 + n octets; see kAcePrefixOctets above.
+            if (opts.verify_dns_length &&
+                work.cps.size() > kMaxLabelOctets - kAcePrefixOctets) {
+                return false;
+            }
             try {
                 out = punycode_encode_label_fallback(utf8);
             } catch (const PunycoderError&) {  // # nocov
@@ -373,6 +397,13 @@ struct Normalizer {
         std::vector<uint32_t> mapped;
         if (!map_codepoints(cps, mapped, opts.use_std3)) return invalid();
         const std::vector<uint32_t> normalized = nfc<T>(mapped);
+
+        // The joined output has at least one octet per code point here, so a
+        // longer host cannot pass step 5; reject it before any label is
+        // decoded, validated or encoded (see kAcePrefixOctets above).
+        if (opts.verify_dns_length && normalized.size() > kMaxHostOctets) {
+            return invalid();
+        }
 
         // Step 3c: split into labels on U+002E and resolve each to its U-label form
         // (decoding xn-- labels) so CheckBidi can examine the whole domain.
