@@ -149,7 +149,8 @@ test_that("backend comparison reports unsupported modes as errors", {
 test_that("fallback and libidn2 agree on RFC 3492 vectors", {
   vectors <- read.csv(
     system.file("testdata", "rfc3492_vectors.csv", package = "punycoder"),
-    stringsAsFactors = FALSE
+    stringsAsFactors = FALSE,
+    encoding = "UTF-8"
   )
 
   # RFC vectors include generic strings, not only DNS-valid labels. The raw

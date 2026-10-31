@@ -98,7 +98,7 @@ WHATWG host policy (where \code{beStrict = false} flips exactly these three) liv
 upstack in \code{rurl}, not here.
 }
 \examples{
-host_normalize(c("Example.COM", "münchen.de", "example.com."))
+host_normalize(c("Example.COM", "m\u00FCnchen.de", "example.com."))
 host_normalize("a_b.com") # NA: STD3 rejects "_"
 host_normalize("a_b.com", use_std3 = FALSE) # "a_b.com"
 host_normalize("a..b.com") # NA: empty label

@@ -1,7 +1,8 @@
 test_that("RFC 3492 vectors encode to expected punycode", {
   vectors <- read.csv(
     system.file("testdata", "rfc3492_vectors.csv", package = "punycoder"),
-    stringsAsFactors = FALSE
+    stringsAsFactors = FALSE,
+    encoding = "UTF-8"
   )
 
   # RFC vectors include generic strings, not only DNS-valid labels. Strict raw
@@ -13,7 +14,8 @@ test_that("RFC 3492 vectors encode to expected punycode", {
 test_that("RFC 3492 vectors decode to expected unicode", {
   vectors <- read.csv(
     system.file("testdata", "rfc3492_vectors.csv", package = "punycoder"),
-    stringsAsFactors = FALSE
+    stringsAsFactors = FALSE,
+    encoding = "UTF-8"
   )
 
   decoded <- puny_decode(vectors$ascii, strict = TRUE)
@@ -23,7 +25,8 @@ test_that("RFC 3492 vectors decode to expected unicode", {
 test_that("raw punycode strict mode does not apply DNS label length limits", {
   vectors <- read.csv(
     system.file("testdata", "rfc3492_vectors.csv", package = "punycoder"),
-    stringsAsFactors = FALSE
+    stringsAsFactors = FALSE,
+    encoding = "UTF-8"
   )
 
   dns_valid <- vectors[vectors$description %in% c(
