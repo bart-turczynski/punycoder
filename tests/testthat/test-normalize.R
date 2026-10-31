@@ -337,7 +337,10 @@ test_that("verify_dns_length = TRUE agrees with the length check it skips to", {
       hosts,
       paste(stem, strrep("c", tail_len), sep = "."),
       paste(stem, paste0(strrep("c", tail_len - 10), "\u00fc"), sep = "."),
-      paste(stem, paste0(strrep("c", tail_len), strrep("\u00ad", 8)), sep = "."),
+      paste(
+        stem, paste0(strrep("c", tail_len), strrep("\u00ad", 8)),
+        sep = "."
+      ),
       paste(stem, paste0(strrep("c", tail_len), strrep("\ufb03", 2)), sep = ".")
     )
   }
@@ -353,7 +356,7 @@ test_that("verify_dns_length = TRUE agrees with the length check it skips to", {
 
   expect_identical(host_normalize(hosts), dns_limited(hosts))
   # The sweep has to straddle both limits to mean anything.
-  expect_true(any(is.na(host_normalize(hosts))))
+  expect_true(anyNA(host_normalize(hosts)))
   expect_true(any(nchar(host_normalize(hosts[seq_along(labels)])) == 63L,
                   na.rm = TRUE))
   expect_true(any(nchar(host_normalize(hosts)) == 253L, na.rm = TRUE))

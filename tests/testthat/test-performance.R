@@ -193,7 +193,7 @@ test_that("cost per character stays stable as hosts get longer", {
   expect_cost_per_char_stable(host_normalize, short_unicode, long_unicode)
 })
 
-test_that("an over-long non-ASCII label is rejected in time linear in its length", {
+test_that("an over-long non-ASCII label is rejected in linear time", {
   skip_on_cran()
 
   # PUNY-ttjakmgu. The Punycode encoder costs O(n * distinct non-basic code
