@@ -1,5 +1,6 @@
 #include "punycoder_core.h"
 
+#include <algorithm>
 #include <cctype>
 #include <limits>
 
@@ -83,6 +84,53 @@ uint32_t adapt(uint64_t delta, uint64_t numpoints, bool first_time) {
     );
 }
 
+// Fenwick (binary indexed) tree over label positions, counting the positions
+// whose code point the encoder has already handled. The RFC 3492 encoder
+// needs, for each insertion, the number of handled code points between two
+// positions; this answers that in O(log n) instead of a scan of the label.
+class HandledPositions {
+public:
+    explicit HandledPositions(const std::vector<uint32_t>& codepoints)
+        : tree_(codepoints.size() + 1, 0) {
+        // Basic code points are handled before the first insertion. Linear
+        // construction: seed each leaf, then push it into its parent.
+        for (size_t i = 0; i < codepoints.size(); ++i) {
+            if (codepoints[i] < 0x80) {
+                tree_[i + 1] += 1;
+            }
+        }
+        for (size_t i = 1; i < tree_.size(); ++i) {
+            size_t parent = i + (i & (~i + 1));
+            if (parent < tree_.size()) {
+                tree_[parent] += tree_[i];
+            }
+        }
+    }
+
+    void mark(size_t pos) {
+        for (size_t i = pos + 1; i < tree_.size(); i += i & (~i + 1)) {
+            tree_[i] += 1;
+        }
+    }
+
+    // Handled positions in [0, end).
+    size_t count_before(size_t end) const {
+        size_t total = 0;
+        for (size_t i = end; i > 0; i -= i & (~i + 1)) {
+            total += tree_[i];
+        }
+        return total;
+    }
+
+    // Handled positions in [begin, end), begin <= end.
+    size_t count_between(size_t begin, size_t end) const {
+        return count_before(end) - count_before(begin);
+    }
+
+private:
+    std::vector<size_t> tree_;
+};
+
 EncodingInput prepare_encode_input(const std::string& label) {
     if (label.empty()) {
         throw_error(ErrorCode::empty_domain_label);  // # nocov (domain layer rejects empty labels first)
@@ -137,51 +185,76 @@ std::string punycode_encode_label_fallback(const std::string& label) {
     uint64_t delta = 0;
     uint32_t bias = kInitialBias;
 
-    while (handled < codepoints.size()) {
-        uint32_t m = std::numeric_limits<uint32_t>::max();
-        for (uint32_t cp : codepoints) {
-            if (cp >= n && cp < m) {
-                m = cp;
-            }
+    // RFC 3492 §6.3 "Encoding procedure", in O(L log L) for a label of L code
+    // points. The RFC's loop rescans the whole label once per distinct
+    // non-basic code point m, adding 1 to delta for every code point < m it
+    // passes and emitting a delta at every occurrence of m. Here the
+    // occurrences of each m come from one sort, and the code points < m
+    // between two of them -- exactly the already-handled ones -- come from a
+    // Fenwick count. Same additions, same order, so the same digits.
+    std::vector<size_t> pending;
+    pending.reserve(codepoints.size() - basic_count);
+    for (size_t pos = 0; pos < codepoints.size(); ++pos) {
+        if (codepoints[pos] >= 0x80) {
+            pending.push_back(pos);
+        }
+    }
+    std::sort(pending.begin(), pending.end(), [&codepoints](size_t a, size_t b) {
+        return codepoints[a] != codepoints[b] ? codepoints[a] < codepoints[b] : a < b;
+    });
+
+    HandledPositions handled_at(codepoints);
+    size_t next = 0;
+
+    while (next < pending.size()) {
+        uint32_t m = codepoints[pending[next]];
+        size_t group_end = next;
+        while (group_end < pending.size() && codepoints[pending[group_end]] == m) {
+            ++group_end;
         }
 
-        if (m == std::numeric_limits<uint32_t>::max()) {
-            throw_error(ErrorCode::punycode_overflow);  // # nocov (unreachable while handled < size)
-        }
-
-        // RFC 3492 §6.3 "Encoding procedure" — delta accumulates the distance
-        // between successive insertion points, scaled by (handled + 1).
+        // delta accumulates the distance between successive insertion
+        // points, scaled by (handled + 1).
         uint64_t span = checked_mul_u64(
             static_cast<uint64_t>(m - n), static_cast<uint64_t>(handled) + 1
         );
         delta = checked_add_u64(delta, span);
         n = m;
 
-        for (uint32_t cp : codepoints) {
-            if (cp < n) {
-                delta = checked_add_u64(delta, 1);
-            }
+        size_t scan_from = 0;  // first position not yet passed in this pass
+        for (size_t i = next; i < group_end; ++i) {
+            size_t pos = pending[i];
+            delta = checked_add_u64(delta, handled_at.count_between(scan_from, pos));
+            scan_from = pos + 1;
 
-            if (cp == n) {
-                uint64_t q = delta;
-                for (uint32_t k = kBase;; k += kBase) {
-                    uint32_t t = compute_threshold(k, bias);
-                    if (q < t) {
-                        break;
-                    }
-
-                    uint32_t code =
-                        t + static_cast<uint32_t>((q - t) % (kBase - t));
-                    output.push_back(encode_digit(code));
-                    q = (q - t) / (kBase - t);
+            uint64_t q = delta;
+            for (uint32_t k = kBase;; k += kBase) {
+                uint32_t t = compute_threshold(k, bias);
+                if (q < t) {
+                    break;
                 }
 
-                output.push_back(encode_digit(static_cast<uint32_t>(q)));
-                bias = adapt(delta, handled + 1, handled == basic_count);
-                delta = 0;
-                ++handled;
+                uint32_t code =
+                    t + static_cast<uint32_t>((q - t) % (kBase - t));
+                output.push_back(encode_digit(code));
+                q = (q - t) / (kBase - t);
             }
+
+            output.push_back(encode_digit(static_cast<uint32_t>(q)));
+            bias = adapt(delta, handled + 1, handled == basic_count);
+            delta = 0;
+            ++handled;
         }
+
+        // The rest of the pass, after the last occurrence of m.
+        delta = checked_add_u64(
+            delta, handled_at.count_between(scan_from, codepoints.size())
+        );
+        // m is handled from the next pass on: it counts as < n there.
+        for (size_t i = next; i < group_end; ++i) {
+            handled_at.mark(pending[i]);
+        }
+        next = group_end;
 
         ++delta;
         ++n;

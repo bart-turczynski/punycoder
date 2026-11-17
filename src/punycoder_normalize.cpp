@@ -24,9 +24,10 @@ constexpr std::size_t kMaxHostOctets = 253;
 constexpr std::size_t kAcePrefixOctets = 4;  // "xn--"
 
 // Lower bounds that let VerifyDnsLength reject before encoding (PUNY-ttjakmgu).
-// The Punycode encoder costs O(n * distinct non-basic code points), so encoding
-// a label only to discard the result is a denial-of-service lever: a 96 KB
-// label of 32,000 distinct CJK code points took 1.7 s to come back NA. Neither
+// Encoding a label only to discard the result is wasted work. When these were
+// added the encoder was O(n * distinct non-basic code points) and that waste was
+// a denial-of-service lever (1.7 s for a 96 KB label); the encoder is now
+// O(n log n) (PUNY-yndiwtxb), so the bounds save work, not a quadratic. Neither
 // bound can reject anything step 5 of run() would accept:
 //
 // - Label. An encoded label is "xn--", then its b basic code points, then a

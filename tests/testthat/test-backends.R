@@ -191,3 +191,99 @@ test_that("fallback backend round-trips valid IDN domains on its own", {
   dec <- backend_decisions(enc, "decode_domain")$fb_out
   expect_identical(dec, roundtrip_domains)
 })
+
+# --- Fallback encoder output pin (PUNY-yndiwtxb) ---------------------------
+#
+# The fallback encoder's output is pinned on a broad corpus, so a rewrite of
+# its RFC 3492 section 6.3 loop must stay byte-identical. The corpus spans
+# many distinct code points, repeats, basic code points interleaved with
+# non-basic ones, wide m - n jumps up to U+10FFFD, and labels up to the
+# 1024-byte cap. It is built without the RNG, so the digest is stable.
+
+encoder_corpus <- function() {
+  gcd <- function(a, b) if (b == 0L) a else gcd(b, a %% b)
+  # A fixed permutation: step through x by a stride coprime to its length.
+  shuffle <- function(x) {
+    n <- length(x)
+    step <- 7919L %% n
+    while (n > 1L && (step == 0L || gcd(step, n) != 1L)) {
+      step <- step + 1L
+    }
+    x[((seq_len(n) - 1L) * step) %% n + 1L]
+  }
+  basic <- utf8ToInt("abcdefghijklmnopqrstuvwxyz0123456789")
+  hangul <- 0xAC00 + 0:399
+  cjk <- 0x4E00 + 0:399
+  latin <- c(0xE0:0xF6, 0xF8:0xFF) # lowercase Latin-1 letters
+  plane2 <- 0x20000 + 0:299 # CJK Extension B
+  greek <- 0x3B1:0x3C9
+
+  per_length <- function(k) {
+    h <- hangul[seq_len(k)]
+    # basic code points interleaved with non-basic ones
+    mixed <- as.vector(rbind(
+      basic[(seq_len(k) - 1L) %% length(basic) + 1L],
+      shuffle(cjk[seq_len(k)])
+    ))
+    labels <- list(
+      h, # distinct, ascending
+      rev(h), # distinct, descending
+      shuffle(h), # distinct, scrambled
+      rep(h[[1L]], k), # one code point repeated
+      rep(h[seq_len(min(k, 5L))], length.out = k), # a few, cycled
+      shuffle(c(hangul[seq_len(ceiling(k / 2))], cjk[seq_len(k %/% 2)])),
+      mixed[seq_len(min(length(mixed), 400L))],
+      c(basic[seq_len(min(k, 36L))], greek[(seq_len(k) - 1L) %% 25L + 1L])
+    )
+    # wide spans: Latin-1, then the BMP, then plane 2
+    if (k <= 250L) {
+      labels <- c(labels, list(shuffle(c(
+        latin[(seq_len(k) - 1L) %% length(latin) + 1L],
+        plane2[seq_len(k %/% 2 + 1L)],
+        hangul[seq_len(k %/% 3 + 1L)]
+      ))))
+    }
+    labels
+  }
+  sizes <- c(1L, 2L, 3L, 7L, 36L, 37L, 100L, 255L, 340L)
+  # code points at the top of the range: the largest m - n jumps
+  top <- 0x10FFFD - 0:9
+  labels <- c(
+    unlist(lapply(sizes, per_length), recursive = FALSE),
+    list(
+      c(0xE0, top),
+      shuffle(c(top, basic[1:10], hangul[1:10])),
+      rep(0x10FFFD, 200L),
+      c(0xA1, 0x10FFFD),
+      # exactly 1024 bytes, the longest label the domain layer passes on
+      c(basic[[1L]], shuffle(hangul[seq_len(341L)]))
+    )
+  )
+  vapply(labels, intToUtf8, character(1))
+}
+
+md5_of <- function(x) {
+  path <- tempfile()
+  on.exit(unlink(path))
+  writeBin(charToRaw(paste(x, collapse = "\n")), path)
+  unname(tools::md5sum(path))
+}
+
+test_that("fallback encoder output is pinned on a broad corpus", {
+  corpus <- encoder_corpus()
+  expect_length(corpus, 84L)
+  expect_identical(max(nchar(corpus, type = "bytes")), 1024L)
+
+  enc <- backend_decisions(corpus, "encode_domain")$fb_out
+  expect_false(anyNA(enc)) # all accepted
+
+  # Recorded from the O(n x distinct) RFC 3492 loop before PUNY-yndiwtxb.
+  expect_identical(md5_of(enc), "292cd42a45bf016a9e984387e7dfd612")
+
+  dec <- backend_decisions(enc, "decode_domain")$fb_out
+  expect_identical(dec, corpus)
+})
+
+test_that("fallback and libidn2 encoders agree on the broad corpus", {
+  expect_backend_parity(encoder_corpus(), "encode_domain")
+})

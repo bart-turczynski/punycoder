@@ -50,7 +50,7 @@ LabelInfo classify_label(
 
     // Hard length cap applied independently of DNS validation. This guard
     // keeps non-DNS raw codec modes from handing pathologically long labels to
-    // the O(n^2) encoder/decoder unbounded.
+    // the O(n^2) decoder (the encoder is O(n log n)) unbounded.
     if (label.size() > kMaxLabelLength) {
         throw_error(ErrorCode::label_length_limit);
     }
