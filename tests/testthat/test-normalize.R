@@ -413,6 +413,59 @@ test_that("verify_dns_length = FALSE keeps empty labels (UTS #46 4.2 step 4)", {
   )
 })
 
+test_that("use_std3 = FALSE keeps non-LDH ASCII in an xn-- basic part", {
+  # IdnaTestV2 rows whose only toASCII error is U1 (V3 too for the last two):
+  # the literal basic part of an xn-- label holds "," or "?", and toAsciiN is
+  # the input itself (PUNY-nqbqcgow).
+  u1 <- c("xn--8,-g9oy26fzu4d.xn--kmb6733w", "xn--88e732c.xn--1-?-pzc",
+          "xn--88e732c.xn--1-?-lzc", "xn--?-fwsr13r.xn--1chz659f")
+  v3_u1 <- c("8ss.xn---?-261a", "xn--8-qfa.xn---?-261a")
+  expect_identical(host_normalize(u1, use_std3 = FALSE), rep(NA_character_, 4))
+  expect_identical(
+    host_normalize(v3_u1, use_std3 = FALSE, check_hyphens = FALSE),
+    rep(NA_character_, 2)
+  )
+
+  # Control: with UseSTD3ASCIIRules on, mapping rejects all six first.
+  for (hyphens in c(TRUE, FALSE)) {
+    for (dns in c(TRUE, FALSE)) {
+      expect_identical(
+        host_normalize(c(u1, v3_u1), check_hyphens = hyphens,
+                       verify_dns_length = dns),
+        rep(NA_character_, 6),
+        info = paste("check_hyphens", hyphens, "verify_dns_length", dns)
+      )
+    }
+  }
+  # The V3 rows still need CheckHyphens off.
+  expect_identical(
+    host_normalize(v3_u1, use_std3 = FALSE), rep(NA_character_, 2)
+  )
+
+  # Edge inputs stay NA with every flag off: a non-LDH basic part with an empty
+  # Bootstring payload ("?" re-encodes to itself, not to "xn--?-"), the bare
+  # prefix, and a basic part holding non-ASCII (UTS #46 makes it an error).
+  edge <- c("xn--?-", "xn--", "xn--bücher-kva", "xn--ü-kva")
+  for (std3 in c(TRUE, FALSE)) {
+    for (hyphens in c(TRUE, FALSE)) {
+      for (dns in c(TRUE, FALSE)) {
+        expect_identical(
+          host_normalize(edge, check_hyphens = hyphens, use_std3 = std3,
+                         verify_dns_length = dns),
+          rep(NA_character_, 4),
+          info = paste(std3, hyphens, dns)
+        )
+      }
+    }
+  }
+
+  # The U-label form encodes to the corpus A-label under use_std3 = FALSE.
+  ulabel <- "憡?ⴔ.\U000102ee≠"
+  expect_identical(
+    host_normalize(ulabel, use_std3 = FALSE), "xn--?-fwsr13r.xn--1chz659f"
+  )
+})
+
 test_that("host_normalize is vectorized and preserves names", {
   x <- c(a = "Example.COM", b = NA, c = "a_b.com")
   out <- host_normalize(x)
