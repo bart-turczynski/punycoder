@@ -94,9 +94,9 @@ constexpr inline bool is_valid_unicode_scalar(uint32_t cp) noexcept {
 // Hard upper bound on a single label's byte length, enforced regardless of
 // the strict flag. Legitimate DNS labels never exceed 63 octets (RFC 1035);
 // this deliberately generous cap exists only to stop adversarial oversized
-// input from driving the O(n^2) reference encoder/decoder into quadratic-time
-// / unbounded-allocation territory on the non-strict path, where the precise
-// RFC limits are not applied. See punycoder_domain.cpp and
+// input from driving the O(n^2) reference decoder into quadratic-time /
+// unbounded-allocation territory on the non-strict path, where the precise
+// RFC limits are not applied. The encoder is O(n log n) (PUNY-yndiwtxb). See punycoder_domain.cpp and
 // punycoder_algorithm.cpp.
 constexpr std::size_t kMaxLabelLength = 1024;
 

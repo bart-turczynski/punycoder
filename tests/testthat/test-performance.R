@@ -17,7 +17,7 @@
 # The scaling assertions are the build-independent half. They compare the
 # package against itself at two input sizes on the same machine in the same run,
 # so the optimization level cancels out and they hold anywhere. That is what
-# actually guards the O(n^2) reference codec and the per-label loops in the
+# actually guards the O(n^2) reference decoder and the per-label loops in the
 # normalizer.
 #
 # Real performance work belongs in a dedicated benchmark run against a clean
@@ -196,13 +196,13 @@ test_that("cost per character stays stable as hosts get longer", {
 test_that("an over-long non-ASCII label is rejected in linear time", {
   skip_on_cran()
 
-  # PUNY-ttjakmgu. The Punycode encoder costs O(n * distinct non-basic code
-  # points), and host_normalize() used to run it before the 63/253-octet check
-  # that rejects the result: a 96 KB label of 32,000 distinct Hangul and CJK
-  # code points took 1.7 s on an -O2 build to come back NA. Every code point
-  # here is distinct, so a quadratic encoder makes the long label's cost per
-  # character 16x the short one's, against ~1x once the label is rejected up
-  # front.
+  # PUNY-ttjakmgu. host_normalize() used to run the Punycode encoder, then
+  # O(n * distinct non-basic code points), before the 63/253-octet check that
+  # rejects the result: a 96 KB label of 32,000 distinct Hangul and CJK code
+  # points took 1.7 s on an -O2 build to come back NA. The encoder is now
+  # O(n log n) (PUNY-yndiwtxb), so this test still bounds the time of the
+  # early-rejection path but no longer proves that the rejection happens
+  # before encoding; that is tracked separately.
   cjk <- c(0xAC00 + 0:11171, 0x4E00 + 0:20827) # Hangul syllables, then CJK
   short <- intToUtf8(cjk[seq(1L, 32000L, by = 16L)])
   long <- intToUtf8(cjk[seq_len(32000L)])
@@ -211,8 +211,8 @@ test_that("an over-long non-ASCII label is rejected in linear time", {
   expect_identical(host_normalize(long), NA_character_)
 
   # Loose absolute bound, as for the combining-mark run in test-normalize.R:
-  # it fails at -O0 against the quadratic encoder and passes with a wide
-  # margin against the bounded one. Not a benchmark. Timed directly, before
+  # it failed at -O0 against the old quadratic encoder and passes with a wide
+  # margin now. Not a benchmark. Timed directly, before
   # the scaling check, so a skip there cannot drop it.
   elapsed <- system.time(host_normalize(long))[["elapsed"]]
   expect_lt(elapsed, 0.5)
