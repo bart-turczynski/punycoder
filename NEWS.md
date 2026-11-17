@@ -4,6 +4,8 @@
 
 * The normalization profile token is now `uts46-nontransitional-std3-v3` (was `-v2`) because `verify_dns_length = FALSE` now keeps empty labels (below); default results are unchanged, but a key storing the token must be rebuilt (ADR-018).
 
+* The profile token is now `uts46-nontransitional-std3-v4` because `host_normalize(use_std3 = FALSE)` now accepts `xn--` labels holding non-LDH ASCII such as `?`, per UTS #46 `toAsciiN` (`PUNY-nqbqcgow`).
+
 * punycoder now requires R >= 4.1.0, up from 3.5.0 (`SEOR-wxelnnmt`).
 
 ## Bug fixes
@@ -17,8 +19,6 @@
 * Under `verify_dns_length = TRUE`, `host_normalize()` returns `NA` at once for a label or host too long for DNS, without Punycode-encoding it first; results are unchanged (`PUNY-ttjakmgu`).
 
 * Punycode-encoding a label with many distinct non-ASCII characters now runs in near-linear rather than quadratic time, notably in `host_normalize(verify_dns_length = FALSE)`; results are unchanged (`PUNY-yndiwtxb`).
-
-* `host_normalize(use_std3 = FALSE)` now accepts `xn--` labels whose basic part holds non-LDH ASCII such as `?`, matching UTS #46 `toAsciiN` with `UseSTD3ASCIIRules` off (`PUNY-nqbqcgow`).
 
 ## Documentation
 

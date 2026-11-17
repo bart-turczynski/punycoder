@@ -87,7 +87,7 @@ host_normalize(x, check_hyphens = TRUE, use_std3 = TRUE, verify_dns_length = TRU
   `NA_character_` (missing, not invalid).
 - `check_hyphens`, `use_std3`, `verify_dns_length`: logical scalars, the three
   UTS #46 processing flags exposed as knobs. Each defaults to `TRUE` (the full
-  `uts46-nontransitional-std3-v3` profile); each may be relaxed independently.
+  `uts46-nontransitional-std3-v4` profile); each may be relaxed independently.
   Behavior must **not** read the process-wide `punycoder.strict` option
   (PRD §4). `CheckBidi` and `CheckJoiners` always apply and are **not** knobs.
   These are UTS #46 parameters, not a browser mode: full WHATWG host policy
@@ -118,7 +118,7 @@ The profile is **UTS-46** with these parameters, fixed for the current revision:
 | `CheckJoiners` | `true` |
 | `VerifyDnsLength` | `true` (label 1–63 octets; total ≤ 253, excluding the root dot) |
 
-`normalization_profile = "uts46-nontransitional-std3-v3"`. The `-vN` suffix is a
+`normalization_profile = "uts46-nontransitional-std3-v4"`. The `-vN` suffix is a
 profile revision: any change to the parameters above, to the accept/reject or
 output of the algorithm in section 4, **or to the pinned Unicode version**,
 increments it.
@@ -136,14 +136,14 @@ would denote one Unicode version before the release and another after, while
 the outgoing version simultaneously starts carrying a `+unicode-<version>` tag
 it did not have. Incrementing makes a stale key miss loudly rather than collide
 silently. `-v1` denoted the pin at 16.0.0; `-v2` denoted it at 17.0.0; `-v3`
-denotes the same pin with empty labels kept under `verify_dns_length = FALSE`
-(PUNY-fffgkhoj) and with non-LDH ASCII kept in an `xn--` label's basic code
-points under `use_std3 = FALSE` (PUNY-nqbqcgow). That last bump is the same
-rule applied to a relaxed path: an accept/reject change to section 4 under any
-flag combination increments `-vN`, because the relaxed tokens are built on the
-same base (ADR-018). Both changes ride one bump because `-v3` had not been
-released when the second landed; the rule is release-relative, so a change
-after a release names a new `-vN`.
+denoted the same pin with empty labels kept under `verify_dns_length = FALSE`
+(PUNY-fffgkhoj). That bump is the same rule applied to a relaxed path: an
+accept/reject change to section 4 under any flag combination increments `-vN`,
+because the relaxed tokens are built on the same base (ADR-018). `-v4` denotes
+`-v3` plus non-LDH ASCII kept in an `xn--` label's basic code points under
+`use_std3 = FALSE` (PUNY-nqbqcgow). `-v3` had already shipped from `main`
+through r-universe, so keys built with it exist, and this change takes a new
+token rather than a second meaning for `-v3`.
 
 ## 4. Algorithm (normative, per element)
 
@@ -247,7 +247,7 @@ Returns a one-row base `data.frame` (stable column names and types):
 
 | Column | Type | Meaning |
 |---|---|---|
-| `profile` | character | `"uts46-nontransitional-std3-v3"` |
+| `profile` | character | `"uts46-nontransitional-std3-v4"` |
 | `unicode_version` | character | the data version this call used; the pinned default is `"17.0.0"` |
 | `idna` | character | `"uts46"` |
 | `transitional` | logical | `FALSE` |
