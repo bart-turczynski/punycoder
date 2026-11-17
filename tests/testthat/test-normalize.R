@@ -315,9 +315,13 @@ test_that("verify_dns_length = TRUE agrees with the length check it skips to", {
     paste0(strrep("a", 63), "\u00ad"),
     paste0(strrep("a", 54), "\u00ad\u00fc"),
     # Decomposed u + U+0308 composes to one code point under NFC, so these
-    # are 110-120 code points as typed and 55-60 as encoded; 58 encodes to
+    # are 110-120 code points as typed and 55-60 as encoded; 57 encodes to
     # exactly 63 octets.
     vapply(55:60, function(n) strrep("u\u0308", n), ""),
+    # U+00A1 encodes one octet shorter than U+00FC, so 58 of them make a
+    # valid 63-octet label: the largest non-ASCII label the early bound must
+    # still let through. 59 gives 64 octets.
+    vapply(57:59, function(n) strrep("\u00a1", n), ""),
     # U+FB03 maps to "ffi", three code points for one, across 59.
     vapply(17:21, function(k) paste0(strrep("\ufb03", k), "\u00fc"), ""),
     # Over 59 and under 253: only the label bound can reject these early.
