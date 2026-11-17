@@ -296,13 +296,18 @@ std::string punycode_decode_label_fallback(const std::string& label,
             // fallback matches it (PUNY-ypjwnagl) rather than passing
             // punctuation such as '(' ')' ',' '%' through. The Bootstring
             // payload after the delimiter is already constrained to a-z0-9 by
-            // decode_digit(), and non-ASCII (>= 0x80) is likewise non-LDH.
+            // decode_digit().
             //
             // host_normalize(use_std3 = FALSE) clears require_ldh_basic: with
             // UseSTD3ASCIIRules off, UTS #46 admits other ASCII in a label, so
-            // the basic part may hold it too (PUNY-nqbqcgow). A basic part is
-            // ASCII by definition (RFC 3492 section 5), so a byte >= 0x80
-            // stays an error in every mode.
+            // the basic part may hold it too (PUNY-nqbqcgow).
+            //
+            // The >= 0x80 guard is always on, whatever require_ldh_basic says:
+            // basic code points are ASCII by definition (RFC 3492 section 5).
+            // It is defense in depth for C++ callers. From R it is unreachable
+            // as a distinct outcome: with the flag set the LDH test rejects the
+            // byte anyway, and with it clear finalize_label's re-encode compare
+            // rejects any A-label that is not pure ASCII.
             if (c >= 0x80) {
                 throw_error(ErrorCode::invalid_basic_code_point);
             }

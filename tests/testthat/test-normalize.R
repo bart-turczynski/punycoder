@@ -449,9 +449,12 @@ test_that("use_std3 = FALSE keeps non-LDH ASCII in an xn-- basic part", {
     host_normalize(v3_u1, use_std3 = FALSE), rep(NA_character_, 2)
   )
 
-  # Edge inputs stay NA with every flag off: a non-LDH basic part with an empty
-  # Bootstring payload ("?" re-encodes to itself, not to "xn--?-"), the bare
-  # prefix, and a basic part holding non-ASCII (UTS #46 makes it an error).
+  # Edge inputs stay NA under every flag set: a non-LDH basic part with an
+  # empty Bootstring payload ("?" re-encodes to itself, not to "xn--?-"), the
+  # bare prefix, and a basic part holding non-ASCII (UTS #46 makes it an
+  # error). These pin the outcome only: the re-encode compare rejects a
+  # non-ASCII A-label on its own, so they do not single out the decoder's
+  # >= 0x80 guard, which nothing reachable from R can.
   edge <- c("xn--?-", "xn--", "xn--bücher-kva", "xn--ü-kva")
   for (std3 in c(TRUE, FALSE)) {
     for (hyphens in c(TRUE, FALSE)) {

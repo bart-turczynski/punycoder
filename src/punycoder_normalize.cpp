@@ -67,7 +67,9 @@ bool has_ace_prefix(const std::vector<uint32_t>& label) {
 // resolves to an empty U-label: whether it is allowed is VerifyDnsLength's call
 // (UTS #46 section 4.2 step 4), made once the labels are encoded. `use_std3`
 // is the UseSTD3ASCIIRules flag: off, the xn-- basic part may hold any ASCII
-// that survived mapping, as a U-label may; validate_label then rules on it.
+// that survived mapping, as a U-label may. Mapping is the only ASCII filter on
+// that path (validate_label checks LDH only when use_std3 is on); the decoded
+// label still faces the remaining criteria and the re-encode compare.
 bool resolve_label(const std::vector<uint32_t>& piece, LabelWork& work,
                    bool use_std3) {
     if (!has_ace_prefix(piece)) {
