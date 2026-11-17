@@ -70,7 +70,7 @@
 #'   [unicode_versions()] for the table sets available,
 #'   [puny_encode()] for the lower-level RFC 3492 transform.
 #' @examples
-#' host_normalize(c("Example.COM", "münchen.de", "example.com."))
+#' host_normalize(c("Example.COM", "m\u00FCnchen.de", "example.com."))
 #' host_normalize("a_b.com") # NA: STD3 rejects "_"
 #' host_normalize("a_b.com", use_std3 = FALSE) # "a_b.com"
 #' host_normalize("a..b.com") # NA: empty label
