@@ -16,6 +16,8 @@
 
 * Under `verify_dns_length = TRUE`, `host_normalize()` returns `NA` at once for a label or host too long for DNS, without Punycode-encoding it first; results are unchanged (`PUNY-ttjakmgu`).
 
+* Punycode-encoding a label with many distinct non-ASCII characters now runs in near-linear rather than quadratic time, notably in `host_normalize(verify_dns_length = FALSE)`; results are unchanged (`PUNY-yndiwtxb`).
+
 ## Documentation
 
 * New `vignette("comparison")` compares punycoder with other Punycode libraries (`SEOR-kqmqosji`).
