@@ -224,6 +224,39 @@ test_that("an over-long non-ASCII label is rejected in linear time", {
   )
 })
 
+test_that("an over-long non-ASCII label encodes in O(n log n) time", {
+  skip_on_cran()
+
+  # PUNY-yndiwtxb. With verify_dns_length = FALSE no length check rejects the
+  # label, so the encoder itself must be sub-quadratic. The RFC 3492 loop it
+  # replaced cost O(n * distinct non-basic code points): 1.7 s on an -O2
+  # build for this 32,000-code-point label, every code point distinct. Same
+  # inputs as the rejection test above, so a quadratic encoder again makes
+  # the long label's cost per character 16x the short one's.
+  cjk <- c(0xAC00 + 0:11171, 0x4E00 + 0:20827) # Hangul syllables, then CJK
+  short <- intToUtf8(cjk[seq(1L, 32000L, by = 16L)])
+  long <- intToUtf8(cjk[seq_len(32000L)])
+  encode <- function(x) host_normalize(x, verify_dns_length = FALSE)
+
+  # The result is unchanged: recorded from the quadratic loop.
+  out <- encode(long)
+  expect_identical(nchar(out), 96992L)
+  path <- tempfile()
+  on.exit(unlink(path))
+  writeBin(charToRaw(out), path)
+  expect_identical(
+    unname(tools::md5sum(path)), "8f555e112d7a19dcc28625b9dc5eb6cb"
+  )
+
+  # Loose absolute bound, as above. Not a benchmark.
+  elapsed <- system.time(encode(long))[["elapsed"]]
+  expect_lt(elapsed, 0.5)
+
+  expect_cost_per_char_stable(
+    encode, short, long, copies = 16L, long_copies = 1L
+  )
+})
+
 test_that("a non-ASCII label over 59 code points is rejected before encoding", {
   skip_on_cran()
 
