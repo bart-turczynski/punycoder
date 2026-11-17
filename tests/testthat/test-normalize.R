@@ -413,6 +413,70 @@ test_that("verify_dns_length = FALSE keeps empty labels (UTS #46 4.2 step 4)", {
   )
 })
 
+test_that("use_std3 = FALSE keeps non-LDH ASCII in an xn-- basic part", {
+  # IdnaTestV2 rows whose only toASCII error is U1 (V3 too for the last two):
+  # the literal basic part of an xn-- label holds "," or "?", and toAsciiN is
+  # the input itself (PUNY-nqbqcgow).
+  u1 <- c("xn--8,-g9oy26fzu4d.xn--kmb6733w", "xn--88e732c.xn--1-?-pzc",
+          "xn--88e732c.xn--1-?-lzc", "xn--?-fwsr13r.xn--1chz659f")
+  v3_u1 <- c("8ss.xn---?-261a", "xn--8-qfa.xn---?-261a")
+  # The output is the input: the non-LDH code point stays literal and visible,
+  # as Bootstring inserts only code points >= 0x80.
+  expect_identical(host_normalize(u1, use_std3 = FALSE), u1)
+  expect_identical(
+    host_normalize(v3_u1, use_std3 = FALSE, check_hyphens = FALSE), v3_u1
+  )
+  # Relaxing VerifyDnsLength as well changes nothing.
+  expect_identical(
+    host_normalize(c(u1, v3_u1), check_hyphens = FALSE, use_std3 = FALSE,
+                   verify_dns_length = FALSE),
+    c(u1, v3_u1)
+  )
+
+  # Control: with UseSTD3ASCIIRules on, mapping rejects all six first.
+  for (hyphens in c(TRUE, FALSE)) {
+    for (dns in c(TRUE, FALSE)) {
+      expect_identical(
+        host_normalize(c(u1, v3_u1), check_hyphens = hyphens,
+                       verify_dns_length = dns),
+        rep(NA_character_, 6),
+        info = paste("check_hyphens", hyphens, "verify_dns_length", dns)
+      )
+    }
+  }
+  # The V3 rows still need CheckHyphens off.
+  expect_identical(
+    host_normalize(v3_u1, use_std3 = FALSE), rep(NA_character_, 2)
+  )
+
+  # Edge inputs stay NA under every flag set: a non-LDH basic part with an
+  # empty Bootstring payload ("?" re-encodes to itself, not to "xn--?-"), the
+  # bare prefix, and a basic part holding non-ASCII (UTS #46 makes it an
+  # error). These pin the outcome only: the re-encode compare rejects a
+  # non-ASCII A-label on its own, so they do not single out the decoder's
+  # >= 0x80 guard, which nothing reachable from R can.
+  edge <- c("xn--?-", "xn--", "xn--bücher-kva", "xn--ü-kva")
+  for (std3 in c(TRUE, FALSE)) {
+    for (hyphens in c(TRUE, FALSE)) {
+      for (dns in c(TRUE, FALSE)) {
+        expect_identical(
+          host_normalize(edge, check_hyphens = hyphens, use_std3 = std3,
+                         verify_dns_length = dns),
+          rep(NA_character_, 4),
+          info = paste(std3, hyphens, dns)
+        )
+      }
+    }
+  }
+
+  # The U-label form encodes to the corpus A-label under use_std3 = FALSE, and
+  # normalizing that output again is a fixed point.
+  ulabel <- "憡?ⴔ.\U000102ee≠"
+  alabel <- host_normalize(ulabel, use_std3 = FALSE)
+  expect_identical(alabel, "xn--?-fwsr13r.xn--1chz659f")
+  expect_identical(host_normalize(alabel, use_std3 = FALSE), alabel)
+})
+
 test_that("host_normalize is vectorized and preserves names", {
   x <- c(a = "Example.COM", b = NA, c = "a_b.com")
   out <- host_normalize(x)
@@ -483,7 +547,7 @@ test_that("normalization_profile_info reports the ratified profile identity", {
     "check_hyphens", "check_bidi", "check_joiners", "verify_dns_length",
     "backend"
   ))
-  expect_identical(info$profile, "uts46-nontransitional-std3-v3")
+  expect_identical(info$profile, "uts46-nontransitional-std3-v4")
   # Hardcoded on purpose: the pin is profile identity, so moving it must be a
   # deliberate edit here and in dev/normalization-contract.md, never something a
   # newly compiled-in table set can do on its own (ADR-016, ADR-017).
@@ -520,28 +584,28 @@ test_that("profile token is stable for defaults, distinct per flag set", {
   # default-relative, so leaving it at -v1 would have let one string denote two
   # different normalizations across that release.
   expect_identical(
-    normalization_profile_info()$profile, "uts46-nontransitional-std3-v3"
+    normalization_profile_info()$profile, "uts46-nontransitional-std3-v4"
   )
 
   # Any deviation appends a deterministic, fixed-order tag.
   expect_identical(
     normalization_profile_info(check_hyphens = FALSE)$profile,
-    "uts46-nontransitional-std3-v3+no-check-hyphens"
+    "uts46-nontransitional-std3-v4+no-check-hyphens"
   )
   expect_identical(
     normalization_profile_info(use_std3 = FALSE)$profile,
-    "uts46-nontransitional-std3-v3+no-std3"
+    "uts46-nontransitional-std3-v4+no-std3"
   )
   expect_identical(
     normalization_profile_info(verify_dns_length = FALSE)$profile,
-    "uts46-nontransitional-std3-v3+no-verify-dns-length"
+    "uts46-nontransitional-std3-v4+no-verify-dns-length"
   )
   expect_identical(
     normalization_profile_info(
       check_hyphens = FALSE, use_std3 = FALSE, verify_dns_length = FALSE
     )$profile,
     paste0(
-      "uts46-nontransitional-std3-v3",
+      "uts46-nontransitional-std3-v4",
       "+no-check-hyphens+no-std3+no-verify-dns-length"
     )
   )

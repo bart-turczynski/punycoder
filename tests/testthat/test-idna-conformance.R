@@ -3,7 +3,7 @@
 # against the corpus Unicode published with that version -- pairing the 17.0.0
 # engine with the 16.0.0 expectations would silently under-test both. We compare
 # the non-transitional ToASCII column toAsciiN, which matches punycoder's pinned
-# profile uts46-nontransitional-std3-v3. The parser and the per-version fixture
+# profile uts46-nontransitional-std3-v4. The parser and the per-version fixture
 # path live in helper-idna.R; this file is ASCII-clean and all Unicode inputs
 # come from the fixture.
 #
@@ -172,12 +172,45 @@ test_that("verify_dns_length = TRUE never emits an empty label", {
 # The converse of the bound above: a row whose every toASCII error is one the
 # relaxed flags govern must convert, to the corpus toAsciiN. For VerifyDnsLength
 # alone that is every A4_1 / A4_2 row -- empty labels anywhere, the empty domain
-# "", "." and over-long labels (UTS #46 section 4.2 step 4). With all three
-# flags off it is checked on the rows that hold an empty label; six U1 rows
-# whose xn-- payload carries non-LDH ASCII ("," or "?") are a separate
-# use_std3 = FALSE gap and stay out of this test.
-.idna_has_empty_label <- function(x) {
-  !nzchar(x) | grepl("^\\.|\\.\\.|\\.$", x)
+# "", "." and over-long labels (UTS #46 section 4.2 step 4). For
+# UseSTD3ASCIIRules alone it is every U1 row, non-LDH ASCII in an xn-- basic
+# part included (PUNY-nqbqcgow); for CheckHyphens alone every V2 / V3 row; and
+# with all three flags off every row whose codes are any mix of those.
+#
+# Each set also names what makes it non-vacuous: witnesses, each a predicate on
+# a covered row's source and its converted value, that more than `min` rows
+# must satisfy, so the check cannot pass on an empty or shrunken selection.
+.idna_any_label <- function(x, pred) {
+  ascii_lower <- chartr("ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+                        "abcdefghijklmnopqrstuvwxyz", x)
+  vapply(strsplit(ascii_lower, ".", fixed = TRUE),
+         function(labels) any(pred(labels)), logical(1))
+}
+# An empty label other than the root.
+.idna_has_inner_empty <- function(source, got) {
+  !is.na(got) & (!nzchar(got) | grepl("^\\.|\\.\\.", got))
+}
+# A source label that carries the ACE prefix and whose basic code points (the
+# part before the last "-") hold non-LDH ASCII: the rows that reach the
+# relaxed decoder path (PUNY-nqbqcgow).
+.idna_has_xn_non_ldh <- function(source, got) {
+  pred <- function(labels) {
+    body <- substring(labels, 5L)
+    basic <- ifelse(grepl("-", body, fixed = TRUE),
+                    sub("-[^-]*$", "", body), "")
+    startsWith(labels, "xn--") & grepl("[^a-z0-9-]", basic) &
+      !grepl("[^\\x01-\\x7f]", basic, perl = TRUE)
+  }
+  !is.na(got) & .idna_any_label(source, pred)
+}
+# A converted label with a leading or trailing hyphen, or hyphens in the 3rd
+# and 4th positions other than the xn-- ACE prefix.
+.idna_has_bad_hyphen <- function(source, got) {
+  pred <- function(labels) {
+    startsWith(labels, "-") | endsWith(labels, "-") |
+      (substr(labels, 3L, 4L) == "--" & !startsWith(labels, "xn--"))
+  }
+  !is.na(got) & .idna_any_label(got, pred)
 }
 
 test_that("rows failing only relaxed checks convert under those flags", {
@@ -185,7 +218,17 @@ test_that("rows failing only relaxed checks convert under those flags", {
     verify_dns_length = list(
       args = list(verify_dns_length = FALSE),
       codes = .idna_flag_codes$verify_dns_length,
-      empty_only = FALSE
+      witnesses = list(list(fn = .idna_has_inner_empty, min = 10L))
+    ),
+    use_std3 = list(
+      args = list(use_std3 = FALSE),
+      codes = .idna_flag_codes$use_std3,
+      witnesses = list(list(fn = .idna_has_xn_non_ldh, min = 3L))
+    ),
+    check_hyphens = list(
+      args = list(check_hyphens = FALSE),
+      codes = .idna_flag_codes$check_hyphens,
+      witnesses = list(list(fn = .idna_has_bad_hyphen, min = 30L))
     ),
     all_three = list(
       args = list(check_hyphens = FALSE, use_std3 = FALSE,
@@ -193,7 +236,9 @@ test_that("rows failing only relaxed checks convert under those flags", {
       codes = unlist(.idna_flag_codes[
         c("check_hyphens", "use_std3", "verify_dns_length")
       ], use.names = FALSE),
-      empty_only = TRUE
+      # The xn-- witness here also sees the two [V3, U1] rows.
+      witnesses = list(list(fn = .idna_has_inner_empty, min = 10L),
+                       list(fn = .idna_has_xn_non_ldh, min = 5L))
     )
   )
   for (version in unicode_versions()) {
@@ -211,19 +256,15 @@ test_that("rows failing only relaxed checks convert under those flags", {
         function(codes) length(codes) > 0L && all(codes %in% spec$codes),
         logical(1)
       )
-      if (spec$empty_only) {
-        covered <- covered & .idna_has_empty_label(df$to_ascii)
-      }
       got <- do.call(
         host_normalize,
         c(list(df$source[covered]), spec$args, unicode_version = version)
       )
       label <- paste(set, "under Unicode", version)
       expect_identical(got, df$to_ascii[covered], info = label)
-      # Empty labels other than the root are what this change is about: make
-      # sure the corpus still has them, so the check cannot pass vacuously.
-      inner_empty <- !nzchar(got) | grepl("^\\.|\\.\\.", got)
-      expect_gt(sum(inner_empty), 10L, label = label)
+      for (w in spec$witnesses) {
+        expect_gt(sum(w$fn(df$source[covered], got)), w$min, label = label)
+      }
     }
   }
 })

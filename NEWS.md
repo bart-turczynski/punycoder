@@ -4,6 +4,8 @@
 
 * The normalization profile token is now `uts46-nontransitional-std3-v3` (was `-v2`) because `verify_dns_length = FALSE` now keeps empty labels (below); default results are unchanged, but a key storing the token must be rebuilt (ADR-018).
 
+* The profile token is now `uts46-nontransitional-std3-v4` because `host_normalize(use_std3 = FALSE)` now accepts `xn--` labels holding non-LDH ASCII such as `?`, per UTS #46 `toAsciiN` (`PUNY-nqbqcgow`).
+
 * punycoder now requires R >= 4.1.0, up from 3.5.0 (`SEOR-wxelnnmt`).
 
 ## Bug fixes

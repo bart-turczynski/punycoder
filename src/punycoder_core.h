@@ -102,7 +102,10 @@ constexpr std::size_t kMaxLabelLength = 1024;
 
 bool starts_with_xn_prefix(const std::string& label);
 std::string punycode_encode_label_fallback(const std::string& label);
-std::string punycode_decode_label_fallback(const std::string& label);
+// require_ldh_basic = false admits non-LDH ASCII in the basic code points
+// (host_normalize under use_std3 = FALSE); non-ASCII there is always rejected.
+std::string punycode_decode_label_fallback(const std::string& label,
+                                           bool require_ldh_basic = true);
 
 // Backend selection. The libidn2 path is compiled in only when
 // PUNYCODER_USE_LIBIDN2 is defined (see punycoder_backend.cpp).
