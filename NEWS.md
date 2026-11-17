@@ -14,6 +14,8 @@
 
 * `host_normalize()` now reorders long runs of combining marks in linear rather than quadratic time, so such input no longer stalls; results are unchanged (`PUNY-zyycvyhb`).
 
+* Under `verify_dns_length = TRUE`, `host_normalize()` returns `NA` at once for a label or host too long for DNS, without Punycode-encoding it first; results are unchanged (`PUNY-ttjakmgu`).
+
 ## Documentation
 
 * New `vignette("comparison")` compares punycoder with other Punycode libraries (`SEOR-kqmqosji`).
