@@ -137,9 +137,13 @@ the outgoing version simultaneously starts carrying a `+unicode-<version>` tag
 it did not have. Incrementing makes a stale key miss loudly rather than collide
 silently. `-v1` denoted the pin at 16.0.0; `-v2` denoted it at 17.0.0; `-v3`
 denotes the same pin with empty labels kept under `verify_dns_length = FALSE`
-(PUNY-fffgkhoj). That last bump is the same rule applied to a relaxed path: an
-accept/reject change to section 4 under any flag combination increments `-vN`,
-because the relaxed tokens are built on the same base (ADR-018).
+(PUNY-fffgkhoj) and with non-LDH ASCII kept in an `xn--` label's basic code
+points under `use_std3 = FALSE` (PUNY-nqbqcgow). That last bump is the same
+rule applied to a relaxed path: an accept/reject change to section 4 under any
+flag combination increments `-vN`, because the relaxed tokens are built on the
+same base (ADR-018). Both changes ride one bump because `-v3` had not been
+released when the second landed; the rule is release-relative, so a change
+after a release names a new `-vN`.
 
 ## 4. Algorithm (normative, per element)
 

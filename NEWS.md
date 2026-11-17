@@ -18,6 +18,8 @@
 
 * Punycode-encoding a label with many distinct non-ASCII characters now runs in near-linear rather than quadratic time, notably in `host_normalize(verify_dns_length = FALSE)`; results are unchanged (`PUNY-yndiwtxb`).
 
+* `host_normalize(use_std3 = FALSE)` now accepts `xn--` labels whose basic part holds non-LDH ASCII such as `?`, matching UTS #46 `toAsciiN` with `UseSTD3ASCIIRules` off (`PUNY-nqbqcgow`).
+
 ## Documentation
 
 * New `vignette("comparison")` compares punycoder with other Punycode libraries (`SEOR-kqmqosji`).

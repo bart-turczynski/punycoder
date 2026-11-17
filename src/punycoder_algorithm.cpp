@@ -263,7 +263,8 @@ std::string punycode_encode_label_fallback(const std::string& label) {
     return output;
 }
 
-std::string punycode_decode_label_fallback(const std::string& label) {
+std::string punycode_decode_label_fallback(const std::string& label,
+                                           bool require_ldh_basic) {
     if (!starts_with_xn_prefix(label)) {
         return label;  // # nocov (decode is only dispatched for xn-- labels)
     }
@@ -296,9 +297,18 @@ std::string punycode_decode_label_fallback(const std::string& label) {
             // punctuation such as '(' ')' ',' '%' through. The Bootstring
             // payload after the delimiter is already constrained to a-z0-9 by
             // decode_digit(), and non-ASCII (>= 0x80) is likewise non-LDH.
+            //
+            // host_normalize(use_std3 = FALSE) clears require_ldh_basic: with
+            // UseSTD3ASCIIRules off, UTS #46 admits other ASCII in a label, so
+            // the basic part may hold it too (PUNY-nqbqcgow). A basic part is
+            // ASCII by definition (RFC 3492 section 5), so a byte >= 0x80
+            // stays an error in every mode.
+            if (c >= 0x80) {
+                throw_error(ErrorCode::invalid_basic_code_point);
+            }
             bool ldh = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
                        (c >= '0' && c <= '9') || c == '-';
-            if (!ldh) {
+            if (require_ldh_basic && !ldh) {
                 throw_error(ErrorCode::invalid_basic_code_point);
             }
             output.push_back(static_cast<uint32_t>(c));

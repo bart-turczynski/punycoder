@@ -65,8 +65,11 @@ bool has_ace_prefix(const std::vector<uint32_t>& label) {
 // Resolve one split label (already mapped + NFC) to its U-label form. Decodes
 // xn-- labels; returns false on a Punycode/UTF-8 decode error. An empty label
 // resolves to an empty U-label: whether it is allowed is VerifyDnsLength's call
-// (UTS #46 section 4.2 step 4), made once the labels are encoded.
-bool resolve_label(const std::vector<uint32_t>& piece, LabelWork& work) {
+// (UTS #46 section 4.2 step 4), made once the labels are encoded. `use_std3`
+// is the UseSTD3ASCIIRules flag: off, the xn-- basic part may hold any ASCII
+// that survived mapping, as a U-label may; validate_label then rules on it.
+bool resolve_label(const std::vector<uint32_t>& piece, LabelWork& work,
+                   bool use_std3) {
     if (!has_ace_prefix(piece)) {
         work.cps = piece;
         work.from_alabel = false;
@@ -76,7 +79,8 @@ bool resolve_label(const std::vector<uint32_t>& piece, LabelWork& work) {
     work.from_alabel = true;
     work.alabel = codepoints_to_utf8(piece);  // ASCII
     try {
-        const std::string ulabel = punycode_decode_label_fallback(work.alabel);
+        const std::string ulabel =
+            punycode_decode_label_fallback(work.alabel, use_std3);
         work.cps = utf8_to_codepoints(ulabel);
     } catch (const PunycoderError&) {
         return false;
@@ -427,7 +431,7 @@ struct Normalizer {
         for (std::size_t i = 0; i <= normalized.size(); ++i) {
             if (i == normalized.size() || normalized[i] == kFullStop) {
                 LabelWork work;
-                if (!resolve_label(piece, work)) return invalid();
+                if (!resolve_label(piece, work, opts.use_std3)) return invalid();
                 labels.push_back(std::move(work));
                 piece.clear();
             } else {

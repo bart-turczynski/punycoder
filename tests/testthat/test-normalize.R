@@ -420,10 +420,17 @@ test_that("use_std3 = FALSE keeps non-LDH ASCII in an xn-- basic part", {
   u1 <- c("xn--8,-g9oy26fzu4d.xn--kmb6733w", "xn--88e732c.xn--1-?-pzc",
           "xn--88e732c.xn--1-?-lzc", "xn--?-fwsr13r.xn--1chz659f")
   v3_u1 <- c("8ss.xn---?-261a", "xn--8-qfa.xn---?-261a")
-  expect_identical(host_normalize(u1, use_std3 = FALSE), rep(NA_character_, 4))
+  # The output is the input: the non-LDH code point stays literal and visible,
+  # as Bootstring inserts only code points >= 0x80.
+  expect_identical(host_normalize(u1, use_std3 = FALSE), u1)
   expect_identical(
-    host_normalize(v3_u1, use_std3 = FALSE, check_hyphens = FALSE),
-    rep(NA_character_, 2)
+    host_normalize(v3_u1, use_std3 = FALSE, check_hyphens = FALSE), v3_u1
+  )
+  # Relaxing VerifyDnsLength as well changes nothing.
+  expect_identical(
+    host_normalize(c(u1, v3_u1), check_hyphens = FALSE, use_std3 = FALSE,
+                   verify_dns_length = FALSE),
+    c(u1, v3_u1)
   )
 
   # Control: with UseSTD3ASCIIRules on, mapping rejects all six first.
@@ -459,11 +466,12 @@ test_that("use_std3 = FALSE keeps non-LDH ASCII in an xn-- basic part", {
     }
   }
 
-  # The U-label form encodes to the corpus A-label under use_std3 = FALSE.
+  # The U-label form encodes to the corpus A-label under use_std3 = FALSE, and
+  # normalizing that output again is a fixed point.
   ulabel <- "憡?ⴔ.\U000102ee≠"
-  expect_identical(
-    host_normalize(ulabel, use_std3 = FALSE), "xn--?-fwsr13r.xn--1chz659f"
-  )
+  alabel <- host_normalize(ulabel, use_std3 = FALSE)
+  expect_identical(alabel, "xn--?-fwsr13r.xn--1chz659f")
+  expect_identical(host_normalize(alabel, use_std3 = FALSE), alabel)
 })
 
 test_that("host_normalize is vectorized and preserves names", {
