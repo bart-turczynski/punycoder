@@ -169,7 +169,8 @@ test_that("rules A and B report unexpected and stale advisories", {
   found <- data.frame(
     package = "curl",
     version = "8.1.0",
-    id = c("CVE-2026-18924", "CVE-2026-99999")
+    id = c("CVE-2026-18924", "CVE-2026-99999"),
+    stringsAsFactors = FALSE
   )
   findings <- oss_index_rule_findings(found, rows)
   expect_equal(findings$unexpected, "curl CVE-2026-99999")
@@ -179,7 +180,8 @@ test_that("rules A and B report unexpected and stale advisories", {
   none <- data.frame(
     package = character(),
     version = character(),
-    id = character()
+    id = character(),
+    stringsAsFactors = FALSE
   )
   findings <- oss_index_rule_findings(none, rows)
   expect_equal(findings$unexpected, character())
@@ -194,7 +196,8 @@ test_that("a row covers its advisory in its own package only", {
   found <- data.frame(
     package = "otherbinding",
     version = "1.0.0",
-    id = "CVE-2026-18924"
+    id = "CVE-2026-18924",
+    stringsAsFactors = FALSE
   )
   findings <- oss_index_rule_findings(found, rows)
   expect_equal(findings$unexpected, "otherbinding CVE-2026-18924")
@@ -214,7 +217,8 @@ test_that("a row covers its advisory in its own package only", {
   found <- data.frame(
     package = c(NA, "curl"),
     version = "8.1.0",
-    id = c("CVE-2026-18924", NA)
+    id = c("CVE-2026-18924", NA),
+    stringsAsFactors = FALSE
   )
   findings <- oss_index_rule_findings(found, literal)
   expect_equal(findings$unexpected, c("NA CVE-2026-18924", "curl NA"))
@@ -235,7 +239,8 @@ test_that("one advisory allow-listed for two packages is two decisions", {
   found <- data.frame(
     package = c("curl", "otherbinding"),
     version = "8.1.0",
-    id = "CVE-2026-18924"
+    id = "CVE-2026-18924",
+    stringsAsFactors = FALSE
   )
   expect_equal(oss_index_allowlist_violations(rows), character())
   expect_equal(
@@ -254,7 +259,12 @@ test_that("rule C warns on drift and never fails", {
   row <- list(oss_index_fixture_row("CVE-2026-18924"))
   before_review <- as.Date("2026-11-30")
   at <- function(version) {
-    data.frame(package = "curl", version = version, id = "CVE-2026-18924")
+    data.frame(
+      package = "curl",
+      version = version,
+      id = "CVE-2026-18924",
+      stringsAsFactors = FALSE
+    )
   }
 
   expect_silent(oss_index_warn_drift(at("8.1.0"), row, before_review))
@@ -275,7 +285,8 @@ test_that("rule C warns on drift and never fails", {
   other <- data.frame(
     package = c("otherbinding", "curl"),
     version = c("9.0.0", "8.1.0"),
-    id = "CVE-2026-18924"
+    id = "CVE-2026-18924",
+    stringsAsFactors = FALSE
   )
   expect_silent(oss_index_warn_drift(other, row, before_review))
 })
