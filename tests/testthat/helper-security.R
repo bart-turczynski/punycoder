@@ -46,6 +46,21 @@ oss_index_allowlist_fields <- c(
   "reason"
 )
 
+# A well-formed allow-list row for the offline tests, which must not depend on
+# what the live list happens to hold.
+oss_index_fixture_row <- function(id, package = "curl") {
+  list(
+    id = id,
+    package = package,
+    version_seen = "8.1.0",
+    review = as.Date("2026-12-01"),
+    reason = paste(
+      "A fixture rationale long enough to be an argument rather than a",
+      "placeholder, so that the validator accepts the row."
+    )
+  )
+}
+
 # Problems with a set of allow-list rows, as a character vector; empty when the
 # set is well formed. Written as a function returning findings rather than as a
 # block of expectations so that it can be exercised against fixtures -- with no
@@ -151,6 +166,53 @@ oss_index_allowlist_violations <- function(rows) {
   }
 
   out
+}
+
+# Rules A and B of the header, as findings rather than expectations, so that
+# they can be exercised against fixtures. Matched on `id` alone.
+oss_index_rule_findings <- function(found, rows) {
+  allowed <- vapply(rows, function(row) row$id, character(1))
+  list(
+    unexpected = sort(setdiff(found$id, allowed)),
+    stale = sort(setdiff(allowed, found$id))
+  )
+}
+
+# Rule C of the header: a row past its review date, or reported at a version
+# later than `version_seen`, warns. Never fails. Looked up on `id` alone.
+oss_index_warn_drift <- function(found, rows, today = Sys.Date()) {
+  for (row in rows) {
+    if (today > row$review) {
+      warning(
+        sprintf(
+          "OSS Index allow-list row %s is past its %s review date.",
+          row$id,
+          format(row$review)
+        ),
+        call. = FALSE
+      )
+    }
+    hit <- found[found$id == row$id, ]
+    if (
+      nrow(hit) > 0 &&
+        package_version(hit$version[1]) > package_version(row$version_seen)
+    ) {
+      warning(
+        sprintf(
+          paste(
+            "OSS Index allow-list row %s was written against %s %s;",
+            "the audit now reports %s. Re-read the advisory."
+          ),
+          row$id,
+          row$package,
+          row$version_seen,
+          hit$version[1]
+        ),
+        call. = FALSE
+      )
+    }
+  }
+  invisible(NULL)
 }
 
 # Flatten an oysteR::audit_description() result to one row per reported
